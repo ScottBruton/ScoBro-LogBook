@@ -63,3 +63,6 @@ Thumbs.db
 # yarn.lock
 # pnpm-lock.yaml
 # Cargo.lock   # (commit this if you want reproducible Rust builds)
+
+# Ignore credentials file
+credentials.json

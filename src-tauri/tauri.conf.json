@@ -1,0 +1,47 @@
+{
+  "package": {
+    "productName": "ScoBro Logbook",
+    "version": "0.1.0"
+  },
+  "build": {
+    // Command to run before `tauri dev`
+    "beforeDevCommand": "npm run dev",
+    // Command to run before `tauri build`
+    "beforeBuildCommand": "npm run build",
+    // Path that tauri loads during development
+    "devPath": "http://localhost:5173",
+    // Relative path to the production bundle (built by Vite)
+    "distDir": "../dist"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "title": "ScoBro Logbook",
+        "width": 900,
+        "height": 700,
+        "resizable": true,
+        "label": "main"
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
+    "autostart": {
+      "enabled": true
+    },
+    "updater": {
+      "active": true,
+      "dialog": true,
+      // Replace with the GitHub Releases endpoint that hosts your latest.json
+      "endpoints": [
+        "https://github.com/YOUR_GITHUB_USER/YOUR_REPO/releases/latest/download/latest.json"
+      ],
+      // Replace this with your actual public signing key when you generate one
+      "pubkey": "YOUR_PUBLIC_KEY_HERE"
+    }
+  }
+}

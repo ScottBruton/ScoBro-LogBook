@@ -1,0 +1,31 @@
+{
+  "name": "scobro-logbook",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ScoBro Logbook – a lightweight desktop journal and productivity tracker built with React and Tauri.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "tauri": "tauri dev",
+    "tauri:build": "tauri build",
+    "generate-icons": "node scripts/generate-icons.js",
+    "test:phase1": "node scripts/test-phase1.js"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "@supabase/supabase-js": "^2.0.0",
+    "@tauri-apps/api": "^1.4.0",
+    "@tauri-apps/plugin-updater": "^2.0.0-beta",
+    "@tauri-apps/plugin-notification": "^2.0.0-beta",
+    "@tauri-apps/plugin-global-shortcut": "^2.0.0-beta",
+    "@tauri-apps/plugin-tray": "^2.0.0-beta",
+    "@tauri-apps/plugin-autostart": "^2.0.0-beta",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "vite": "^4.0.0",
+    "@vitejs/plugin-react": "^4.0.0"
+  }
+}
