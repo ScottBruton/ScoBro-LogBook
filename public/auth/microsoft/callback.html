@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microsoft OAuth Callback</title>
+</head>
+<body>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h2>🔐 Microsoft Calendar Authentication</h2>
+        <p id="status">Processing authentication...</p>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+        const state = urlParams.get('state');
+
+        if (error) {
+            document.getElementById('status').textContent = `Authentication failed: ${error}`;
+            // Send error message to parent window
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'MICROSOFT_OAUTH_ERROR',
+                    error: error
+                }, window.location.origin);
+            }
+        } else if (code) {
+            document.getElementById('status').textContent = 'Authentication successful! Exchanging code for tokens...';
+            
+            // Exchange authorization code for access token
+            exchangeCodeForToken(code);
+        } else {
+            document.getElementById('status').textContent = 'No authorization code received';
+            if (window.opener) {
+                window.opener.postMessage({
+                    type: 'MICROSOFT_OAUTH_ERROR',
+                    error: 'No authorization code received'
+                }, window.location.origin);
+            }
+        }
+
+        async function exchangeCodeForToken(code) {
+            try {
+                // In a real implementation, this would be done on your backend
+                // For now, we'll simulate the token exchange
+                const response = await fetch('/api/oauth/microsoft/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ code })
+                });
+
+                if (response.ok) {
+                    const tokens = await response.json();
+                    
+                    // Send success message to parent window
+                    if (window.opener) {
+                        window.opener.postMessage({
+                            type: 'MICROSOFT_OAUTH_SUCCESS',
+                            accessToken: tokens.access_token,
+                            refreshToken: tokens.refresh_token
+                        }, window.location.origin);
+                    }
+                    
+                    document.getElementById('status').textContent = 'Authentication complete! You can close this window.';
+                } else {
+                    throw new Error('Failed to exchange code for token');
+                }
+            } catch (error) {
+                console.error('Token exchange failed:', error);
+                document.getElementById('status').textContent = `Token exchange failed: ${error.message}`;
+                
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'MICROSOFT_OAUTH_ERROR',
+                        error: error.message
+                    }, window.location.origin);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

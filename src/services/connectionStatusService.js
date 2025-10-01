@@ -185,7 +185,7 @@ export class ConnectionStatusService {
       const { CalendarService } = await import('./calendarService.js');
       const config = CalendarService.getCalendarConfig();
       
-      if (!config || (!config.google && !config.microsoft)) {
+      if (!config || !config.enabled || !config.calendars || config.calendars.length === 0) {
         return this.updateConnectionStatus('calendar', 'not-configured', false);
       }
 

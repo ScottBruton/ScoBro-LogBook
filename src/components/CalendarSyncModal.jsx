@@ -6,7 +6,16 @@ import { CalendarService } from '../services/calendarService.js';
  * Provides functionality to connect and sync with Google Calendar and Microsoft Outlook
  */
 export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
-  const [config, setConfig] = useState(null);
+  const [config, setConfig] = useState({
+    enabled: false,
+    calendars: [],
+    syncInterval: 15,
+    lastSync: null,
+    autoCreateEntries: true,
+    includeAllDayEvents: false,
+    syncPastDays: 7,
+    syncFutureDays: 30
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -22,7 +31,10 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const loadCalendarConfig = () => {
     try {
       const calendarConfig = CalendarService.getCalendarConfig();
-      setConfig(calendarConfig);
+      setConfig(prevConfig => ({
+        ...prevConfig,
+        ...calendarConfig
+      }));
       setSyncStatus(CalendarService.getSyncStatus());
     } catch (error) {
       console.error('Failed to load calendar config:', error);
@@ -41,12 +53,12 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const handleGoogleConnect = async () => {
     setIsLoading(true);
     try {
-      const newConfig = await CalendarService.initializeGoogleCalendar();
-      setConfig(newConfig);
-      setSyncStatus(CalendarService.getSyncStatus());
+      const newCalendar = await CalendarService.initializeGoogleCalendar();
+      // Reload the full config to get updated calendars array
+      loadCalendarConfig();
       setTestResult({
         success: true,
-        message: 'Successfully connected to Google Calendar!'
+        message: `Successfully connected to Google Calendar: ${newCalendar.name}`
       });
     } catch (error) {
       setTestResult({
@@ -61,12 +73,12 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const handleMicrosoftConnect = async () => {
     setIsLoading(true);
     try {
-      const newConfig = await CalendarService.initializeMicrosoftOutlook();
-      setConfig(newConfig);
-      setSyncStatus(CalendarService.getSyncStatus());
+      const newCalendar = await CalendarService.initializeMicrosoftOutlook();
+      // Reload the full config to get updated calendars array
+      loadCalendarConfig();
       setTestResult({
         success: true,
-        message: 'Successfully connected to Microsoft Outlook!'
+        message: `Successfully connected to Microsoft Outlook: ${newCalendar.name}`
       });
     } catch (error) {
       setTestResult({
@@ -79,10 +91,9 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   };
 
   const handleDisconnect = () => {
-    if (confirm('Are you sure you want to disconnect your calendar?')) {
+    if (confirm('Are you sure you want to disconnect all calendars?')) {
       CalendarService.disconnectCalendar();
-      setConfig(CalendarService.getCalendarConfig());
-      setSyncStatus(CalendarService.getSyncStatus());
+      loadCalendarConfig();
       setUpcomingEvents([]);
       setTestResult(null);
     }
@@ -315,15 +326,81 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-                  Provider
+                  Connected Calendars
                 </label>
                 <div style={{
                   padding: '8px',
                   backgroundColor: '#f8f9fa',
                   borderRadius: '4px',
-                  textTransform: 'capitalize'
+                  minHeight: '40px'
                 }}>
-                  {config.provider}
+                  {config.calendars && config.calendars.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                      {config.calendars.map((calendar) => (
+                        <span
+                          key={calendar.id}
+                          style={{
+                            padding: '2px 6px',
+                            backgroundColor: calendar.provider === 'google' ? '#4285f4' : '#0078d4',
+                            color: 'white',
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            textTransform: 'capitalize'
+                          }}
+                        >
+                          {calendar.provider} - {calendar.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span style={{ color: '#6c757d', fontStyle: 'italic', display: 'block', marginBottom: '8px' }}>No calendars connected</span>
+                  )}
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={async () => {
+                    try {
+                      await handleGoogleConnect();
+                    } catch (error) {
+                      alert(`Google OAuth Setup Required:\n\n${error.message}\n\nTo enable Google Calendar sync:\n1. Create a Google Cloud Project\n2. Enable Google Calendar API\n3. Create OAuth 2.0 credentials\n4. Set VITE_GOOGLE_CLIENT_ID in your .env file`);
+                    }
+                  }}
+                  disabled={isLoading}
+                  style={{
+                    padding: '4px 8px',
+                    backgroundColor: '#4285f4',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    fontSize: '12px',
+                    opacity: isLoading ? 0.6 : 1
+                  }}
+                >
+                  + Google
+                </button>
+                <button
+                  onClick={async () => {
+                    try {
+                      await handleMicrosoftConnect();
+                    } catch (error) {
+                      alert(`Microsoft OAuth Setup Required:\n\n${error.message}\n\nTo enable Microsoft Calendar sync:\n1. Create an Azure App Registration\n2. Configure Microsoft Graph API permissions\n3. Set VITE_MICROSOFT_CLIENT_ID in your .env file`);
+                    }
+                  }}
+                  disabled={isLoading}
+                  style={{
+                    padding: '4px 8px',
+                    backgroundColor: '#0078d4',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                    fontSize: '12px',
+                    opacity: isLoading ? 0.6 : 1
+                  }}
+                >
+                  + Microsoft
+                </button>
+                  </div>
                 </div>
               </div>
               
@@ -332,7 +409,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                   Sync Interval (minutes)
                 </label>
                 <select
-                  value={config.syncInterval}
+                  value={config.syncInterval || 15}
                   onChange={(e) => handleConfigChange('syncInterval', parseInt(e.target.value))}
                   style={{
                     width: '100%',
@@ -354,7 +431,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                 </label>
                 <input
                   type="number"
-                  value={config.syncPastDays}
+                  value={config.syncPastDays || 7}
                   onChange={(e) => handleConfigChange('syncPastDays', parseInt(e.target.value))}
                   min="1"
                   max="30"
@@ -373,7 +450,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                 </label>
                 <input
                   type="number"
-                  value={config.syncFutureDays}
+                  value={config.syncFutureDays || 30}
                   onChange={(e) => handleConfigChange('syncFutureDays', parseInt(e.target.value))}
                   min="1"
                   max="90"
@@ -391,7 +468,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="checkbox"
-                  checked={config.autoCreateEntries}
+                  checked={config.autoCreateEntries || false}
                   onChange={(e) => handleConfigChange('autoCreateEntries', e.target.checked)}
                 />
                 Auto-create entries from events
@@ -400,7 +477,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
               <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <input
                   type="checkbox"
-                  checked={config.includeAllDayEvents}
+                  checked={config.includeAllDayEvents || false}
                   onChange={(e) => handleConfigChange('includeAllDayEvents', e.target.checked)}
                 />
                 Include all-day events
@@ -465,6 +542,71 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                 {testResult.success ? '✅ Success' : '❌ Error'}
               </div>
               <div>{testResult.message}</div>
+            </div>
+          </div>
+        )}
+
+        {/* OAuth Setup Section */}
+        {config?.enabled && (
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ marginBottom: '12px' }}>🔐 OAuth Setup (For Real API Integration)</h3>
+            <div style={{
+              padding: '16px',
+              backgroundColor: '#fff3cd',
+              border: '1px solid #ffeaa7',
+              borderRadius: '6px',
+              marginBottom: '12px'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#856404' }}>
+                ⚠️ Real API Integration Required
+              </div>
+              <div style={{ fontSize: '14px', color: '#856404', marginBottom: '12px' }}>
+                To sync real calendar events, you need to set up OAuth credentials. Currently using mock data for testing.
+              </div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => {
+                    try {
+                      const url = CalendarService.generateGoogleAuthUrl();
+                      window.open(url, '_blank');
+                    } catch (error) {
+                      alert(`Google OAuth setup required:\n\n1. Create a Google Cloud Project\n2. Enable Google Calendar API\n3. Create OAuth 2.0 credentials\n4. Set VITE_GOOGLE_CLIENT_ID environment variable\n\nError: ${error.message}`);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#4285f4',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                >
+                  🔧 Setup Google OAuth
+                </button>
+                <button
+                  onClick={() => {
+                    try {
+                      const url = CalendarService.generateMicrosoftAuthUrl();
+                      window.open(url, '_blank');
+                    } catch (error) {
+                      alert(`Microsoft OAuth setup required:\n\n1. Create an Azure App Registration\n2. Configure Microsoft Graph API permissions\n3. Set VITE_MICROSOFT_CLIENT_ID environment variable\n\nError: ${error.message}`);
+                    }
+                  }}
+                  style={{
+                    padding: '8px 12px',
+                    backgroundColor: '#0078d4',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '12px'
+                  }}
+                >
+                  🔧 Setup Microsoft OAuth
+                </button>
+              </div>
             </div>
           </div>
         )}
