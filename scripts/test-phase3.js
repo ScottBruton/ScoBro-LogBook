@@ -24,10 +24,12 @@ const phase3Components = [
   'src/components/TimeTrackingModal.jsx',
   'src/components/CalendarSyncModal.jsx',
   'src/components/JiraApiModal.jsx',
+  'src/components/AnalyticsDashboard.jsx',
   'src/services/smartPromptsService.js',
   'src/services/timeTrackingService.js',
   'src/services/calendarService.js',
-  'src/services/jiraApiService.js'
+  'src/services/jiraApiService.js',
+  'src/services/analyticsService.js'
 ];
 
 let allComponentsExist = true;
@@ -155,7 +157,53 @@ if (allJiraApiFeaturesPresent) {
   console.log('\n❌ Some Jira API service features are missing');
 }
 
-// Test 5: Check Time Tracking service functionality
+// Test 5: Check Analytics service functionality
+console.log('\n📊 Checking Analytics service functionality...');
+
+const analyticsService = fs.readFileSync('src/services/analyticsService.js', 'utf8');
+const analyticsFeatures = [
+  'getAnalyticsConfig',
+  'saveAnalyticsConfig',
+  'generateAnalytics',
+  'generateOverview',
+  'generateProductivityAnalytics',
+  'generateProjectAnalytics',
+  'generateTimeTrackingAnalytics',
+  'generateCollaborationAnalytics',
+  'generateInsights',
+  'generateTrends',
+  'generateChartData',
+  'calculateProductivityScore',
+  'calculateEntryStreak',
+  'calculateTimeTrackingStreak',
+  'formatDuration',
+  'getTimeRanges',
+  'calculateDailyProductivity',
+  'calculateDayProductivity',
+  'generateProductivityInsights',
+  'generateTimeInsights',
+  'generateProjectInsights',
+  'generateCollaborationInsights',
+  'generateJiraInsights'
+];
+
+let allAnalyticsFeaturesPresent = true;
+analyticsFeatures.forEach(feature => {
+  if (analyticsService.includes(`static ${feature}`) || analyticsService.includes(`static async ${feature}`)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allAnalyticsFeaturesPresent = false;
+  }
+});
+
+if (allAnalyticsFeaturesPresent) {
+  console.log('\n✅ All Analytics service features present');
+} else {
+  console.log('\n❌ Some Analytics service features are missing');
+}
+
+// Test 6: Check Time Tracking service functionality
 console.log('\n⏱️ Checking Time Tracking service functionality...');
 
 const timeTrackingService = fs.readFileSync('src/services/timeTrackingService.js', 'utf8');
@@ -289,7 +337,44 @@ if (allJiraApiModalFeaturesPresent) {
   console.log('\n❌ Some Jira API Modal features are missing');
 }
 
-// Test 7: Check Time Tracking Modal functionality
+// Test 7: Check Analytics Dashboard functionality
+console.log('\n📊 Checking Analytics Dashboard functionality...');
+
+const analyticsDashboard = fs.readFileSync('src/components/AnalyticsDashboard.jsx', 'utf8');
+const analyticsDashboardFeatures = [
+  'loadAnalyticsData',
+  'handleConfigChange',
+  'exportAnalytics',
+  'getInsightIcon',
+  'getInsightColor',
+  'AnalyticsService',
+  'TimeTrackingService',
+  'CalendarService',
+  'JiraApiService',
+  'selectedTimeRange',
+  'selectedChart',
+  'analytics',
+  'config',
+  'loading'
+];
+
+let allAnalyticsDashboardFeaturesPresent = true;
+analyticsDashboardFeatures.forEach(feature => {
+  if (analyticsDashboard.includes(feature)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allAnalyticsDashboardFeaturesPresent = false;
+  }
+});
+
+if (allAnalyticsDashboardFeaturesPresent) {
+  console.log('\n✅ All Analytics Dashboard features present');
+} else {
+  console.log('\n❌ Some Analytics Dashboard features are missing');
+}
+
+// Test 8: Check Time Tracking Modal functionality
 console.log('\n⏱️ Checking Time Tracking Modal functionality...');
 
 const timeTrackingModal = fs.readFileSync('src/components/TimeTrackingModal.jsx', 'utf8');
@@ -326,14 +411,17 @@ const appPhase3Features = [
   'TimeTrackingModal',
   'CalendarSyncModal',
   'JiraApiModal',
+  'AnalyticsDashboard',
   'SmartPromptsService',
   'TimeTrackingService',
   'CalendarService',
   'JiraApiService',
+  'AnalyticsService',
   'showSmartPrompts',
   'showTimeTracking',
   'showCalendarSync',
   'showJiraApi',
+  'showAnalytics',
   'smartPromptNudge',
   'setupSmartPrompts',
   'checkForSmartPromptNudge',
@@ -425,6 +513,7 @@ const uiEnhancements = [
   'Time Tracking',
   'Calendar',
   'Jira API',
+  'Analytics',
   'smartPromptNudge',
   'priority',
   'insights',
@@ -432,12 +521,14 @@ const uiEnhancements = [
   'export',
   'Google Calendar',
   'Microsoft Outlook',
-  'Jira'
+  'Jira',
+  'Productivity Score',
+  'Analytics Dashboard'
 ];
 
 let allUIEnhancementsPresent = true;
 uiEnhancements.forEach(enhancement => {
-  if (appJsx.includes(enhancement) || smartPromptsModal.includes(enhancement) || timeTrackingModal.includes(enhancement) || calendarSyncModal.includes(enhancement) || jiraApiModal.includes(enhancement)) {
+  if (appJsx.includes(enhancement) || smartPromptsModal.includes(enhancement) || timeTrackingModal.includes(enhancement) || calendarSyncModal.includes(enhancement) || jiraApiModal.includes(enhancement) || analyticsDashboard.includes(enhancement)) {
     console.log(`✅ ${enhancement}`);
   } else {
     console.log(`❌ ${enhancement} - MISSING`);
@@ -489,10 +580,12 @@ const tests = [
   { name: 'Smart Prompts Service', passed: allSmartPromptsFeaturesPresent },
   { name: 'Calendar Service', passed: allCalendarFeaturesPresent },
   { name: 'Jira API Service', passed: allJiraApiFeaturesPresent },
+  { name: 'Analytics Service', passed: allAnalyticsFeaturesPresent },
   { name: 'Time Tracking Service', passed: allTimeTrackingFeaturesPresent },
   { name: 'Smart Prompts Modal', passed: allSmartPromptsModalFeaturesPresent },
   { name: 'Calendar Sync Modal', passed: allCalendarSyncModalFeaturesPresent },
   { name: 'Jira API Modal', passed: allJiraApiModalFeaturesPresent },
+  { name: 'Analytics Dashboard', passed: allAnalyticsDashboardFeaturesPresent },
   { name: 'Time Tracking Modal', passed: allTimeTrackingModalFeaturesPresent },
   { name: 'App Integration', passed: allAppPhase3FeaturesPresent },
   { name: 'Smart Prompts Config', passed: allSmartPromptsConfigPresent },
@@ -517,12 +610,13 @@ if (passedTests === totalTests) {
   console.log('• ✅ Time tracking with start/stop timers');
   console.log('• ✅ Calendar sync (Google Calendar & Microsoft Outlook)');
   console.log('• ✅ Jira API integration for real-time issue data');
-  console.log('• ✅ Advanced analytics and insights');
+  console.log('• ✅ Advanced analytics dashboard with comprehensive insights');
   console.log('• ✅ Enhanced user experience');
   console.log('• ✅ Intelligent suggestions based on user patterns');
   console.log('• ✅ Productivity insights and statistics');
   console.log('• ✅ Configurable nudge settings');
   console.log('• ✅ Time tracking data export');
+  console.log('• ✅ Analytics data export');
   console.log('• ✅ Integration with existing entry system');
   console.log('\nNext steps:');
   console.log('1. Run `npm run tauri` to start development');
@@ -530,10 +624,11 @@ if (passedTests === totalTests) {
   console.log('3. Test time tracking functionality');
   console.log('4. Test calendar sync with Google Calendar and Microsoft Outlook');
   console.log('5. Test Jira API integration and issue synchronization');
-  console.log('6. Configure nudge settings');
-  console.log('7. Test timer integration with entries');
-  console.log('8. Explore productivity insights');
-  console.log('9. Test data export functionality');
+  console.log('6. Test analytics dashboard and insights');
+  console.log('7. Configure nudge settings');
+  console.log('8. Test timer integration with entries');
+  console.log('9. Explore productivity insights and analytics');
+  console.log('10. Test data export functionality');
 } else {
   console.log('\n⚠️ Some Phase 3 tests failed. Please fix the issues before proceeding.');
   process.exit(1);

@@ -11,12 +11,14 @@ import SmartPromptsModal from './components/SmartPromptsModal.jsx';
 import TimeTrackingModal from './components/TimeTrackingModal.jsx';
 import CalendarSyncModal from './components/CalendarSyncModal.jsx';
 import JiraApiModal from './components/JiraApiModal.jsx';
+import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 import { SmartPromptsService } from './services/smartPromptsService.js';
 import { TimeTrackingService } from './services/timeTrackingService.js';
 import { CalendarService } from './services/calendarService.js';
 import { JiraApiService } from './services/jiraApiService.js';
+import { AnalyticsService } from './services/analyticsService.js';
 
 // Attempt to import Tauri APIs. If running in development (non-tauri) 
 // these will be undefined and the useEffect below will simply not register.
@@ -40,6 +42,7 @@ export default function App() {
   const [showTimeTracking, setShowTimeTracking] = useState(false);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
   const [showJiraApi, setShowJiraApi] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('offline');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -456,6 +459,20 @@ export default function App() {
             🔗 Jira API
           </button>
           <button
+            onClick={() => setShowAnalytics(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#fd7e14',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            📊 Analytics
+          </button>
+          <button
             onClick={() => DataService.exportAndDownloadCSV()}
             style={{
               padding: '6px 12px',
@@ -602,6 +619,11 @@ export default function App() {
         isOpen={showJiraApi}
         onClose={() => setShowJiraApi(false)}
         onIssuesSynced={handleJiraIssuesSynced}
+      />
+      <AnalyticsDashboard
+        isOpen={showAnalytics}
+        onClose={() => setShowAnalytics(false)}
+        entries={entries}
       />
       
       {/* Smart Prompt Nudge */}
