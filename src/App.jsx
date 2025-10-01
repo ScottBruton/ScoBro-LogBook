@@ -9,10 +9,14 @@ import AuthModal from './components/AuthModal.jsx';
 import EmailConfigModal from './components/EmailConfigModal.jsx';
 import SmartPromptsModal from './components/SmartPromptsModal.jsx';
 import TimeTrackingModal from './components/TimeTrackingModal.jsx';
+import CalendarSyncModal from './components/CalendarSyncModal.jsx';
+import JiraApiModal from './components/JiraApiModal.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 import { SmartPromptsService } from './services/smartPromptsService.js';
 import { TimeTrackingService } from './services/timeTrackingService.js';
+import { CalendarService } from './services/calendarService.js';
+import { JiraApiService } from './services/jiraApiService.js';
 
 // Attempt to import Tauri APIs. If running in development (non-tauri) 
 // these will be undefined and the useEffect below will simply not register.
@@ -34,6 +38,8 @@ export default function App() {
   const [showEmailConfig, setShowEmailConfig] = useState(false);
   const [showSmartPrompts, setShowSmartPrompts] = useState(false);
   const [showTimeTracking, setShowTimeTracking] = useState(false);
+  const [showCalendarSync, setShowCalendarSync] = useState(false);
+  const [showJiraApi, setShowJiraApi] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('offline');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -270,6 +276,48 @@ export default function App() {
     }
   };
 
+  const handleCalendarEventsSynced = async (events) => {
+    try {
+      const config = CalendarService.getCalendarConfig();
+      if (!config.autoCreateEntries) {
+        return;
+      }
+
+      // Convert calendar events to entries
+      const entries = events.map(event => CalendarService.convertEventToEntry(event));
+      
+      if (entries.length > 0) {
+        await handleSaveItems(entries);
+      }
+    } catch (error) {
+      console.error('Failed to create entries from calendar events:', error);
+    }
+  };
+
+  const handleJiraIssuesSynced = async (issues) => {
+    try {
+      // Create entries from synced Jira issues
+      const entries = issues.map(issue => ({
+        item_type: 'Note',
+        content: `${JiraApiService.getIssueTypeIcon(issue.issueType)} ${issue.key}: ${issue.summary}`,
+        project: issue.project,
+        tags: ['jira', issue.issueType.toLowerCase(), issue.status.toLowerCase()],
+        jira: [issue.key],
+        people: [issue.assignee, issue.reporter].filter(Boolean),
+        metadata: {
+          jiraIssue: issue,
+          syncedAt: new Date().toISOString()
+        }
+      }));
+      
+      if (entries.length > 0) {
+        await handleSaveItems(entries);
+      }
+    } catch (error) {
+      console.error('Failed to create entries from Jira issues:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
@@ -378,6 +426,34 @@ export default function App() {
             }}
           >
             ⏱️ Time Tracking
+          </button>
+          <button
+            onClick={() => setShowCalendarSync(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#17a2b8',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            🗓️ Calendar
+          </button>
+          <button
+            onClick={() => setShowJiraApi(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#0052cc',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            🔗 Jira API
           </button>
           <button
             onClick={() => DataService.exportAndDownloadCSV()}
@@ -516,6 +592,16 @@ export default function App() {
         isOpen={showTimeTracking}
         onClose={() => setShowTimeTracking(false)}
         onTimerComplete={handleTimerComplete}
+      />
+      <CalendarSyncModal
+        isOpen={showCalendarSync}
+        onClose={() => setShowCalendarSync(false)}
+        onEventsSynced={handleCalendarEventsSynced}
+      />
+      <JiraApiModal
+        isOpen={showJiraApi}
+        onClose={() => setShowJiraApi(false)}
+        onIssuesSynced={handleJiraIssuesSynced}
       />
       
       {/* Smart Prompt Nudge */}
