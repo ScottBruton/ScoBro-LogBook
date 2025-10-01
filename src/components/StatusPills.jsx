@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { ConnectionStatusService } from '../services/connectionStatusService';
 
-const StatusPills = ({ onStatusClick }) => {
+const StatusPills = ({ onStatusClick, refreshTrigger }) => {
   const [statuses, setStatuses] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -18,6 +18,13 @@ const StatusPills = ({ onStatusClick }) => {
     
     return () => clearInterval(interval);
   }, []);
+
+  // Refresh when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger) {
+      loadStatuses();
+    }
+  }, [refreshTrigger]);
 
   const loadStatuses = async () => {
     try {

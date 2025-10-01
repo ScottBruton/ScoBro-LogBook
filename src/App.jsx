@@ -50,6 +50,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [smartPromptNudge, setSmartPromptNudge] = useState(null);
+  const [statusRefreshTrigger, setStatusRefreshTrigger] = useState(0);
 
   // Load entries from SQLite database on mount and check authentication
   useEffect(() => {
@@ -369,7 +370,7 @@ export default function App() {
                 </span>
               )}
             </div>
-            <StatusPills onStatusClick={handleStatusClick} />
+            <StatusPills onStatusClick={handleStatusClick} refreshTrigger={statusRefreshTrigger} />
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -625,6 +626,11 @@ export default function App() {
       <EmailConfigModal
         isOpen={showEmailConfig}
         onClose={() => setShowEmailConfig(false)}
+        onSave={() => {
+          // Trigger status refresh
+          setStatusRefreshTrigger(prev => prev + 1);
+          console.log('📧 Email configured, triggering status refresh');
+        }}
       />
       <SmartPromptsModal
         isOpen={showSmartPrompts}

@@ -11,20 +11,25 @@ export class EmailService {
    */
   static async getCredentials() {
     try {
-      // In a real implementation, this would read from credentials.json
-      // For now, we'll return a placeholder structure
-      return {
-        username: 'scott@idegroup.com.au',
-        password: 'Laen1903#104',
-        smtp: {
-          host: 'smtp-mail.outlook.com',
-          port: 587,
-          secure: false
-        }
-      };
+      // Read credentials from localStorage
+      const storedCredentials = localStorage.getItem('email_credentials');
+      
+      if (!storedCredentials) {
+        console.log('📧 No email credentials found in localStorage');
+        return null;
+      }
+
+      const credentials = JSON.parse(storedCredentials);
+      console.log('📧 Email credentials loaded from localStorage:', {
+        username: credentials.username,
+        host: credentials.smtp?.host,
+        port: credentials.smtp?.port
+      });
+      
+      return credentials;
     } catch (error) {
       console.error('Failed to get email credentials:', error);
-      throw error;
+      return null;
     }
   }
 
@@ -217,20 +222,25 @@ ScoBro Logbook
 
   /**
    * Test email connectivity
-   * @returns {Promise<boolean>} Connection status
+   * @returns {Promise<{success: boolean, error?: string}>} Connection status
    */
   static async testConnection() {
     try {
       const credentials = await this.getCredentials();
       
+      if (!credentials) {
+        console.log('❌ No email credentials available for testing');
+        return { success: false, error: 'No credentials available' };
+      }
+      
       // In a real implementation, this would test SMTP connection
       console.log('Email service configured for:', credentials.username);
-      console.log('SMTP Host:', credentials.smtp.host);
+      console.log('SMTP Host:', credentials.smtp?.host);
       
-      return true;
+      return { success: true };
     } catch (error) {
       console.error('Email connection test failed:', error);
-      return false;
+      return { success: false, error: error.message };
     }
   }
 }

@@ -5,7 +5,7 @@ import { EmailService } from '../services/emailService.js';
  * EmailConfigModal component for configuring email settings.
  * Allows users to set up SMTP credentials for meeting notifications.
  */
-export default function EmailConfigModal({ isOpen, onClose }) {
+export default function EmailConfigModal({ isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -37,15 +37,23 @@ export default function EmailConfigModal({ isOpen, onClose }) {
         }
       };
 
-      // Test the connection
-      const isConnected = await EmailService.testConnection();
+      // Save credentials first
+      localStorage.setItem('email_credentials', JSON.stringify(credentials));
       
-      if (isConnected) {
+      // Test the connection
+      const testResult = await EmailService.testConnection();
+      
+      if (testResult.success) {
         setTestResult({ success: true, message: 'Email configuration successful!' });
-        // In a real app, you'd save these credentials securely
-        localStorage.setItem('email_credentials', JSON.stringify(credentials));
+        
+        // Notify parent component that email was configured
+        if (onSave) {
+          onSave();
+        }
       } else {
-        setTestResult({ success: false, message: 'Failed to connect to email server' });
+        setTestResult({ success: false, message: testResult.error || 'Failed to connect to email server' });
+        // Remove credentials if test failed
+        localStorage.removeItem('email_credentials');
       }
     } catch (error) {
       setTestResult({ success: false, message: error.message });
@@ -59,10 +67,28 @@ export default function EmailConfigModal({ isOpen, onClose }) {
     setTestResult(null);
 
     try {
-      const isConnected = await EmailService.testConnection();
+      // Temporarily save credentials for testing
+      const testCredentials = {
+        username: formData.username,
+        password: formData.password,
+        smtp: {
+          host: formData.smtpHost,
+          port: parseInt(formData.smtpPort),
+          secure: formData.smtpPort === '465'
+        },
+        from: {
+          name: formData.fromName,
+          email: formData.username
+        }
+      };
+
+      // Save temporarily for test
+      localStorage.setItem('email_credentials', JSON.stringify(testCredentials));
+      
+      const testResult = await EmailService.testConnection();
       setTestResult({
-        success: isConnected,
-        message: isConnected ? 'Connection successful!' : 'Connection failed'
+        success: testResult.success,
+        message: testResult.success ? 'Connection successful!' : (testResult.error || 'Connection failed')
       });
     } catch (error) {
       setTestResult({ success: false, message: error.message });

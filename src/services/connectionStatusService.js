@@ -116,22 +116,38 @@ export class ConnectionStatusService {
    */
   static async checkEmailStatus() {
     try {
+      console.log('📧 Checking Email service status...');
+      
       const { EmailService } = await import('./emailService.js');
       const credentials = await EmailService.getCredentials();
       
-      if (!credentials || !credentials.host || !credentials.username) {
+      console.log('📧 Email credentials:', {
+        hasCredentials: !!credentials,
+        hasHost: !!(credentials && credentials.smtp?.host),
+        hasUsername: !!(credentials && credentials.username),
+        host: credentials?.smtp?.host || 'NOT SET',
+        username: credentials?.username || 'NOT SET'
+      });
+      
+      if (!credentials || !credentials.smtp?.host || !credentials.username) {
+        console.log('❌ Email not configured - missing credentials');
         return this.updateConnectionStatus('email', 'not-configured', false);
       }
 
       // Test connection
+      console.log('📧 Testing email connection...');
       const testResult = await EmailService.testConnection();
+      console.log('📧 Email test result:', testResult);
+      
       if (testResult.success) {
+        console.log('✅ Email connection successful');
         return this.updateConnectionStatus('email', 'connected', true);
       } else {
+        console.log('❌ Email connection failed:', testResult.error);
         return this.updateConnectionStatus('email', 'error', false);
       }
     } catch (error) {
-      console.error('Failed to check Email status:', error);
+      console.error('❌ Failed to check Email status:', error);
       return this.updateConnectionStatus('email', 'error', false);
     }
   }
