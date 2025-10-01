@@ -7,15 +7,13 @@
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tauri::{
-  Manager, GlobalShortcutManager, AppHandle
-};
+// use tauri::Manager; // Not needed for now
 
 mod database;
 mod commands;
 
 use database::Database;
-use commands::{AppState, create_entry, get_all_entries, delete_entry_item, delete_entry, export_entries_csv, export_entries_markdown};
+use commands::{AppState, create_entry, get_all_entries, delete_entry_item, delete_entry, export_entries_csv, export_entries_markdown, create_project, get_all_projects, update_project, delete_project, create_tag, get_all_tags, update_tag, delete_tag, create_meeting, get_all_meetings, add_meeting_attendee, get_meeting_attendees, create_meeting_action, get_meeting_actions, delete_meeting};
 
 
 #[tokio::main]
@@ -26,22 +24,32 @@ async fn main() {
 
   tauri::Builder::default()
     .manage(app_state)
-    .invoke_handler(tauri::generate_handler![
-      create_entry,
-      get_all_entries,
-      delete_entry_item,
-      delete_entry,
-      export_entries_csv,
-      export_entries_markdown
-    ])
-    .setup(|app| {
-      // Set up global shortcuts
-      let app_handle = app.handle().clone();
-      let mut shortcut_manager = app.global_shortcut_manager();
-      shortcut_manager.register("Ctrl+Alt+N", move || {
-        app_handle.emit_all("quick-add", ()).unwrap();
-      }).unwrap();
-      
+        .invoke_handler(tauri::generate_handler![
+          create_entry,
+          get_all_entries,
+          delete_entry_item,
+          delete_entry,
+          export_entries_csv,
+          export_entries_markdown,
+          create_project,
+          get_all_projects,
+          update_project,
+          delete_project,
+          create_tag,
+          get_all_tags,
+          update_tag,
+          delete_tag,
+          create_meeting,
+          get_all_meetings,
+          add_meeting_attendee,
+          get_meeting_attendees,
+          create_meeting_action,
+          get_meeting_actions,
+          delete_meeting
+        ])
+    .setup(|_app| {
+      // Note: Global shortcuts are not available in Tauri 1.x
+      // Users can use the tray menu or the New Entry button instead
       Ok(())
     })
     .run(tauri::generate_context!())

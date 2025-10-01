@@ -40,6 +40,59 @@ pub struct ItemResponse {
     pub people: Vec<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateProjectRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateProjectRequest {
+    pub id: String,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProjectResponse {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub color: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateTagRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub color: Option<String>,
+    pub category: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateTagRequest {
+    pub id: String,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub color: Option<String>,
+    pub category: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TagResponse {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub color: String,
+    pub category: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
 pub type AppState = Arc<Mutex<Database>>;
 
 #[tauri::command]
@@ -266,4 +319,444 @@ pub async fn export_entries_markdown(state: State<'_, AppState>) -> Result<Strin
     }
     
     Ok(markdown)
+}
+
+// Project management commands
+#[tauri::command]
+pub async fn create_project(
+    state: State<'_, AppState>,
+    request: CreateProjectRequest,
+) -> Result<ProjectResponse, String> {
+    let db = state.lock().await;
+    
+    let project = db.create_project(
+        &request.name,
+        request.description.as_deref(),
+        request.color.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to create project: {}", e))?;
+
+    Ok(ProjectResponse {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        color: project.color,
+        created_at: project.created_at.to_rfc3339(),
+        updated_at: project.updated_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn get_all_projects(state: State<'_, AppState>) -> Result<Vec<ProjectResponse>, String> {
+    let db = state.lock().await;
+    
+    let projects = db.get_all_projects()
+        .await
+        .map_err(|e| format!("Failed to get projects: {}", e))?;
+
+    let response = projects.into_iter().map(|project| ProjectResponse {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        color: project.color,
+        created_at: project.created_at.to_rfc3339(),
+        updated_at: project.updated_at.to_rfc3339(),
+    }).collect();
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn update_project(
+    state: State<'_, AppState>,
+    request: UpdateProjectRequest,
+) -> Result<ProjectResponse, String> {
+    let db = state.lock().await;
+    
+    let project = db.update_project(
+        &request.id,
+        request.name.as_deref(),
+        request.description.as_deref(),
+        request.color.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to update project: {}", e))?;
+
+    Ok(ProjectResponse {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        color: project.color,
+        created_at: project.created_at.to_rfc3339(),
+        updated_at: project.updated_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn delete_project(
+    state: State<'_, AppState>,
+    project_id: String,
+) -> Result<(), String> {
+    let db = state.lock().await;
+    
+    db.delete_project(&project_id)
+        .await
+        .map_err(|e| format!("Failed to delete project: {}", e))?;
+
+    Ok(())
+}
+
+// Tag management commands
+#[tauri::command]
+pub async fn create_tag(
+    state: State<'_, AppState>,
+    request: CreateTagRequest,
+) -> Result<TagResponse, String> {
+    let db = state.lock().await;
+    
+    let tag = db.create_tag(
+        &request.name,
+        request.description.as_deref(),
+        request.color.as_deref(),
+        request.category.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to create tag: {}", e))?;
+
+    Ok(TagResponse {
+        id: tag.id,
+        name: tag.name,
+        description: tag.description,
+        color: tag.color,
+        category: tag.category,
+        created_at: tag.created_at.to_rfc3339(),
+        updated_at: tag.updated_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn get_all_tags(state: State<'_, AppState>) -> Result<Vec<TagResponse>, String> {
+    let db = state.lock().await;
+    
+    let tags = db.get_all_tags()
+        .await
+        .map_err(|e| format!("Failed to get tags: {}", e))?;
+
+    let response = tags.into_iter().map(|tag| TagResponse {
+        id: tag.id,
+        name: tag.name,
+        description: tag.description,
+        color: tag.color,
+        category: tag.category,
+        created_at: tag.created_at.to_rfc3339(),
+        updated_at: tag.updated_at.to_rfc3339(),
+    }).collect();
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn update_tag(
+    state: State<'_, AppState>,
+    request: UpdateTagRequest,
+) -> Result<TagResponse, String> {
+    let db = state.lock().await;
+    
+    let tag = db.update_tag(
+        &request.id,
+        request.name.as_deref(),
+        request.description.as_deref(),
+        request.color.as_deref(),
+        request.category.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to update tag: {}", e))?;
+
+    Ok(TagResponse {
+        id: tag.id,
+        name: tag.name,
+        description: tag.description,
+        color: tag.color,
+        category: tag.category,
+        created_at: tag.created_at.to_rfc3339(),
+        updated_at: tag.updated_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn delete_tag(
+    state: State<'_, AppState>,
+    tag_id: String,
+) -> Result<(), String> {
+    let db = state.lock().await;
+    
+    db.delete_tag(&tag_id)
+        .await
+        .map_err(|e| format!("Failed to delete tag: {}", e))?;
+
+    Ok(())
+}
+
+// Meeting-related structs
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateMeetingRequest {
+    pub title: String,
+    pub description: Option<String>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+    pub location: Option<String>,
+    pub meeting_type: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MeetingResponse {
+    pub id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+    pub location: Option<String>,
+    pub meeting_type: String,
+    pub status: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AddAttendeeRequest {
+    pub meeting_id: String,
+    pub name: String,
+    pub email: Option<String>,
+    pub role: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AttendeeResponse {
+    pub id: String,
+    pub meeting_id: String,
+    pub name: String,
+    pub email: Option<String>,
+    pub role: String,
+    pub status: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CreateActionRequest {
+    pub meeting_id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub assignee: Option<String>,
+    pub due_date: Option<String>,
+    pub priority: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ActionResponse {
+    pub id: String,
+    pub meeting_id: String,
+    pub entry_item_id: Option<String>,
+    pub title: String,
+    pub description: Option<String>,
+    pub assignee: Option<String>,
+    pub due_date: Option<String>,
+    pub status: String,
+    pub priority: String,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+// Meeting commands
+#[tauri::command]
+pub async fn create_meeting(
+    state: State<'_, AppState>,
+    request: CreateMeetingRequest,
+) -> Result<MeetingResponse, String> {
+    let db = state.lock().await;
+    
+    let start_time = request.start_time
+        .and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+        .map(|dt| dt.with_timezone(&Utc));
+    let end_time = request.end_time
+        .and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+        .map(|dt| dt.with_timezone(&Utc));
+
+    let meeting = db.create_meeting(
+        &request.title,
+        request.description.as_deref(),
+        start_time,
+        end_time,
+        request.location.as_deref(),
+        request.meeting_type.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to create meeting: {}", e))?;
+
+    Ok(MeetingResponse {
+        id: meeting.id,
+        title: meeting.title,
+        description: meeting.description,
+        start_time: meeting.start_time.map(|t| t.to_rfc3339()),
+        end_time: meeting.end_time.map(|t| t.to_rfc3339()),
+        location: meeting.location,
+        meeting_type: meeting.meeting_type,
+        status: meeting.status,
+        created_at: meeting.created_at.to_rfc3339(),
+        updated_at: meeting.updated_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn get_all_meetings(state: State<'_, AppState>) -> Result<Vec<MeetingResponse>, String> {
+    let db = state.lock().await;
+    
+    let meetings = db.get_all_meetings()
+        .await
+        .map_err(|e| format!("Failed to get meetings: {}", e))?;
+
+    let response = meetings.into_iter().map(|meeting| MeetingResponse {
+        id: meeting.id,
+        title: meeting.title,
+        description: meeting.description,
+        start_time: meeting.start_time.map(|t| t.to_rfc3339()),
+        end_time: meeting.end_time.map(|t| t.to_rfc3339()),
+        location: meeting.location,
+        meeting_type: meeting.meeting_type,
+        status: meeting.status,
+        created_at: meeting.created_at.to_rfc3339(),
+        updated_at: meeting.updated_at.to_rfc3339(),
+    }).collect();
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn add_meeting_attendee(
+    state: State<'_, AppState>,
+    request: AddAttendeeRequest,
+) -> Result<AttendeeResponse, String> {
+    let db = state.lock().await;
+    
+    let attendee = db.add_meeting_attendee(
+        &request.meeting_id,
+        &request.name,
+        request.email.as_deref(),
+        request.role.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to add attendee: {}", e))?;
+
+    Ok(AttendeeResponse {
+        id: attendee.id,
+        meeting_id: attendee.meeting_id,
+        name: attendee.name,
+        email: attendee.email,
+        role: attendee.role,
+        status: attendee.status,
+        created_at: attendee.created_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn get_meeting_attendees(
+    state: State<'_, AppState>,
+    meeting_id: String,
+) -> Result<Vec<AttendeeResponse>, String> {
+    let db = state.lock().await;
+    
+    let attendees = db.get_meeting_attendees(&meeting_id)
+        .await
+        .map_err(|e| format!("Failed to get attendees: {}", e))?;
+
+    let response = attendees.into_iter().map(|attendee| AttendeeResponse {
+        id: attendee.id,
+        meeting_id: attendee.meeting_id,
+        name: attendee.name,
+        email: attendee.email,
+        role: attendee.role,
+        status: attendee.status,
+        created_at: attendee.created_at.to_rfc3339(),
+    }).collect();
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn create_meeting_action(
+    state: State<'_, AppState>,
+    request: CreateActionRequest,
+) -> Result<ActionResponse, String> {
+    let db = state.lock().await;
+    
+    let due_date = request.due_date
+        .and_then(|s| DateTime::parse_from_rfc3339(&s).ok())
+        .map(|dt| dt.with_timezone(&Utc));
+
+    let action = db.create_meeting_action(
+        &request.meeting_id,
+        &request.title,
+        request.description.as_deref(),
+        request.assignee.as_deref(),
+        due_date,
+        request.priority.as_deref(),
+    )
+    .await
+    .map_err(|e| format!("Failed to create action: {}", e))?;
+
+    Ok(ActionResponse {
+        id: action.id,
+        meeting_id: action.meeting_id,
+        entry_item_id: action.entry_item_id,
+        title: action.title,
+        description: action.description,
+        assignee: action.assignee,
+        due_date: action.due_date.map(|t| t.to_rfc3339()),
+        status: action.status,
+        priority: action.priority,
+        created_at: action.created_at.to_rfc3339(),
+        updated_at: action.updated_at.to_rfc3339(),
+    })
+}
+
+#[tauri::command]
+pub async fn get_meeting_actions(
+    state: State<'_, AppState>,
+    meeting_id: String,
+) -> Result<Vec<ActionResponse>, String> {
+    let db = state.lock().await;
+    
+    let actions = db.get_meeting_actions(&meeting_id)
+        .await
+        .map_err(|e| format!("Failed to get actions: {}", e))?;
+
+    let response = actions.into_iter().map(|action| ActionResponse {
+        id: action.id,
+        meeting_id: action.meeting_id,
+        entry_item_id: action.entry_item_id,
+        title: action.title,
+        description: action.description,
+        assignee: action.assignee,
+        due_date: action.due_date.map(|t| t.to_rfc3339()),
+        status: action.status,
+        priority: action.priority,
+        created_at: action.created_at.to_rfc3339(),
+        updated_at: action.updated_at.to_rfc3339(),
+    }).collect();
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn delete_meeting(
+    state: State<'_, AppState>,
+    meeting_id: String,
+) -> Result<(), String> {
+    let db = state.lock().await;
+    
+    db.delete_meeting(&meeting_id)
+        .await
+        .map_err(|e| format!("Failed to delete meeting: {}", e))?;
+
+    Ok(())
 }

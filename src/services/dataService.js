@@ -146,4 +146,214 @@ export class DataService {
       throw error;
     }
   }
+
+  // Project management methods
+  /**
+   * Create a new project
+   * @param {Object} project - Project object with name, description, color
+   * @returns {Promise<Object>} Created project
+   */
+  static async createProject(project) {
+    try {
+      return await invoke('create_project', { request: project });
+    } catch (error) {
+      console.error('Failed to create project:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all projects
+   * @returns {Promise<Array>} Array of projects
+   */
+  static async getAllProjects() {
+    try {
+      return await invoke('get_all_projects');
+    } catch (error) {
+      console.error('Failed to get projects:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a project
+   * @param {Object} project - Project object with id and fields to update
+   * @returns {Promise<Object>} Updated project
+   */
+  static async updateProject(project) {
+    try {
+      return await invoke('update_project', { request: project });
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a project
+   * @param {string} projectId - ID of the project to delete
+   * @returns {Promise<void>}
+   */
+  static async deleteProject(projectId) {
+    try {
+      return await invoke('delete_project', { projectId });
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      throw error;
+    }
+  }
+
+  // Tag management methods
+  /**
+   * Create a new tag
+   * @param {Object} tag - Tag object with name, description, color, category
+   * @returns {Promise<Object>} Created tag
+   */
+  static async createTag(tag) {
+    try {
+      return await invoke('create_tag', { request: tag });
+    } catch (error) {
+      console.error('Failed to create tag:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all tags
+   * @returns {Promise<Array>} Array of tags
+   */
+  static async getAllTags() {
+    try {
+      return await invoke('get_all_tags');
+    } catch (error) {
+      console.error('Failed to get tags:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a tag
+   * @param {Object} tag - Tag object with id and fields to update
+   * @returns {Promise<Object>} Updated tag
+   */
+  static async updateTag(tag) {
+    try {
+      return await invoke('update_tag', { request: tag });
+    } catch (error) {
+      console.error('Failed to update tag:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a tag
+   * @param {string} tagId - ID of the tag to delete
+   * @returns {Promise<void>}
+   */
+  static async deleteTag(tagId) {
+    try {
+      return await invoke('delete_tag', { tagId });
+    } catch (error) {
+      console.error('Failed to delete tag:', error);
+      throw error;
+    }
+  }
+
+  // Meeting management methods
+  /**
+   * Create a new meeting
+   * @param {Object} meeting - Meeting object with title, description, start_time, end_time, location, meeting_type
+   * @returns {Promise<Object>} Created meeting
+   */
+  static async createMeeting(meeting) {
+    try {
+      return await invoke('create_meeting', { request: meeting });
+    } catch (error) {
+      console.error('Failed to create meeting:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all meetings
+   * @returns {Promise<Array>} Array of meetings
+   */
+  static async getAllMeetings() {
+    try {
+      return await invoke('get_all_meetings');
+    } catch (error) {
+      console.error('Failed to get meetings:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add attendee to a meeting
+   * @param {Object} attendee - Attendee object with meeting_id, name, email, role
+   * @returns {Promise<Object>} Created attendee
+   */
+  static async addMeetingAttendee(attendee) {
+    try {
+      return await invoke('add_meeting_attendee', { request: attendee });
+    } catch (error) {
+      console.error('Failed to add attendee:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get attendees for a meeting
+   * @param {string} meetingId - ID of the meeting
+   * @returns {Promise<Array>} Array of attendees
+   */
+  static async getMeetingAttendees(meetingId) {
+    try {
+      return await invoke('get_meeting_attendees', { meeting_id: meetingId });
+    } catch (error) {
+      console.error('Failed to get attendees:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create a meeting action
+   * @param {Object} action - Action object with meeting_id, title, description, assignee, due_date, priority
+   * @returns {Promise<Object>} Created action
+   */
+  static async createMeetingAction(action) {
+    try {
+      return await invoke('create_meeting_action', { request: action });
+    } catch (error) {
+      console.error('Failed to create action:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get actions for a meeting
+   * @param {string} meetingId - ID of the meeting
+   * @returns {Promise<Array>} Array of actions
+   */
+  static async getMeetingActions(meetingId) {
+    try {
+      return await invoke('get_meeting_actions', { meeting_id: meetingId });
+    } catch (error) {
+      console.error('Failed to get actions:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a meeting
+   * @param {string} meetingId - ID of the meeting to delete
+   * @returns {Promise<void>}
+   */
+  static async deleteMeeting(meetingId) {
+    try {
+      return await invoke('delete_meeting', { meeting_id: meetingId });
+    } catch (error) {
+      console.error('Failed to delete meeting:', error);
+      throw error;
+    }
+  }
 }

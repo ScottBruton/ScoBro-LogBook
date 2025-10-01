@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import UpdateBanner from './components/UpdateBanner.jsx';
 import EntryPopup from './components/EntryPopup.jsx';
 import Dashboard from './components/Dashboard.jsx';
+import ProjectsManager from './components/ProjectsManager.jsx';
+import TagsManager from './components/TagsManager.jsx';
+import MeetingsManager from './components/MeetingsManager.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 
@@ -18,6 +21,9 @@ import { listen } from '@tauri-apps/api/event';
 export default function App() {
   const [entries, setEntries] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [showProjectsManager, setShowProjectsManager] = useState(false);
+  const [showTagsManager, setShowTagsManager] = useState(false);
+  const [showMeetingsManager, setShowMeetingsManager] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('offline');
 
@@ -138,6 +144,48 @@ export default function App() {
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
+            onClick={() => setShowProjectsManager(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#17a2b8',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            📂 Projects
+          </button>
+          <button
+            onClick={() => setShowTagsManager(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#6f42c1',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            🏷️ Tags
+          </button>
+          <button
+            onClick={() => setShowMeetingsManager(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#fd7e14',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            📅 Meetings
+          </button>
+          <button
             onClick={() => DataService.exportAndDownloadCSV()}
             style={{
               padding: '6px 12px',
@@ -155,7 +203,7 @@ export default function App() {
             onClick={() => DataService.exportAndDownloadMarkdown()}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#6f42c1',
+              backgroundColor: '#6c757d',
               color: '#fff',
               border: 'none',
               borderRadius: '4px',
@@ -185,6 +233,18 @@ export default function App() {
         isOpen={showPopup}
         onSave={handleSaveItems}
         onClose={() => setShowPopup(false)}
+      />
+      <ProjectsManager
+        isOpen={showProjectsManager}
+        onClose={() => setShowProjectsManager(false)}
+      />
+      <TagsManager
+        isOpen={showTagsManager}
+        onClose={() => setShowTagsManager(false)}
+      />
+      <MeetingsManager
+        isOpen={showMeetingsManager}
+        onClose={() => setShowMeetingsManager(false)}
       />
     </div>
   );

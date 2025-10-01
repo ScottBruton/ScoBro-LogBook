@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { DataService } from '../services/dataService.js';
 
 // Types available for new items. Additional types (e.g. Meeting) can
 // be added later without altering the underlying schema. Each type
@@ -22,6 +23,23 @@ const ITEM_TYPES = ['Action', 'Decision', 'Note', 'Meeting'];
  */
 export default function EntryPopup({ isOpen, onSave, onClose }) {
   const [items, setItems] = useState([]);
+  const [projects, setProjects] = useState([]);
+
+  // Load projects when popup opens
+  useEffect(() => {
+    if (isOpen) {
+      loadProjects();
+    }
+  }, [isOpen]);
+
+  const loadProjects = async () => {
+    try {
+      const data = await DataService.getAllProjects();
+      setProjects(data);
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+    }
+  };
 
   // Adds a new blank item to the list.
   const addItem = () => {
@@ -159,12 +177,18 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
             </div>
             <div style={{ marginTop: '8px' }}>
               <label>Project:</label>
-              <input
-                type="text"
+              <select
                 value={item.project}
                 onChange={(e) => updateItem(index, 'project', e.target.value)}
-                style={{ marginLeft: '8px', width: '70%' }}
-              />
+                style={{ marginLeft: '8px', width: '70%', padding: '4px' }}
+              >
+                <option value="">No Project</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.name}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div style={{ marginTop: '8px' }}>
               <label>Tags (comma separated):</label>

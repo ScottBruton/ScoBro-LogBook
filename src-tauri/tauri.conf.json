@@ -37,6 +37,11 @@
       ],
       "dialog": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlcnZpY2UKUlVUVjJMVmR5YjI5dFltbGhkR1Z5TURFd01nPT0K"
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true,
+      "menuOnLeftClick": false
     }
   }
 }
