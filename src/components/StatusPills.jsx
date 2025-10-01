@@ -21,11 +21,13 @@ const StatusPills = ({ onStatusClick }) => {
 
   const loadStatuses = async () => {
     try {
+      console.log('🔄 StatusPills: Loading connection statuses...');
       setLoading(true);
       const currentStatuses = await ConnectionStatusService.checkAllStatuses();
+      console.log('📊 StatusPills: Received statuses:', currentStatuses);
       setStatuses(currentStatuses);
     } catch (error) {
-      console.error('Failed to load statuses:', error);
+      console.error('❌ StatusPills: Failed to load statuses:', error);
     } finally {
       setLoading(false);
     }

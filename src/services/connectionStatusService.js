@@ -64,34 +64,49 @@ export class ConnectionStatusService {
    */
   static async checkSupabaseStatus() {
     try {
+      console.log('🔍 Checking Supabase connection status...');
+      
       // Check if environment variables are configured
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
       
+      console.log('📋 Environment variables:', {
+        url: supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'NOT SET',
+        key: supabaseAnonKey ? `SET (${supabaseAnonKey.length} chars)` : 'NOT SET'
+      });
+      
       if (!supabaseUrl || !supabaseAnonKey) {
+        console.log('❌ Environment variables not configured');
         return this.updateConnectionStatus('supabase', 'not-configured', false);
       }
 
       // Try to import and check Supabase client
+      console.log('📦 Importing Supabase client...');
       const { supabase } = await import('../supabaseClient.js');
       if (!supabase) {
+        console.log('❌ Supabase client not created');
         return this.updateConnectionStatus('supabase', 'not-configured', false);
       }
+      console.log('✅ Supabase client created successfully');
 
       // Test connection by getting current user
+      console.log('🔐 Testing authentication...');
       const { data: { user }, error } = await supabase.auth.getUser();
       
       if (error) {
+        console.log('❌ Authentication error:', error);
         return this.updateConnectionStatus('supabase', 'error', false);
       }
 
       if (user) {
+        console.log('✅ User authenticated:', user.email);
         return this.updateConnectionStatus('supabase', 'connected', true);
       } else {
+        console.log('🟡 Not authenticated (no user)');
         return this.updateConnectionStatus('supabase', 'not-authenticated', false);
       }
     } catch (error) {
-      console.error('Failed to check Supabase status:', error);
+      console.error('❌ Failed to check Supabase status:', error);
       return this.updateConnectionStatus('supabase', 'error', false);
     }
   }
@@ -195,6 +210,8 @@ export class ConnectionStatusService {
    */
   static async checkAllStatuses() {
     try {
+      console.log('🔍 ConnectionStatusService: Checking all statuses...');
+      
       const results = await Promise.allSettled([
         this.checkSupabaseStatus(),
         this.checkEmailStatus(),
@@ -204,9 +221,10 @@ export class ConnectionStatusService {
       ]);
 
       const statuses = this.getConnectionStatuses();
+      console.log('📊 ConnectionStatusService: Final statuses:', statuses);
       return statuses;
     } catch (error) {
-      console.error('Failed to check all statuses:', error);
+      console.error('❌ ConnectionStatusService: Failed to check all statuses:', error);
       return this.getConnectionStatuses();
     }
   }
