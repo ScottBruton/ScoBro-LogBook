@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 // running in a regular browser (development), these imports will
 // evaluate to undefined functions, so be sure to guard their usage in
 // your components.
-import { checkUpdate, installUpdate } from '@tauri-apps/plugin-updater';
+import { checkUpdate, installUpdate } from '@tauri-apps/api/updater';
 
 /**
  * Custom React hook that encapsulates update checking and installation.

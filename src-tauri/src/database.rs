@@ -76,7 +76,10 @@ pub struct Database {
 
 impl Database {
     pub async fn new() -> Result<Self, sqlx::Error> {
-        let database_url = "sqlite:scobro_logbook.db";
+        // Use in-memory database for now to avoid file permission issues
+        let database_url = "sqlite::memory:";
+        println!("Database URL: {}", database_url);
+        
         let pool = SqlitePool::connect(database_url).await?;
         
         let db = Database { pool };

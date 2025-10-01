@@ -13,6 +13,10 @@ export class SupabaseService {
    */
   static async isAuthenticated() {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, returning false for authentication');
+        return false;
+      }
       const { data: { user } } = await supabase.auth.getUser();
       return !!user;
     } catch (error) {
@@ -29,6 +33,9 @@ export class SupabaseService {
    */
   static async signIn(email, password) {
     try {
+      if (!supabase) {
+        throw new Error('Supabase not configured');
+      }
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -84,6 +91,11 @@ export class SupabaseService {
    */
   static async syncEntries(entries) {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, skipping sync');
+        return { synced: 0, errors: 0, errors: [] };
+      }
+      
       const isAuth = await this.isAuthenticated();
       if (!isAuth) {
         throw new Error('User not authenticated');

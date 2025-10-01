@@ -1,4 +1,10 @@
 import React, { useState } from 'react';
+import { 
+  Search as SearchIcon, 
+  Delete as DeleteIcon, 
+  ViewList as ViewListIcon,
+  CalendarToday as CalendarIcon 
+} from '@mui/icons-material';
 
 /**
  * Dashboard displays the logbook entries and allows toggling between
@@ -95,8 +101,12 @@ export default function Dashboard({ entries, onDeleteItem }) {
             border: '1px solid #ccc',
             borderRadius: '4px',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
           }}
         >
+          <CalendarIcon style={{ fontSize: '16px' }} />
           Daily Log
         </button>
         <button
@@ -108,8 +118,12 @@ export default function Dashboard({ entries, onDeleteItem }) {
             border: '1px solid #ccc',
             borderRadius: '4px',
             cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
           }}
         >
+          <ViewListIcon style={{ fontSize: '16px' }} />
           Items
         </button>
       </div>
@@ -186,8 +200,12 @@ export default function Dashboard({ entries, onDeleteItem }) {
                               borderRadius: '3px',
                               fontSize: '12px',
                               cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '2px'
                             }}
                           >
+                            <DeleteIcon style={{ fontSize: '12px' }} />
                             Delete
                           </button>
                         </div>
@@ -236,12 +254,17 @@ export default function Dashboard({ entries, onDeleteItem }) {
                     borderRadius: '3px',
                     fontSize: '12px',
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '2px'
                   }}
                 >
+                  <DeleteIcon style={{ fontSize: '12px' }} />
                   Delete
                 </button>
               </div>
-            )))
+            ))
+          )}
         </div>
       )}
     </div>

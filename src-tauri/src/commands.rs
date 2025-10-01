@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use crate::database::{Database, EntryWithItems, EntryItemWithMetadata};
+use crate::database::Database;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateEntryRequest {
@@ -70,8 +70,8 @@ pub async fn create_entry(
         .map_err(|e| format!("Failed to create entry item: {}", e))?;
 
         // Create and link tags
-        for tag_name in item_req.tags {
-            let tag = db.get_or_create_tag(&tag_name)
+        for tag_name in &item_req.tags {
+            let tag = db.get_or_create_tag(tag_name)
                 .await
                 .map_err(|e| format!("Failed to create tag: {}", e))?;
             db.link_item_tag(&entry_item.id, &tag.id)
@@ -80,8 +80,8 @@ pub async fn create_entry(
         }
 
         // Create and link people
-        for person_name in item_req.people {
-            let person = db.get_or_create_person(&person_name)
+        for person_name in &item_req.people {
+            let person = db.get_or_create_person(person_name)
                 .await
                 .map_err(|e| format!("Failed to create person: {}", e))?;
             db.link_item_person(&entry_item.id, &person.id)
@@ -90,8 +90,8 @@ pub async fn create_entry(
         }
 
         // Create Jira refs
-        for jira_key in item_req.jira {
-            db.create_jira_ref(&entry_item.id, &jira_key)
+        for jira_key in &item_req.jira {
+            db.create_jira_ref(&entry_item.id, jira_key)
                 .await
                 .map_err(|e| format!("Failed to create Jira ref: {}", e))?;
         }
@@ -101,9 +101,9 @@ pub async fn create_entry(
             item_type: entry_item.item_type,
             content: entry_item.content,
             project: entry_item.project,
-            tags: item_req.tags,
-            jira: item_req.jira,
-            people: item_req.people,
+            tags: item_req.tags.clone(),
+            jira: item_req.jira.clone(),
+            people: item_req.people.clone(),
         });
     }
 

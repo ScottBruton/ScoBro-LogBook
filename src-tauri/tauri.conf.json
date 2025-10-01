@@ -4,44 +4,39 @@
     "version": "0.1.0"
   },
   "build": {
-    // Command to run before `tauri dev`
     "beforeDevCommand": "npm run dev",
-    // Command to run before `tauri build`
     "beforeBuildCommand": "npm run build",
-    // Path that tauri loads during development
-    "devPath": "http://localhost:5173",
-    // Relative path to the production bundle (built by Vite)
-    "distDir": "../dist"
+    "devPath": "http://localhost:5173"
   },
   "tauri": {
-    "windows": [
-      {
-        "title": "ScoBro Logbook",
-        "width": 900,
-        "height": 700,
-        "resizable": true,
-        "label": "main"
-      }
-    ],
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "active": false,
+      "targets": "all",
+      "identifier": "com.scobro.logbook"
+    },
     "security": {
       "csp": null
     },
-    "systemTray": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": true
-    },
-    "autostart": {
-      "enabled": true
-    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "resizable": true,
+        "title": "ScoBro Logbook",
+        "width": 900,
+        "height": 700,
+        "label": "main"
+      }
+    ],
     "updater": {
       "active": true,
-      "dialog": true,
-      // Replace with the GitHub Releases endpoint that hosts your latest.json
       "endpoints": [
-        "https://github.com/YOUR_GITHUB_USER/YOUR_REPO/releases/latest/download/latest.json"
+        "https://releases.myapp.com/{{target}}/{{arch}}/{{current_version}}"
       ],
-      // Replace this with your actual public signing key when you generate one
-      "pubkey": "YOUR_PUBLIC_KEY_HERE"
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlcnZpY2UKUlVUVjJMVmR5YjI5dFltbGhkR1Z5TURFd01nPT0K"
     }
   }
 }

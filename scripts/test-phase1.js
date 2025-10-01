@@ -54,7 +54,6 @@ console.log('\n📦 Checking dependencies...');
 
 const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const requiredDeps = [
-  '@tauri-apps/plugin-autostart',
   '@supabase/supabase-js',
   'uuid'
 ];
@@ -84,8 +83,7 @@ const requiredRustDeps = [
   'tokio',
   'serde',
   'chrono',
-  'uuid',
-  'tauri-plugin-autostart'
+  'uuid'
 ];
 
 let allRustDepsPresent = true;
@@ -111,10 +109,11 @@ console.log('\n⚙️ Checking Tauri configuration...');
 const tauriConfigContent = fs.readFileSync('src-tauri/tauri.conf.json', 'utf8');
 
 const configChecks = [
-  { name: 'Autostart enabled', check: () => tauriConfigContent.includes('"enabled": true') && tauriConfigContent.includes('autostart') },
-  { name: 'System tray configured', check: () => tauriConfigContent.includes('systemTray') && tauriConfigContent.includes('iconPath') },
+  { name: 'Identifier set', check: () => tauriConfigContent.includes('"identifier": "com.scobro.logbook"') },
+  { name: 'Tray configured', check: () => tauriConfigContent.includes('"tray"') && tauriConfigContent.includes('iconPath') },
   { name: 'Updater configured', check: () => tauriConfigContent.includes('"active": true') && tauriConfigContent.includes('updater') },
-  { name: 'Window label set', check: () => tauriConfigContent.includes('"label": "main"') }
+  { name: 'Window label set', check: () => tauriConfigContent.includes('"label": "main"') },
+  { name: 'Bundle configured', check: () => tauriConfigContent.includes('"bundle"') && tauriConfigContent.includes('"active": true') }
 ];
 
 let allConfigValid = true;

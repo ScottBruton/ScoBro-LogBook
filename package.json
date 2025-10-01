@@ -10,22 +10,22 @@
     "tauri": "tauri dev",
     "tauri:build": "tauri build",
     "generate-icons": "node scripts/generate-icons.js",
+    "create-icon": "node scripts/create-icon.js",
     "test:phase1": "node scripts/test-phase1.js"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.2",
+    "@mui/material": "^7.3.2",
     "@supabase/supabase-js": "^2.0.0",
     "@tauri-apps/api": "^1.4.0",
-    "@tauri-apps/plugin-updater": "^2.0.0-beta",
-    "@tauri-apps/plugin-notification": "^2.0.0-beta",
-    "@tauri-apps/plugin-global-shortcut": "^2.0.0-beta",
-    "@tauri-apps/plugin-tray": "^2.0.0-beta",
-    "@tauri-apps/plugin-autostart": "^2.0.0-beta",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "vite": "^4.0.0",
-    "@vitejs/plugin-react": "^4.0.0"
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.0.0"
   }
 }

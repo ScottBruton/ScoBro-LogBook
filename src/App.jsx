@@ -5,18 +5,15 @@ import Dashboard from './components/Dashboard.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 
-// Attempt to import global shortcut plugin from Tauri. If running in
-// development (non-tauri) this will be undefined and the useEffect
-// below will simply not register the hotkey.
-import { register } from '@tauri-apps/plugin-global-shortcut';
+// Attempt to import Tauri APIs. If running in development (non-tauri) 
+// these will be undefined and the useEffect below will simply not register.
 import { listen } from '@tauri-apps/api/event';
 
 /**
  * Top-level application component. It manages global state for
  * entries, popup visibility and handles saving/loading from
- * SQLite database via Tauri commands. It also registers a keyboard 
- * shortcut (Ctrl+Alt+N) for opening the popup when running inside 
- * a Tauri environment.
+ * SQLite database via Tauri commands. It listens for tray menu
+ * events to open the popup when running inside a Tauri environment.
  */
 export default function App() {
   const [entries, setEntries] = useState([]);
@@ -51,21 +48,8 @@ export default function App() {
     }
   };
 
-  // Register global shortcut in Tauri environment.
-  useEffect(() => {
-    async function registerShortcut() {
-      if (typeof register === 'function') {
-        try {
-          await register('Ctrl+Alt+N', () => {
-            setShowPopup(true);
-          });
-        } catch (err) {
-          console.error('Failed to register global shortcut', err);
-        }
-      }
-    }
-    registerShortcut();
-  }, []);
+  // Note: Global shortcuts are not available in Tauri 2.0 beta
+  // Users can use the tray menu or the New Entry button instead
 
   // Listen for tray menu events
   useEffect(() => {

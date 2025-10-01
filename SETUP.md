@@ -6,7 +6,7 @@
 ✅ **Tauri Backend Commands** - Full CRUD operations via Tauri commands
 ✅ **Export Functionality** - CSV and Markdown export with download
 ✅ **Enhanced Tray Menu** - Quick add note, check updates, quit
-✅ **Autostart Support** - App starts automatically at login
+✅ **Tray Integration** - System tray menu with quick actions
 ✅ **Offline-First Architecture** - Works without internet connection
 ✅ **Update System** - Progress tracking in banner and tray notifications
 
@@ -35,11 +35,27 @@ npm run tauri
 
 This will start both the Vite dev server and Tauri app.
 
-### 4. Build for Production
+### 4. Test Configuration
 
 ```bash
-npm run build
+npm run test:phase1
 ```
+
+This validates all Phase 1 MVP components.
+
+### 5. Build for Production
+
+```bash
+npm run tauri:build
+```
+
+### 6. Icon Setup (Optional)
+
+```bash
+npm run create-icon
+```
+
+Creates a placeholder icon. Replace with proper PNG for better tray support.
 
 ## Database Schema
 
@@ -65,6 +81,7 @@ The app uses SQLite with the following tables:
 - **Quick Add Note** - Right-click tray icon to quickly add a note
 - **Check Updates** - Manual update check with progress notifications
 - **Quit** - Exit the application
+- **System Integration** - App runs in system tray for quick access
 
 ### Keyboard Shortcuts
 - **Ctrl+Alt+N** - Open new entry popup
