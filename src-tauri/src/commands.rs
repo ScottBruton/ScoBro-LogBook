@@ -201,6 +201,108 @@ pub async fn get_all_entries(state: State<'_, AppState>) -> Result<Vec<EntryResp
     Ok(result)
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateEntryItemRequest {
+    pub content: Option<String>,
+    pub project: Option<String>,
+    pub tags: Option<Vec<String>>,
+    pub jira: Option<Vec<String>>,
+    pub people: Option<Vec<String>>,
+}
+
+#[tauri::command]
+pub async fn update_entry_item(
+    state: State<'_, AppState>,
+    entry_item_id: String,
+    updates: UpdateEntryItemRequest,
+) -> Result<ItemResponse, String> {
+    let db = state.lock().await;
+    
+    // Update the entry item content if provided
+    if let Some(content) = updates.content {
+        db.update_entry_item_content(&entry_item_id, &content)
+            .await
+            .map_err(|e| format!("Failed to update entry item content: {}", e))?;
+    }
+    
+    // Update project if provided
+    if let Some(project) = updates.project {
+        db.update_entry_item_project(&entry_item_id, Some(&project))
+            .await
+            .map_err(|e| format!("Failed to update entry item project: {}", e))?;
+    }
+    
+    // Update tags if provided
+    if let Some(tags) = updates.tags {
+        // First, remove existing tags
+        db.remove_item_tags(&entry_item_id)
+            .await
+            .map_err(|e| format!("Failed to remove existing tags: {}", e))?;
+        
+        // Then add new tags
+        for tag_name in tags {
+            let tag = db.get_or_create_tag(&tag_name)
+                .await
+                .map_err(|e| format!("Failed to get or create tag: {}", e))?;
+            db.link_item_tag(&entry_item_id, &tag.id)
+                .await
+                .map_err(|e| format!("Failed to link tag: {}", e))?;
+        }
+    }
+    
+    // Update people if provided
+    if let Some(people) = updates.people {
+        // First, remove existing people
+        db.remove_item_people(&entry_item_id)
+            .await
+            .map_err(|e| format!("Failed to remove existing people: {}", e))?;
+        
+        // Then add new people
+        for person_name in people {
+            let person = db.get_or_create_person(&person_name)
+                .await
+                .map_err(|e| format!("Failed to get or create person: {}", e))?;
+            db.link_item_person(&entry_item_id, &person.id)
+                .await
+                .map_err(|e| format!("Failed to link person: {}", e))?;
+        }
+    }
+    
+    // Update Jira refs if provided
+    if let Some(jira_refs) = updates.jira {
+        // First, remove existing Jira refs
+        db.remove_item_jira_refs(&entry_item_id)
+            .await
+            .map_err(|e| format!("Failed to remove existing Jira refs: {}", e))?;
+        
+        // Then add new Jira refs
+        for jira_key in jira_refs {
+            db.create_jira_ref(&entry_item_id, &jira_key)
+                .await
+                .map_err(|e| format!("Failed to create Jira ref: {}", e))?;
+        }
+    }
+    
+    // Get the updated item with metadata
+    let entry_with_items = db.get_entry_with_items(&entry_item_id)
+        .await
+        .map_err(|e| format!("Failed to get updated entry item: {}", e))?;
+    
+    if let Some(item_with_metadata) = entry_with_items.items.first() {
+        Ok(ItemResponse {
+            id: item_with_metadata.item.id.clone(),
+            item_type: item_with_metadata.item.item_type.clone(),
+            content: item_with_metadata.item.content.clone(),
+            project: item_with_metadata.item.project.clone(),
+            tags: item_with_metadata.tags.iter().map(|t| t.name.clone()).collect(),
+            jira: item_with_metadata.jira_refs.iter().map(|j| j.jira_key.clone()).collect(),
+            people: item_with_metadata.people.iter().map(|p| p.name.clone()).collect(),
+        })
+    } else {
+        Err("Entry item not found".to_string())
+    }
+}
+
 #[tauri::command]
 pub async fn delete_entry_item(
     state: State<'_, AppState>,

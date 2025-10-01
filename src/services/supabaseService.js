@@ -26,6 +26,22 @@ export class SupabaseService {
   }
 
   /**
+   * Get current user
+   * @returns {Promise<Object>} User object
+   */
+  static async getCurrentUser() {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase not configured');
+      }
+      return await supabase.auth.getUser();
+    } catch (error) {
+      console.error('Failed to get current user:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Sign in with email and password
    * @param {string} email - User email
    * @param {string} password - User password
@@ -280,6 +296,11 @@ export class SupabaseService {
    */
   static subscribeToEntries(callback) {
     try {
+      if (!supabase) {
+        console.log('Supabase not configured, cannot set up real-time subscription');
+        return { unsubscribe: () => {} };
+      }
+
       return supabase
         .channel('entries_changes')
         .on(
@@ -291,9 +312,196 @@ export class SupabaseService {
           },
           callback
         )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'entry_items'
+          },
+          callback
+        )
         .subscribe();
     } catch (error) {
       console.error('Failed to subscribe to entries:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Sync local entries to Supabase (bidirectional sync)
+   * @param {Array} localEntries - Local entries to sync
+   * @returns {Promise<Array>} Synced entries
+   */
+  static async syncEntriesBidirectional(localEntries) {
+    try {
+      const isAuth = await this.isAuthenticated();
+      if (!isAuth) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const userId = user.id;
+
+      // Fetch remote entries
+      const { data: remoteEntries, error: fetchError } = await supabase
+        .from('entries')
+        .select(`
+          *,
+          entry_items (
+            *,
+            item_tags (
+              tags (*)
+            ),
+            item_people (
+              people (*)
+            ),
+            jira_refs (*)
+          )
+        `)
+        .eq('user_id', userId)
+        .order('timestamp', { ascending: false });
+
+      if (fetchError) throw fetchError;
+
+      // Merge local and remote entries
+      const mergedEntries = this.mergeEntries(localEntries, remoteEntries || []);
+
+      // Upload merged entries to Supabase
+      for (const entry of mergedEntries) {
+        await this.uploadEntry(entry, userId);
+      }
+
+      return mergedEntries;
+    } catch (error) {
+      console.error('Failed to sync entries bidirectionally:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Merge local and remote entries, resolving conflicts
+   * @param {Array} localEntries - Local entries
+   * @param {Array} remoteEntries - Remote entries
+   * @returns {Array} Merged entries
+   */
+  static mergeEntries(localEntries, remoteEntries) {
+    const merged = new Map();
+
+    // Add remote entries first (they have priority for conflicts)
+    remoteEntries.forEach(entry => {
+      merged.set(entry.id, entry);
+    });
+
+    // Add local entries, only if they don't exist remotely or are newer
+    localEntries.forEach(localEntry => {
+      const remoteEntry = merged.get(localEntry.id);
+      if (!remoteEntry || new Date(localEntry.timestamp) > new Date(remoteEntry.timestamp)) {
+        merged.set(localEntry.id, localEntry);
+      }
+    });
+
+    return Array.from(merged.values());
+  }
+
+  /**
+   * Upload a single entry to Supabase
+   * @param {Object} entry - Entry to upload
+   * @param {string} userId - User ID
+   * @returns {Promise<void>}
+   */
+  static async uploadEntry(entry, userId) {
+    try {
+      // Upload entry
+      const { data: uploadedEntry, error: entryError } = await supabase
+        .from('entries')
+        .upsert({
+          id: entry.id,
+          user_id: userId,
+          timestamp: entry.timestamp,
+          created_at: entry.created_at,
+          updated_at: entry.updated_at
+        })
+        .select()
+        .single();
+
+      if (entryError) throw entryError;
+
+      // Upload entry items
+      for (const item of entry.items) {
+        const { data: uploadedItem, error: itemError } = await supabase
+          .from('entry_items')
+          .upsert({
+            id: item.id,
+            entry_id: uploadedEntry.id,
+            item_type: item.type,
+            content: item.content,
+            project: item.project,
+            created_at: item.created_at,
+            updated_at: item.updated_at
+          })
+          .select()
+          .single();
+
+        if (itemError) throw itemError;
+
+        // Upload tags
+        for (const tagName of item.tags || []) {
+          const { data: tag, error: tagError } = await supabase
+            .from('tags')
+            .upsert({
+              name: tagName,
+              user_id: userId
+            })
+            .select()
+            .single();
+
+          if (tagError) throw tagError;
+
+          // Link tag to item
+          await supabase
+            .from('item_tags')
+            .upsert({
+              entry_item_id: uploadedItem.id,
+              tag_id: tag.id
+            });
+        }
+
+        // Upload people
+        for (const personName of item.people || []) {
+          const { data: person, error: personError } = await supabase
+            .from('people')
+            .upsert({
+              name: personName,
+              user_id: userId
+            })
+            .select()
+            .single();
+
+          if (personError) throw personError;
+
+          // Link person to item
+          await supabase
+            .from('item_people')
+            .upsert({
+              entry_item_id: uploadedItem.id,
+              person_id: person.id
+            });
+        }
+
+        // Upload Jira refs
+        for (const jiraKey of item.jira || []) {
+          await supabase
+            .from('jira_refs')
+            .upsert({
+              entry_item_id: uploadedItem.id,
+              jira_key: jiraKey,
+              user_id: userId
+            });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to upload entry:', error);
       throw error;
     }
   }

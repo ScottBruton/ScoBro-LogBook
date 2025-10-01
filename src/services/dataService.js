@@ -48,6 +48,21 @@ export class DataService {
   }
 
   /**
+   * Update an entry item
+   * @param {string} entryItemId - ID of the entry item to update
+   * @param {Object} updates - Object containing fields to update
+   * @returns {Promise<Object>} Updated entry item
+   */
+  static async updateEntryItem(entryItemId, updates) {
+    try {
+      return await invoke('update_entry_item', { entryItemId, updates });
+    } catch (error) {
+      console.error('Failed to update entry item:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Delete a specific entry item
    * @param {string} entryItemId - ID of the entry item to delete
    * @returns {Promise<void>}

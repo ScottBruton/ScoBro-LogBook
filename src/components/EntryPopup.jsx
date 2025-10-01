@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DataService } from '../services/dataService.js';
+import JiraRefInput from './JiraRefInput.jsx';
 
 // Types available for new items. Additional types (e.g. Meeting) can
 // be added later without altering the underlying schema. Each type
@@ -200,13 +201,14 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
               />
             </div>
             <div style={{ marginTop: '8px' }}>
-              <label>Jira (comma separated):</label>
-              <input
-                type="text"
-                value={item.jira}
-                onChange={(e) => updateItem(index, 'jira', e.target.value)}
-                style={{ marginLeft: '8px', width: '70%' }}
-              />
+              <label>Jira References:</label>
+              <div style={{ marginTop: '4px' }}>
+                <JiraRefInput
+                  value={item.jira}
+                  onChange={(jiraRefs) => updateItem(index, 'jira', jiraRefs.join(', '))}
+                  placeholder="Enter Jira references (e.g., PROJ-123, TASK-456)"
+                />
+              </div>
             </div>
             <div style={{ marginTop: '8px' }}>
               <label>People (comma separated):</label>

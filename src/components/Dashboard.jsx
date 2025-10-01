@@ -53,6 +53,10 @@ export default function Dashboard({ entries, onDeleteItem }) {
   // Filter presets
   const [filterPresets, setFilterPresets] = useState({});
   const [activePreset, setActivePreset] = useState('');
+  
+  // Inline editing states
+  const [editingItem, setEditingItem] = useState(null);
+  const [editingContent, setEditingContent] = useState('');
 
   // Load projects and tags on component mount
   useEffect(() => {
@@ -358,6 +362,50 @@ export default function Dashboard({ entries, onDeleteItem }) {
     if (hasPeople !== '') count++;
     if (hasJira !== '') count++;
     return count;
+  };
+
+  // Inline editing functions
+  const startEditing = (item) => {
+    setEditingItem(item);
+    setEditingContent(item.content);
+  };
+
+  const cancelEditing = () => {
+    setEditingItem(null);
+    setEditingContent('');
+  };
+
+  const saveEditing = async () => {
+    if (!editingItem || !editingContent.trim()) return;
+    
+    try {
+      // Update the item content via Tauri command
+      await DataService.updateEntryItem(editingItem.id, { content: editingContent.trim() });
+      
+      // Update local state
+      setEntries(prev => prev.map(entry => ({
+        ...entry,
+        items: entry.items.map(item => 
+          item.id === editingItem.id 
+            ? { ...item, content: editingContent.trim() }
+            : item
+        )
+      })));
+      
+      cancelEditing();
+    } catch (error) {
+      console.error('Failed to update item:', error);
+      // Fallback to local state update
+      setEntries(prev => prev.map(entry => ({
+        ...entry,
+        items: entry.items.map(item => 
+          item.id === editingItem.id 
+            ? { ...item, content: editingContent.trim() }
+            : item
+        )
+      })));
+      cancelEditing();
+    }
   };
 
   const filteredEntries = sortEntries(filterEntries(entries));
@@ -883,7 +931,72 @@ export default function Dashboard({ entries, onDeleteItem }) {
                           <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
                             {item.type}
                           </div>
-                          <div style={{ marginBottom: '4px', whiteSpace: 'pre-wrap' }}>{item.content}</div>
+                          {editingItem && editingItem.id === item.id ? (
+                            <div style={{ marginBottom: '4px' }}>
+                              <textarea
+                                value={editingContent}
+                                onChange={(e) => setEditingContent(e.target.value)}
+                                style={{
+                                  width: '100%',
+                                  minHeight: '60px',
+                                  padding: '8px',
+                                  border: '1px solid #007bff',
+                                  borderRadius: '4px',
+                                  fontSize: '14px',
+                                  fontFamily: 'inherit',
+                                  resize: 'vertical'
+                                }}
+                                autoFocus
+                              />
+                              <div style={{ marginTop: '4px', display: 'flex', gap: '4px' }}>
+                                <button
+                                  onClick={saveEditing}
+                                  style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: '#28a745',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={cancelEditing}
+                                  style={{
+                                    padding: '4px 8px',
+                                    backgroundColor: '#6c757d',
+                                    color: '#fff',
+                                    border: 'none',
+                                    borderRadius: '3px',
+                                    cursor: 'pointer',
+                                    fontSize: '12px'
+                                  }}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div 
+                              style={{ 
+                                marginBottom: '4px', 
+                                whiteSpace: 'pre-wrap',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                borderRadius: '4px',
+                                transition: 'background-color 0.2s'
+                              }}
+                              onClick={() => startEditing(item)}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                              title="Click to edit"
+                            >
+                              {item.content}
+                            </div>
+                          )}
                           <div style={{ fontSize: '12px', color: '#555' }}>
                             {item.project && (
                               <span style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -967,7 +1080,71 @@ export default function Dashboard({ entries, onDeleteItem }) {
                 }}
               >
                 <div style={{ fontWeight: 'bold' }}>{item.type}</div>
-                <div style={{ marginBottom: '4px' }}>{item.content}</div>
+                {editingItem && editingItem.id === item.id ? (
+                  <div style={{ marginBottom: '4px' }}>
+                    <textarea
+                      value={editingContent}
+                      onChange={(e) => setEditingContent(e.target.value)}
+                      style={{
+                        width: '100%',
+                        minHeight: '60px',
+                        padding: '8px',
+                        border: '1px solid #007bff',
+                        borderRadius: '4px',
+                        fontSize: '14px',
+                        fontFamily: 'inherit',
+                        resize: 'vertical'
+                      }}
+                      autoFocus
+                    />
+                    <div style={{ marginTop: '4px', display: 'flex', gap: '4px' }}>
+                      <button
+                        onClick={saveEditing}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#28a745',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={cancelEditing}
+                        style={{
+                          padding: '4px 8px',
+                          backgroundColor: '#6c757d',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div 
+                    style={{ 
+                      marginBottom: '4px',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      borderRadius: '4px',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onClick={() => startEditing(item)}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#f8f9fa'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                    title="Click to edit"
+                  >
+                    {item.content}
+                  </div>
+                )}
                 <div style={{ fontSize: '12px', color: '#555' }}>
                   {item.project && (
                     <span style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>

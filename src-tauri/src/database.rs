@@ -641,6 +641,92 @@ impl Database {
         Ok(jira_refs)
     }
 
+    pub async fn update_entry_item_content(&self, entry_item_id: &str, content: &str) -> Result<(), sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query("UPDATE entry_items SET content = ?, updated_at = ? WHERE id = ?")
+            .bind(content)
+            .bind(now.to_rfc3339())
+            .bind(entry_item_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn update_entry_item_project(&self, entry_item_id: &str, project: Option<&str>) -> Result<(), sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query("UPDATE entry_items SET project = ?, updated_at = ? WHERE id = ?")
+            .bind(project)
+            .bind(now.to_rfc3339())
+            .bind(entry_item_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn remove_item_tags(&self, entry_item_id: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM item_tags WHERE entry_item_id = ?")
+            .bind(entry_item_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn remove_item_people(&self, entry_item_id: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM item_people WHERE entry_item_id = ?")
+            .bind(entry_item_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn remove_item_jira_refs(&self, entry_item_id: &str) -> Result<(), sqlx::Error> {
+        sqlx::query("DELETE FROM jira_refs WHERE entry_item_id = ?")
+            .bind(entry_item_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_entry_with_items(&self, entry_item_id: &str) -> Result<EntryWithItems, sqlx::Error> {
+        // First get the entry_id from the entry_item
+        let entry_id: String = sqlx::query_scalar("SELECT entry_id FROM entry_items WHERE id = ?")
+            .bind(entry_item_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        // Get the entry
+        let entry_row = sqlx::query("SELECT id, timestamp, created_at, updated_at FROM entries WHERE id = ?")
+            .bind(&entry_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        let timestamp: String = entry_row.get("timestamp");
+        let created_at: String = entry_row.get("created_at");
+        let updated_at: String = entry_row.get("updated_at");
+
+        let timestamp = DateTime::parse_from_rfc3339(&timestamp)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
+            .with_timezone(&Utc);
+        let created_at = DateTime::parse_from_rfc3339(&created_at)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
+            .with_timezone(&Utc);
+        let updated_at = DateTime::parse_from_rfc3339(&updated_at)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
+            .with_timezone(&Utc);
+
+        let entry = Entry {
+            id: entry_row.get("id"),
+            timestamp,
+            created_at,
+            updated_at,
+        };
+
+        // Get items with metadata
+        let items = self.get_entry_items_with_metadata(&entry_id).await?;
+
+        Ok(EntryWithItems { entry, items })
+    }
+
     pub async fn delete_entry_item(&self, entry_item_id: &str) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM entry_items WHERE id = ?")
             .bind(entry_item_id)

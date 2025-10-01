@@ -5,6 +5,8 @@ import Dashboard from './components/Dashboard.jsx';
 import ProjectsManager from './components/ProjectsManager.jsx';
 import TagsManager from './components/TagsManager.jsx';
 import MeetingsManager from './components/MeetingsManager.jsx';
+import AuthModal from './components/AuthModal.jsx';
+import EmailConfigModal from './components/EmailConfigModal.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 
@@ -24,13 +26,57 @@ export default function App() {
   const [showProjectsManager, setShowProjectsManager] = useState(false);
   const [showTagsManager, setShowTagsManager] = useState(false);
   const [showMeetingsManager, setShowMeetingsManager] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showEmailConfig, setShowEmailConfig] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('offline');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
 
-  // Load entries from SQLite database on mount.
+  // Load entries from SQLite database on mount and check authentication
   useEffect(() => {
     loadEntries();
+    checkAuthentication();
   }, []);
+
+  // Set up real-time sync when authenticated
+  useEffect(() => {
+    let subscription = null;
+    
+    if (isAuthenticated) {
+      // Set up real-time subscription
+      subscription = SupabaseService.subscribeToEntries((payload) => {
+        console.log('Real-time update received:', payload);
+        // Reload entries to get the latest data
+        loadEntries();
+      });
+    }
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [isAuthenticated]);
+
+  const checkAuthentication = async () => {
+    try {
+      const authStatus = await SupabaseService.isAuthenticated();
+      setIsAuthenticated(authStatus);
+      
+      if (authStatus) {
+        const { data: { user } } = await SupabaseService.getCurrentUser();
+        setUser(user);
+        setSyncStatus('synced');
+      } else {
+        setSyncStatus('offline');
+      }
+    } catch (error) {
+      console.error('Failed to check authentication:', error);
+      setIsAuthenticated(false);
+      setSyncStatus('offline');
+    }
+  };
 
   const loadEntries = async () => {
     try {
@@ -78,13 +124,15 @@ export default function App() {
       const newEntry = await DataService.createEntry(timestamp, items);
       setEntries((prev) => [newEntry, ...prev]);
       
-      // Try to sync to Supabase in background
-      try {
-        await SupabaseService.syncEntries([newEntry]);
-        setSyncStatus('synced');
-      } catch (syncErr) {
-        console.warn('Failed to sync to Supabase:', syncErr);
-        setSyncStatus('pending');
+      // Try to sync to Supabase in background if authenticated
+      if (isAuthenticated) {
+        try {
+          await SupabaseService.syncEntries([newEntry]);
+          setSyncStatus('synced');
+        } catch (syncErr) {
+          console.warn('Failed to sync to Supabase:', syncErr);
+          setSyncStatus('pending');
+        }
       }
     } catch (err) {
       console.error('Failed to save entry:', err);
@@ -123,6 +171,32 @@ export default function App() {
     }
   };
 
+  const handleAuthSuccess = async () => {
+    setIsAuthenticated(true);
+    setShowAuthModal(false);
+    await checkAuthentication();
+    
+    // Sync existing entries to Supabase
+    try {
+      await SupabaseService.syncEntries(entries);
+      setSyncStatus('synced');
+    } catch (error) {
+      console.warn('Failed to sync existing entries:', error);
+      setSyncStatus('pending');
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await SupabaseService.signOut();
+      setIsAuthenticated(false);
+      setUser(null);
+      setSyncStatus('offline');
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
@@ -140,6 +214,11 @@ export default function App() {
           <h1 style={{ margin: 0, fontSize: '1.5rem' }}>📒 ScoBro Logbook</h1>
           <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
             Status: {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
+            {isAuthenticated && user && (
+              <span style={{ marginLeft: '8px' }}>
+                • 👤 {user.email}
+              </span>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
@@ -186,6 +265,20 @@ export default function App() {
             📅 Meetings
           </button>
           <button
+            onClick={() => setShowEmailConfig(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#e83e8c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            📧 Email
+          </button>
+          <button
             onClick={() => DataService.exportAndDownloadCSV()}
             style={{
               padding: '6px 12px',
@@ -213,6 +306,63 @@ export default function App() {
           >
             📝 MD
           </button>
+          {!isAuthenticated && (
+            <button
+              onClick={() => setShowAuthModal(true)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#17a2b8',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+              }}
+            >
+              🔐 Sign In
+            </button>
+          )}
+          {isAuthenticated && (
+            <>
+              <button
+                onClick={async () => {
+                  try {
+                    setSyncStatus('pending');
+                    await SupabaseService.syncEntriesBidirectional(entries);
+                    setSyncStatus('synced');
+                  } catch (error) {
+                    console.error('Sync failed:', error);
+                    setSyncStatus('offline');
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#17a2b8',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                }}
+              >
+                🔄 Sync
+              </button>
+              <button
+                onClick={handleSignOut}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#6c757d',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                }}
+              >
+                🚪 Sign Out
+              </button>
+            </>
+          )}
           <button
             onClick={() => setShowPopup(true)}
             style={{
@@ -245,6 +395,15 @@ export default function App() {
       <MeetingsManager
         isOpen={showMeetingsManager}
         onClose={() => setShowMeetingsManager(false)}
+      />
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+      <EmailConfigModal
+        isOpen={showEmailConfig}
+        onClose={() => setShowEmailConfig(false)}
       />
     </div>
   );
