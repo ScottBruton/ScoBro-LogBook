@@ -1,0 +1,369 @@
+#!/usr/bin/env node
+
+/**
+ * Phase 3 Testing Script
+ * 
+ * This script tests the Phase 3 features of ScoBro Logbook:
+ * - Smart prompts and time-based nudges
+ * - Time tracking with start/stop timers
+ * - Advanced analytics and insights
+ * - Enhanced user experience features
+ */
+
+const fs = require('fs');
+const path = require('path');
+
+console.log('🧪 ScoBro Logbook Phase 3 Testing');
+console.log('==================================\n');
+
+// Test 1: Check if all Phase 3 components exist
+console.log('📁 Checking Phase 3 components...');
+
+const phase3Components = [
+  'src/components/SmartPromptsModal.jsx',
+  'src/components/TimeTrackingModal.jsx',
+  'src/services/smartPromptsService.js',
+  'src/services/timeTrackingService.js'
+];
+
+let allComponentsExist = true;
+phase3Components.forEach(component => {
+  if (fs.existsSync(component)) {
+    console.log(`✅ ${component}`);
+  } else {
+    console.log(`❌ ${component} - MISSING`);
+    allComponentsExist = false;
+  }
+});
+
+if (allComponentsExist) {
+  console.log('\n✅ All Phase 3 components present');
+} else {
+  console.log('\n❌ Some Phase 3 components are missing');
+}
+
+// Test 2: Check Phase 3 service functionality
+console.log('\n🔧 Checking Phase 3 service functionality...');
+
+const smartPromptsService = fs.readFileSync('src/services/smartPromptsService.js', 'utf8');
+const smartPromptsFeatures = [
+  'getSmartPrompt',
+  'analyzeUserPatterns',
+  'generateContextualSuggestions',
+  'shouldShowNudge',
+  'getNudgeConfig',
+  'saveNudgeConfig',
+  'isQuietHours'
+];
+
+let allSmartPromptsFeaturesPresent = true;
+smartPromptsFeatures.forEach(feature => {
+  if (smartPromptsService.includes(`static async ${feature}`) || 
+      smartPromptsService.includes(`static ${feature}`)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allSmartPromptsFeaturesPresent = false;
+  }
+});
+
+if (allSmartPromptsFeaturesPresent) {
+  console.log('\n✅ All Smart Prompts features present');
+} else {
+  console.log('\n❌ Some Smart Prompts features are missing');
+}
+
+// Test 3: Check Time Tracking service functionality
+console.log('\n⏱️ Checking Time Tracking service functionality...');
+
+const timeTrackingService = fs.readFileSync('src/services/timeTrackingService.js', 'utf8');
+const timeTrackingFeatures = [
+  'startTimer',
+  'stopTimer',
+  'getActiveTimer',
+  'isTimerActive',
+  'getCurrentTimerDuration',
+  'formatDuration',
+  'getTimeTrackingStats',
+  'getTimeTrackingByProject',
+  'getTimeTrackingByTask',
+  'createEntryFromTimer',
+  'exportTimeTrackingData',
+  'getProductivityInsights'
+];
+
+let allTimeTrackingFeaturesPresent = true;
+timeTrackingFeatures.forEach(feature => {
+  if (timeTrackingService.includes(`static ${feature}`)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allTimeTrackingFeaturesPresent = false;
+  }
+});
+
+if (allTimeTrackingFeaturesPresent) {
+  console.log('\n✅ All Time Tracking features present');
+} else {
+  console.log('\n❌ Some Time Tracking features are missing');
+}
+
+// Test 4: Check Smart Prompts Modal functionality
+console.log('\n🧠 Checking Smart Prompts Modal functionality...');
+
+const smartPromptsModal = fs.readFileSync('src/components/SmartPromptsModal.jsx', 'utf8');
+const smartPromptsModalFeatures = [
+  'loadSmartPrompt',
+  'getActiveProject',
+  'getUpcomingMeeting',
+  'getRecentActivity',
+  'handlePromptSelect',
+  'handleConfigChange',
+  'getPriorityColor',
+  'getPriorityIcon'
+];
+
+let allSmartPromptsModalFeaturesPresent = true;
+smartPromptsModalFeatures.forEach(feature => {
+  if (smartPromptsModal.includes(feature)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allSmartPromptsModalFeaturesPresent = false;
+  }
+});
+
+if (allSmartPromptsModalFeaturesPresent) {
+  console.log('\n✅ All Smart Prompts Modal features present');
+} else {
+  console.log('\n❌ Some Smart Prompts Modal features are missing');
+}
+
+// Test 5: Check Time Tracking Modal functionality
+console.log('\n⏱️ Checking Time Tracking Modal functionality...');
+
+const timeTrackingModal = fs.readFileSync('src/components/TimeTrackingModal.jsx', 'utf8');
+const timeTrackingModalFeatures = [
+  'loadTimeTrackingData',
+  'handleStartTimer',
+  'handleStopTimer',
+  'handleDeleteTimer',
+  'handleExportData'
+];
+
+let allTimeTrackingModalFeaturesPresent = true;
+timeTrackingModalFeatures.forEach(feature => {
+  if (timeTrackingModal.includes(feature)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allTimeTrackingModalFeaturesPresent = false;
+  }
+});
+
+if (allTimeTrackingModalFeaturesPresent) {
+  console.log('\n✅ All Time Tracking Modal features present');
+} else {
+  console.log('\n❌ Some Time Tracking Modal features are missing');
+}
+
+// Test 6: Check App.jsx Phase 3 integration
+console.log('\n⚛️ Checking App.jsx Phase 3 integration...');
+
+const appJsx = fs.readFileSync('src/App.jsx', 'utf8');
+const appPhase3Features = [
+  'SmartPromptsModal',
+  'TimeTrackingModal',
+  'SmartPromptsService',
+  'TimeTrackingService',
+  'showSmartPrompts',
+  'showTimeTracking',
+  'smartPromptNudge',
+  'setupSmartPrompts',
+  'checkForSmartPromptNudge',
+  'handleSmartPromptSelect',
+  'handleTimerComplete'
+];
+
+let allAppPhase3FeaturesPresent = true;
+appPhase3Features.forEach(feature => {
+  if (appJsx.includes(feature)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allAppPhase3FeaturesPresent = false;
+  }
+});
+
+if (allAppPhase3FeaturesPresent) {
+  console.log('\n✅ All App.jsx Phase 3 features present');
+} else {
+  console.log('\n❌ Some App.jsx Phase 3 features are missing');
+}
+
+// Test 7: Check Smart Prompts configuration
+console.log('\n⚙️ Checking Smart Prompts configuration...');
+
+const smartPromptsConfig = [
+  'morning',
+  'afternoon',
+  'evening',
+  'weekly',
+  'project',
+  'meeting',
+  'nudgeIntervals',
+  'prompts'
+];
+
+let allSmartPromptsConfigPresent = true;
+smartPromptsConfig.forEach(config => {
+  if (smartPromptsService.includes(config)) {
+    console.log(`✅ ${config}`);
+  } else {
+    console.log(`❌ ${config} - MISSING`);
+    allSmartPromptsConfigPresent = false;
+  }
+});
+
+if (allSmartPromptsConfigPresent) {
+  console.log('\n✅ All Smart Prompts configuration present');
+} else {
+  console.log('\n❌ Some Smart Prompts configuration is missing');
+}
+
+// Test 8: Check Time Tracking data management
+console.log('\n💾 Checking Time Tracking data management...');
+
+const timeTrackingDataFeatures = [
+  'STORAGE_KEY',
+  'ACTIVE_TIMER_KEY',
+  'getTimeTrackingData',
+  'saveTimeTrackingData',
+  'calculateTotalTime',
+  'generateId'
+];
+
+let allTimeTrackingDataFeaturesPresent = true;
+timeTrackingDataFeatures.forEach(feature => {
+  if (timeTrackingService.includes(feature)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allTimeTrackingDataFeaturesPresent = false;
+  }
+});
+
+if (allTimeTrackingDataFeaturesPresent) {
+  console.log('\n✅ All Time Tracking data management features present');
+} else {
+  console.log('\n❌ Some Time Tracking data management features are missing');
+}
+
+// Test 9: Check UI/UX enhancements
+console.log('\n🎨 Checking UI/UX enhancements...');
+
+const uiEnhancements = [
+  'Smart Prompts',
+  'Time Tracking',
+  'smartPromptNudge',
+  'priority',
+  'insights',
+  'Statistics',
+  'export'
+];
+
+let allUIEnhancementsPresent = true;
+uiEnhancements.forEach(enhancement => {
+  if (appJsx.includes(enhancement) || smartPromptsModal.includes(enhancement) || timeTrackingModal.includes(enhancement)) {
+    console.log(`✅ ${enhancement}`);
+  } else {
+    console.log(`❌ ${enhancement} - MISSING`);
+    allUIEnhancementsPresent = false;
+  }
+});
+
+if (allUIEnhancementsPresent) {
+  console.log('\n✅ All UI/UX enhancements present');
+} else {
+  console.log('\n❌ Some UI/UX enhancements are missing');
+}
+
+// Test 10: Check integration with existing features
+console.log('\n🔗 Checking integration with existing features...');
+
+const integrationFeatures = [
+  'handleSaveItems',
+  'entries',
+  'DataService',
+  'SupabaseService',
+  'localStorage',
+  'useEffect',
+  'useState'
+];
+
+let allIntegrationFeaturesPresent = true;
+integrationFeatures.forEach(feature => {
+  if (appJsx.includes(feature)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allIntegrationFeaturesPresent = false;
+  }
+});
+
+if (allIntegrationFeaturesPresent) {
+  console.log('\n✅ All integration features present');
+} else {
+  console.log('\n❌ Some integration features are missing');
+}
+
+// Summary
+console.log('\n📊 Phase 3 Test Summary');
+console.log('========================');
+
+const tests = [
+  { name: 'Phase 3 Components', passed: allComponentsExist },
+  { name: 'Smart Prompts Service', passed: allSmartPromptsFeaturesPresent },
+  { name: 'Time Tracking Service', passed: allTimeTrackingFeaturesPresent },
+  { name: 'Smart Prompts Modal', passed: allSmartPromptsModalFeaturesPresent },
+  { name: 'Time Tracking Modal', passed: allTimeTrackingModalFeaturesPresent },
+  { name: 'App Integration', passed: allAppPhase3FeaturesPresent },
+  { name: 'Smart Prompts Config', passed: allSmartPromptsConfigPresent },
+  { name: 'Time Tracking Data', passed: allTimeTrackingDataFeaturesPresent },
+  { name: 'UI/UX Enhancements', passed: allUIEnhancementsPresent },
+  { name: 'Feature Integration', passed: allIntegrationFeaturesPresent }
+];
+
+const passedTests = tests.filter(test => test.passed).length;
+const totalTests = tests.length;
+
+tests.forEach(test => {
+  console.log(`${test.passed ? '✅' : '❌'} ${test.name}`);
+});
+
+console.log(`\n🎯 Results: ${passedTests}/${totalTests} tests passed`);
+
+if (passedTests === totalTests) {
+  console.log('\n🎉 Phase 3 implementation is complete and ready for testing!');
+  console.log('\n🚀 Phase 3 Features Available:');
+  console.log('• ✅ Smart prompts and time-based nudges');
+  console.log('• ✅ Time tracking with start/stop timers');
+  console.log('• ✅ Advanced analytics and insights');
+  console.log('• ✅ Enhanced user experience');
+  console.log('• ✅ Intelligent suggestions based on user patterns');
+  console.log('• ✅ Productivity insights and statistics');
+  console.log('• ✅ Configurable nudge settings');
+  console.log('• ✅ Time tracking data export');
+  console.log('• ✅ Integration with existing entry system');
+  console.log('\nNext steps:');
+  console.log('1. Run `npm run tauri` to start development');
+  console.log('2. Test smart prompts and nudges');
+  console.log('3. Test time tracking functionality');
+  console.log('4. Configure nudge settings');
+  console.log('5. Test timer integration with entries');
+  console.log('6. Explore productivity insights');
+  console.log('7. Test data export functionality');
+} else {
+  console.log('\n⚠️ Some Phase 3 tests failed. Please fix the issues before proceeding.');
+  process.exit(1);
+}

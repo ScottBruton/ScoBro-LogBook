@@ -7,8 +7,12 @@ import TagsManager from './components/TagsManager.jsx';
 import MeetingsManager from './components/MeetingsManager.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import EmailConfigModal from './components/EmailConfigModal.jsx';
+import SmartPromptsModal from './components/SmartPromptsModal.jsx';
+import TimeTrackingModal from './components/TimeTrackingModal.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
+import { SmartPromptsService } from './services/smartPromptsService.js';
+import { TimeTrackingService } from './services/timeTrackingService.js';
 
 // Attempt to import Tauri APIs. If running in development (non-tauri) 
 // these will be undefined and the useEffect below will simply not register.
@@ -28,16 +32,29 @@ export default function App() {
   const [showMeetingsManager, setShowMeetingsManager] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showEmailConfig, setShowEmailConfig] = useState(false);
+  const [showSmartPrompts, setShowSmartPrompts] = useState(false);
+  const [showTimeTracking, setShowTimeTracking] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('offline');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [smartPromptNudge, setSmartPromptNudge] = useState(null);
 
   // Load entries from SQLite database on mount and check authentication
   useEffect(() => {
     loadEntries();
     checkAuthentication();
+    setupSmartPrompts();
   }, []);
+
+  // Set up smart prompts nudges
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkForSmartPromptNudge();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [entries]);
 
   // Set up real-time sync when authenticated
   useEffect(() => {
@@ -197,6 +214,62 @@ export default function App() {
     }
   };
 
+  const setupSmartPrompts = () => {
+    const config = SmartPromptsService.getNudgeConfig();
+    if (config.enabled) {
+      checkForSmartPromptNudge();
+    }
+  };
+
+  const checkForSmartPromptNudge = async () => {
+    try {
+      const config = SmartPromptsService.getNudgeConfig();
+      if (!config.enabled || SmartPromptsService.isQuietHours()) {
+        return;
+      }
+
+      const lastNudgeTime = localStorage.getItem('lastSmartPromptNudge');
+      if (!SmartPromptsService.shouldShowNudge(lastNudgeTime)) {
+        return;
+      }
+
+      const prompt = await SmartPromptsService.getSmartPrompt();
+      if (prompt.priority === 'high' || Math.random() < 0.3) { // 30% chance for medium/low priority
+        setSmartPromptNudge(prompt);
+        localStorage.setItem('lastSmartPromptNudge', new Date().toISOString());
+      }
+    } catch (error) {
+      console.error('Failed to check for smart prompt nudge:', error);
+    }
+  };
+
+  const handleSmartPromptSelect = (prompt) => {
+    // Create a new entry with the selected prompt
+    const items = [{
+      item_type: 'Note',
+      content: prompt,
+      project: '',
+      tags: ['smart-prompt'],
+      jira: [],
+      people: []
+    }];
+    
+    handleSaveItems(items);
+    setSmartPromptNudge(null);
+  };
+
+  const handleTimerComplete = async (completedTimer) => {
+    try {
+      // Create an entry from the completed timer
+      const entry = TimeTrackingService.createEntryFromTimer(completedTimer, 'Note');
+      const items = [entry];
+      
+      await handleSaveItems(items);
+    } catch (error) {
+      console.error('Failed to create entry from timer:', error);
+    }
+  };
+
   if (isLoading) {
     return (
       <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
@@ -277,6 +350,34 @@ export default function App() {
             }}
           >
             📧 Email
+          </button>
+          <button
+            onClick={() => setShowSmartPrompts(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#6f42c1',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            🧠 Smart Prompts
+          </button>
+          <button
+            onClick={() => setShowTimeTracking(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#fd7e14',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            ⏱️ Time Tracking
           </button>
           <button
             onClick={() => DataService.exportAndDownloadCSV()}
@@ -405,6 +506,85 @@ export default function App() {
         isOpen={showEmailConfig}
         onClose={() => setShowEmailConfig(false)}
       />
+      <SmartPromptsModal
+        isOpen={showSmartPrompts}
+        onClose={() => setShowSmartPrompts(false)}
+        onPromptSelect={handleSmartPromptSelect}
+        entries={entries}
+      />
+      <TimeTrackingModal
+        isOpen={showTimeTracking}
+        onClose={() => setShowTimeTracking(false)}
+        onTimerComplete={handleTimerComplete}
+      />
+      
+      {/* Smart Prompt Nudge */}
+      {smartPromptNudge && (
+        <div
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            backgroundColor: '#fff',
+            border: '2px solid #6f42c1',
+            borderRadius: '8px',
+            padding: '16px',
+            maxWidth: '300px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1001,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+            <h4 style={{ margin: 0, color: '#6f42c1' }}>🧠 Smart Prompt</h4>
+            <button
+              onClick={() => setSmartPromptNudge(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                fontSize: '16px',
+                cursor: 'pointer',
+                color: '#666'
+              }}
+            >
+              ✕
+            </button>
+          </div>
+          <p style={{ margin: '0 0 12px 0', fontSize: '14px', lineHeight: '1.4' }}>
+            {smartPromptNudge.prompt}
+          </p>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => handleSmartPromptSelect(smartPromptNudge.prompt)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#6f42c1',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px',
+                flex: 1
+              }}
+            >
+              Use This Prompt
+            </button>
+            <button
+              onClick={() => setSmartPromptNudge(null)}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#6c757d',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
