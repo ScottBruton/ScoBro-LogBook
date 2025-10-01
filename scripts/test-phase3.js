@@ -29,7 +29,9 @@ const phase3Components = [
   'src/services/timeTrackingService.js',
   'src/services/calendarService.js',
   'src/services/jiraApiService.js',
-  'src/services/analyticsService.js'
+  'src/services/analyticsService.js',
+  'src/services/connectionStatusService.js',
+  'src/components/StatusPills.jsx'
 ];
 
 let allComponentsExist = true;
@@ -203,7 +205,41 @@ if (allAnalyticsFeaturesPresent) {
   console.log('\n❌ Some Analytics service features are missing');
 }
 
-// Test 6: Check Time Tracking service functionality
+// Test 6: Check Connection Status service functionality
+console.log('\n🔗 Checking Connection Status service functionality...');
+
+const connectionStatusService = fs.readFileSync('src/services/connectionStatusService.js', 'utf8');
+const connectionStatusFeatures = [
+  'getConnectionStatuses',
+  'saveConnectionStatuses',
+  'updateConnectionStatus',
+  'checkSupabaseStatus',
+  'checkEmailStatus',
+  'checkJiraStatus',
+  'checkCalendarStatus',
+  'checkAnalyticsStatus',
+  'checkAllStatuses',
+  'getStatusPillConfig',
+  'getServiceDisplayName'
+];
+
+let allConnectionStatusFeaturesPresent = true;
+connectionStatusFeatures.forEach(feature => {
+  if (connectionStatusService.includes(`static ${feature}`) || connectionStatusService.includes(`static async ${feature}`)) {
+    console.log(`✅ ${feature}`);
+  } else {
+    console.log(`❌ ${feature} - MISSING`);
+    allConnectionStatusFeaturesPresent = false;
+  }
+});
+
+if (allConnectionStatusFeaturesPresent) {
+  console.log('\n✅ All Connection Status service features present');
+} else {
+  console.log('\n❌ Some Connection Status service features are missing');
+}
+
+// Test 7: Check Time Tracking service functionality
 console.log('\n⏱️ Checking Time Tracking service functionality...');
 
 const timeTrackingService = fs.readFileSync('src/services/timeTrackingService.js', 'utf8');
@@ -238,7 +274,7 @@ if (allTimeTrackingFeaturesPresent) {
   console.log('\n❌ Some Time Tracking features are missing');
 }
 
-// Test 4: Check Smart Prompts Modal functionality
+// Test 8: Check Smart Prompts Modal functionality
 console.log('\n🧠 Checking Smart Prompts Modal functionality...');
 
 const smartPromptsModal = fs.readFileSync('src/components/SmartPromptsModal.jsx', 'utf8');
@@ -269,7 +305,7 @@ if (allSmartPromptsModalFeaturesPresent) {
   console.log('\n❌ Some Smart Prompts Modal features are missing');
 }
 
-// Test 5: Check Calendar Sync Modal functionality
+// Test 9: Check Calendar Sync Modal functionality
 console.log('\n🗓️ Checking Calendar Sync Modal functionality...');
 
 const calendarSyncModal = fs.readFileSync('src/components/CalendarSyncModal.jsx', 'utf8');
@@ -303,7 +339,7 @@ if (allCalendarSyncModalFeaturesPresent) {
   console.log('\n❌ Some Calendar Sync Modal features are missing');
 }
 
-// Test 6: Check Jira API Modal functionality
+// Test 10: Check Jira API Modal functionality
 console.log('\n🔗 Checking Jira API Modal functionality...');
 
 const jiraApiModal = fs.readFileSync('src/components/JiraApiModal.jsx', 'utf8');
@@ -337,7 +373,7 @@ if (allJiraApiModalFeaturesPresent) {
   console.log('\n❌ Some Jira API Modal features are missing');
 }
 
-// Test 7: Check Analytics Dashboard functionality
+// Test 11: Check Analytics Dashboard functionality
 console.log('\n📊 Checking Analytics Dashboard functionality...');
 
 const analyticsDashboard = fs.readFileSync('src/components/AnalyticsDashboard.jsx', 'utf8');
@@ -374,7 +410,7 @@ if (allAnalyticsDashboardFeaturesPresent) {
   console.log('\n❌ Some Analytics Dashboard features are missing');
 }
 
-// Test 8: Check Time Tracking Modal functionality
+// Test 12: Check Time Tracking Modal functionality
 console.log('\n⏱️ Checking Time Tracking Modal functionality...');
 
 const timeTrackingModal = fs.readFileSync('src/components/TimeTrackingModal.jsx', 'utf8');
@@ -402,7 +438,7 @@ if (allTimeTrackingModalFeaturesPresent) {
   console.log('\n❌ Some Time Tracking Modal features are missing');
 }
 
-// Test 6: Check App.jsx Phase 3 integration
+// Test 13: Check App.jsx Phase 3 integration
 console.log('\n⚛️ Checking App.jsx Phase 3 integration...');
 
 const appJsx = fs.readFileSync('src/App.jsx', 'utf8');
@@ -447,7 +483,7 @@ if (allAppPhase3FeaturesPresent) {
   console.log('\n❌ Some App.jsx Phase 3 features are missing');
 }
 
-// Test 7: Check Smart Prompts configuration
+// Test 14: Check Smart Prompts configuration
 console.log('\n⚙️ Checking Smart Prompts configuration...');
 
 const smartPromptsConfig = [
@@ -477,7 +513,7 @@ if (allSmartPromptsConfigPresent) {
   console.log('\n❌ Some Smart Prompts configuration is missing');
 }
 
-// Test 8: Check Time Tracking data management
+// Test 15: Check Time Tracking data management
 console.log('\n💾 Checking Time Tracking data management...');
 
 const timeTrackingDataFeatures = [
@@ -505,7 +541,7 @@ if (allTimeTrackingDataFeaturesPresent) {
   console.log('\n❌ Some Time Tracking data management features are missing');
 }
 
-// Test 9: Check UI/UX enhancements
+// Test 16: Check UI/UX enhancements
 console.log('\n🎨 Checking UI/UX enhancements...');
 
 const uiEnhancements = [
@@ -542,7 +578,7 @@ if (allUIEnhancementsPresent) {
   console.log('\n❌ Some UI/UX enhancements are missing');
 }
 
-// Test 10: Check integration with existing features
+// Test 17: Check integration with existing features
 console.log('\n🔗 Checking integration with existing features...');
 
 const integrationFeatures = [
@@ -581,6 +617,7 @@ const tests = [
   { name: 'Calendar Service', passed: allCalendarFeaturesPresent },
   { name: 'Jira API Service', passed: allJiraApiFeaturesPresent },
   { name: 'Analytics Service', passed: allAnalyticsFeaturesPresent },
+  { name: 'Connection Status Service', passed: allConnectionStatusFeaturesPresent },
   { name: 'Time Tracking Service', passed: allTimeTrackingFeaturesPresent },
   { name: 'Smart Prompts Modal', passed: allSmartPromptsModalFeaturesPresent },
   { name: 'Calendar Sync Modal', passed: allCalendarSyncModalFeaturesPresent },
@@ -611,6 +648,7 @@ if (passedTests === totalTests) {
   console.log('• ✅ Calendar sync (Google Calendar & Microsoft Outlook)');
   console.log('• ✅ Jira API integration for real-time issue data');
   console.log('• ✅ Advanced analytics dashboard with comprehensive insights');
+  console.log('• ✅ Connection status monitoring for all services');
   console.log('• ✅ Enhanced user experience');
   console.log('• ✅ Intelligent suggestions based on user patterns');
   console.log('• ✅ Productivity insights and statistics');
@@ -620,15 +658,17 @@ if (passedTests === totalTests) {
   console.log('• ✅ Integration with existing entry system');
   console.log('\nNext steps:');
   console.log('1. Run `npm run tauri` to start development');
-  console.log('2. Test smart prompts and nudges');
-  console.log('3. Test time tracking functionality');
-  console.log('4. Test calendar sync with Google Calendar and Microsoft Outlook');
-  console.log('5. Test Jira API integration and issue synchronization');
-  console.log('6. Test analytics dashboard and insights');
-  console.log('7. Configure nudge settings');
-  console.log('8. Test timer integration with entries');
-  console.log('9. Explore productivity insights and analytics');
-  console.log('10. Test data export functionality');
+  console.log('2. Set up Supabase connection (see SUPABASE_SETUP.md)');
+  console.log('3. Test connection status pills and service monitoring');
+  console.log('4. Test smart prompts and nudges');
+  console.log('5. Test time tracking functionality');
+  console.log('6. Test calendar sync with Google Calendar and Microsoft Outlook');
+  console.log('7. Test Jira API integration and issue synchronization');
+  console.log('8. Test analytics dashboard and insights');
+  console.log('9. Configure nudge settings');
+  console.log('10. Test timer integration with entries');
+  console.log('11. Explore productivity insights and analytics');
+  console.log('12. Test data export functionality');
 } else {
   console.log('\n⚠️ Some Phase 3 tests failed. Please fix the issues before proceeding.');
   process.exit(1);

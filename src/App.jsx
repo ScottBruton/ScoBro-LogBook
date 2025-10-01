@@ -12,6 +12,7 @@ import TimeTrackingModal from './components/TimeTrackingModal.jsx';
 import CalendarSyncModal from './components/CalendarSyncModal.jsx';
 import JiraApiModal from './components/JiraApiModal.jsx';
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
+import StatusPills from './components/StatusPills.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 import { SmartPromptsService } from './services/smartPromptsService.js';
@@ -19,6 +20,7 @@ import { TimeTrackingService } from './services/timeTrackingService.js';
 import { CalendarService } from './services/calendarService.js';
 import { JiraApiService } from './services/jiraApiService.js';
 import { AnalyticsService } from './services/analyticsService.js';
+import { ConnectionStatusService } from './services/connectionStatusService.js';
 
 // Attempt to import Tauri APIs. If running in development (non-tauri) 
 // these will be undefined and the useEffect below will simply not register.
@@ -321,6 +323,28 @@ export default function App() {
     }
   };
 
+  const handleStatusClick = (service) => {
+    switch (service) {
+      case 'supabase':
+        setShowAuthModal(true);
+        break;
+      case 'email':
+        setShowEmailConfig(true);
+        break;
+      case 'jira':
+        setShowJiraApi(true);
+        break;
+      case 'calendar':
+        setShowCalendarSync(true);
+        break;
+      case 'analytics':
+        setShowAnalytics(true);
+        break;
+      default:
+        console.log(`Status clicked for ${service}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
@@ -337,12 +361,15 @@ export default function App() {
         <div>
           <h1 style={{ margin: 0, fontSize: '1.5rem' }}>📒 ScoBro Logbook</h1>
           <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-            Status: {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
-            {isAuthenticated && user && (
-              <span style={{ marginLeft: '8px' }}>
-                • 👤 {user.email}
-              </span>
-            )}
+            <div style={{ marginBottom: '4px' }}>
+              Status: {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
+              {isAuthenticated && user && (
+                <span style={{ marginLeft: '8px' }}>
+                  • 👤 {user.email}
+                </span>
+              )}
+            </div>
+            <StatusPills onStatusClick={handleStatusClick} />
           </div>
         </div>
         <div style={{ display: 'flex', gap: '8px' }}>
