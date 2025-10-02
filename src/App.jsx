@@ -23,9 +23,8 @@ import { AnalyticsService } from './services/analyticsService.js';
 import { ConnectionStatusService } from './services/connectionStatusService.js';
 // import { FileLogger } from './services/fileLogger.js'; // Removed to prevent crash
 
-// Attempt to import Tauri APIs. If running in development (non-tauri) 
-// these will be undefined and the useEffect below will simply not register.
-import { listen } from '@tauri-apps/api/event';
+// Check if we're running in Tauri environment
+const isTauri = typeof window !== 'undefined' && window.__TAURI__;
 
 /**
  * Top-level application component. It manages global state for
@@ -195,11 +194,16 @@ export default function App() {
   // Listen for tray menu events
   useEffect(() => {
     let unlisten;
-    if (typeof listen === 'function') {
-      listen('quick-add', () => {
-        setShowPopup(true);
-      }).then((unlistenFn) => {
-        unlisten = unlistenFn;
+    if (isTauri) {
+      // Only try to use Tauri APIs if we're in Tauri environment
+      import('@tauri-apps/api/event').then(({ listen: tauriListen }) => {
+        tauriListen('quick-add', () => {
+          setShowPopup(true);
+        }).then((unlistenFn) => {
+          unlisten = unlistenFn;
+        });
+      }).catch((error) => {
+        console.log('🔧 ScoBro Logbook: Tauri event listener not available:', error.message);
       });
     }
     return () => {

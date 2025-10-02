@@ -40,7 +40,14 @@ export class DataService {
    */
   static async getAllEntries() {
     try {
-      return await invoke('get_all_entries');
+      // Check if we're in Tauri environment
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        return await invoke('get_all_entries');
+      } else {
+        // Browser mode - return empty array
+        console.log('🔧 ScoBro Logbook: Running in browser mode - returning empty entries');
+        return [];
+      }
     } catch (error) {
       console.error('Failed to get entries:', error);
       throw error;
@@ -183,7 +190,14 @@ export class DataService {
    */
   static async getAllProjects() {
     try {
-      return await invoke('get_all_projects');
+      // Check if we're in Tauri environment
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        return await invoke('get_all_projects');
+      } else {
+        // Browser mode - return empty array
+        console.log('🔧 ScoBro Logbook: Running in browser mode - returning empty projects');
+        return [];
+      }
     } catch (error) {
       console.error('Failed to get projects:', error);
       throw error;
@@ -239,7 +253,14 @@ export class DataService {
    */
   static async getAllTags() {
     try {
-      return await invoke('get_all_tags');
+      // Check if we're in Tauri environment
+      if (typeof window !== 'undefined' && window.__TAURI__) {
+        return await invoke('get_all_tags');
+      } else {
+        // Browser mode - return empty array
+        console.log('🔧 ScoBro Logbook: Running in browser mode - returning empty tags');
+        return [];
+      }
     } catch (error) {
       console.error('Failed to get tags:', error);
       throw error;

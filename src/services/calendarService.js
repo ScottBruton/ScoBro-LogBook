@@ -191,19 +191,19 @@ export class CalendarService {
       
       // Listen for OAuth callback
       return new Promise((resolve, reject) => {
-        const checkClosed = setInterval(() => {
-          if (authWindow.closed) {
-            clearInterval(checkClosed);
-            reject(new Error('OAuth window was closed'));
-          }
-        }, 1000);
+        // Don't check window.closed due to COOP restrictions
+        // Instead, rely on the message handler and a timeout
+        const timeout = setTimeout(() => {
+          window.removeEventListener('message', messageHandler);
+          reject(new Error('OAuth timeout - please try again'));
+        }, 300000); // 5 minute timeout
         
         // Listen for OAuth callback message
         const messageHandler = (event) => {
           if (event.origin !== window.location.origin) return;
           
           if (event.data.type === 'GOOGLE_OAUTH_SUCCESS') {
-            clearInterval(checkClosed);
+            clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
             authWindow.close();
             
@@ -221,7 +221,7 @@ export class CalendarService {
             const calendar = this.addCalendar(calendarConfig);
             resolve(calendar);
           } else if (event.data.type === 'GOOGLE_OAUTH_ERROR') {
-            clearInterval(checkClosed);
+            clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
             authWindow.close();
             reject(new Error(event.data.error));
@@ -262,19 +262,19 @@ export class CalendarService {
       
       // Listen for OAuth callback
       return new Promise((resolve, reject) => {
-        const checkClosed = setInterval(() => {
-          if (authWindow.closed) {
-            clearInterval(checkClosed);
-            reject(new Error('OAuth window was closed'));
-          }
-        }, 1000);
+        // Don't check window.closed due to COOP restrictions
+        // Instead, rely on the message handler and a timeout
+        const timeout = setTimeout(() => {
+          window.removeEventListener('message', messageHandler);
+          reject(new Error('OAuth timeout - please try again'));
+        }, 300000); // 5 minute timeout
         
         // Listen for OAuth callback message
         const messageHandler = (event) => {
           if (event.origin !== window.location.origin) return;
           
           if (event.data.type === 'MICROSOFT_OAUTH_SUCCESS') {
-            clearInterval(checkClosed);
+            clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
             authWindow.close();
             
@@ -292,7 +292,7 @@ export class CalendarService {
             const calendar = this.addCalendar(calendarConfig);
             resolve(calendar);
           } else if (event.data.type === 'MICROSOFT_OAUTH_ERROR') {
-            clearInterval(checkClosed);
+            clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
             authWindow.close();
             reject(new Error(event.data.error));

@@ -30,6 +30,12 @@ export function useUpdater() {
   useEffect(() => {
     let isMounted = true;
     async function check() {
+      // Check if we're in Tauri environment
+      if (typeof window === 'undefined' || !window.__TAURI__) {
+        console.log('🔧 ScoBro Logbook: Running in browser mode - skipping update check');
+        return;
+      }
+      
       if (typeof checkUpdate !== 'function') {
         // Not running in Tauri; skip update check.
         return;
