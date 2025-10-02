@@ -62,7 +62,8 @@
                         window.opener.postMessage({
                             type: 'MICROSOFT_OAUTH_SUCCESS',
                             accessToken: tokens.access_token,
-                            refreshToken: tokens.refresh_token
+                            refreshToken: tokens.refresh_token,
+                            email: tokens.email || 'Unknown Email'
                         }, window.location.origin);
                     }
                     

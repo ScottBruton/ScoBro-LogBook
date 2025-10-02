@@ -58,7 +58,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
       loadCalendarConfig();
       setTestResult({
         success: true,
-        message: `Successfully connected to Google Calendar: ${newCalendar.name}`
+        message: `Successfully connected to Google Calendar: ${newCalendar.name}${newCalendar.email ? ` (${newCalendar.email})` : ''}`
       });
     } catch (error) {
       setTestResult({
@@ -78,7 +78,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
       loadCalendarConfig();
       setTestResult({
         success: true,
-        message: `Successfully connected to Microsoft Outlook: ${newCalendar.name}`
+        message: `Successfully connected to Microsoft Outlook: ${newCalendar.name}${newCalendar.email ? ` (${newCalendar.email})` : ''}`
       });
     } catch (error) {
       setTestResult({
@@ -335,21 +335,57 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                   minHeight: '40px'
                 }}>
                   {config.calendars && config.calendars.length > 0 ? (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
                       {config.calendars.map((calendar) => (
-                        <span
+                        <div
                           key={calendar.id}
                           style={{
-                            padding: '2px 6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 12px',
                             backgroundColor: calendar.provider === 'google' ? '#4285f4' : '#0078d4',
                             color: 'white',
-                            borderRadius: '12px',
-                            fontSize: '12px',
-                            textTransform: 'capitalize'
+                            borderRadius: '8px',
+                            fontSize: '14px'
                           }}
                         >
-                          {calendar.provider} - {calendar.name}
-                        </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            <div style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>
+                              {calendar.provider} - {calendar.name}
+                            </div>
+                            {calendar.email && (
+                              <div style={{ fontSize: '12px', opacity: 0.9 }}>
+                                {calendar.email}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to disconnect ${calendar.provider} calendar for ${calendar.email || 'this account'}?`)) {
+                                CalendarService.removeCalendar(calendar.id);
+                                loadCalendarConfig();
+                                setTestResult({
+                                  success: true,
+                                  message: `Successfully disconnected ${calendar.provider} calendar`
+                                });
+                              }
+                            }}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.2)',
+                              border: 'none',
+                              color: 'white',
+                              borderRadius: '4px',
+                              padding: '4px 8px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              marginLeft: '8px'
+                            }}
+                            title={`Disconnect ${calendar.provider} calendar`}
+                          >
+                            ✕
+                          </button>
+                        </div>
                       ))}
                     </div>
                   ) : (
@@ -361,7 +397,14 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                     try {
                       await handleGoogleConnect();
                     } catch (error) {
-                      alert(`Google OAuth Setup Required:\n\n${error.message}\n\nTo enable Google Calendar sync:\n1. Create a Google Cloud Project\n2. Enable Google Calendar API\n3. Create OAuth 2.0 credentials\n4. Set VITE_GOOGLE_CLIENT_ID in your .env file`);
+                      if (error.message.includes('already connected')) {
+                        setTestResult({
+                          success: false,
+                          message: error.message
+                        });
+                      } else {
+                        alert(`Google OAuth Setup Required:\n\n${error.message}\n\nTo enable Google Calendar sync:\n1. Create a Google Cloud Project\n2. Enable Google Calendar API\n3. Create OAuth 2.0 credentials\n4. Set VITE_GOOGLE_CLIENT_ID in your .env file`);
+                      }
                     }
                   }}
                   disabled={isLoading}
@@ -383,7 +426,14 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                     try {
                       await handleMicrosoftConnect();
                     } catch (error) {
-                      alert(`Microsoft OAuth Setup Required:\n\n${error.message}\n\nTo enable Microsoft Calendar sync:\n1. Create an Azure App Registration\n2. Configure Microsoft Graph API permissions\n3. Set VITE_MICROSOFT_CLIENT_ID in your .env file`);
+                      if (error.message.includes('already connected')) {
+                        setTestResult({
+                          success: false,
+                          message: error.message
+                        });
+                      } else {
+                        alert(`Microsoft OAuth Setup Required:\n\n${error.message}\n\nTo enable Microsoft Calendar sync:\n1. Create an Azure App Registration\n2. Configure Microsoft Graph API permissions\n3. Set VITE_MICROSOFT_CLIENT_ID in your .env file`);
+                      }
                     }
                   }}
                   disabled={isLoading}

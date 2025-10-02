@@ -66,3 +66,7 @@ Thumbs.db
 
 # Ignore credentials file
 credentials.json
+
+# Ignore log files
+logs/
+*.log

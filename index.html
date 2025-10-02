@@ -10,5 +10,66 @@
     <div id="root"></div>
     <!-- Vite injects the compiled script here -->
     <script type="module" src="/src/main.jsx"></script>
+    <!-- Debug helper script -->
+    <script src="/debug-console.js"></script>
+    
+    <!-- Early logging script -->
+    <script>
+      // Very early logging - this runs before any modules load
+      console.log('🚀 ScoBro Logbook: HTML loaded, starting early logging...');
+      
+      // Store early logs in localStorage as backup
+      const earlyLogs = [];
+      const originalLog = console.log;
+      const originalError = console.error;
+      const originalWarn = console.warn;
+      
+      console.log = function(...args) {
+        const message = '[EARLY] ' + args.join(' ');
+        earlyLogs.push(message);
+        originalLog.apply(console, args);
+      };
+      
+      console.error = function(...args) {
+        const message = '[EARLY ERROR] ' + args.join(' ');
+        earlyLogs.push(message);
+        originalError.apply(console, args);
+      };
+      
+      console.warn = function(...args) {
+        const message = '[EARLY WARN] ' + args.join(' ');
+        earlyLogs.push(message);
+        originalWarn.apply(console, args);
+      };
+      
+      // Save logs to localStorage every 2 seconds
+      setInterval(() => {
+        if (earlyLogs.length > 0) {
+          const existingLogs = localStorage.getItem('scobro_early_logs') || '';
+          const newLogs = existingLogs + earlyLogs.join('\n') + '\n';
+          localStorage.setItem('scobro_early_logs', newLogs);
+          earlyLogs.length = 0; // Clear the array
+        }
+      }, 2000);
+      
+      // Global error handler for uncaught errors
+      window.addEventListener('error', function(event) {
+        const errorMsg = `[EARLY FATAL ERROR] ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
+        earlyLogs.push(errorMsg);
+        console.error('💥 Fatal error caught:', errorMsg);
+        console.error('Stack:', event.error?.stack);
+      });
+      
+      // Global handler for unhandled promise rejections
+      window.addEventListener('unhandledrejection', function(event) {
+        const errorMsg = `[EARLY UNHANDLED REJECTION] ${event.reason}`;
+        earlyLogs.push(errorMsg);
+        console.error('💥 Unhandled promise rejection:', errorMsg);
+        console.error('Stack:', event.reason?.stack);
+      });
+      
+      console.log('✅ ScoBro Logbook: Early logging system initialized');
+      console.log('🔍 ScoBro Logbook: About to load main.jsx...');
+    </script>
   </body>
 </html>

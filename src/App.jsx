@@ -21,6 +21,7 @@ import { CalendarService } from './services/calendarService.js';
 import { JiraApiService } from './services/jiraApiService.js';
 import { AnalyticsService } from './services/analyticsService.js';
 import { ConnectionStatusService } from './services/connectionStatusService.js';
+// import { FileLogger } from './services/fileLogger.js'; // Removed to prevent crash
 
 // Attempt to import Tauri APIs. If running in development (non-tauri) 
 // these will be undefined and the useEffect below will simply not register.
@@ -33,6 +34,8 @@ import { listen } from '@tauri-apps/api/event';
  * events to open the popup when running inside a Tauri environment.
  */
 export default function App() {
+  console.log('🎯 ScoBro Logbook: App component initializing...');
+  
   const [entries, setEntries] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [showProjectsManager, setShowProjectsManager] = useState(false);
@@ -54,9 +57,25 @@ export default function App() {
 
   // Load entries from SQLite database on mount and check authentication
   useEffect(() => {
-    loadEntries();
-    checkAuthentication();
-    setupSmartPrompts();
+    // // FileLogger.info('🔄 ScoBro Logbook: App useEffect starting...');
+    console.log('🔄 ScoBro Logbook: App useEffect starting...');
+    try {
+      // FileLogger.info('📊 ScoBro Logbook: Loading entries...');
+      console.log('📊 ScoBro Logbook: Loading entries...');
+      loadEntries();
+      // FileLogger.info('🔐 ScoBro Logbook: Checking authentication...');
+      console.log('🔐 ScoBro Logbook: Checking authentication...');
+      checkAuthentication();
+      // FileLogger.info('🧠 ScoBro Logbook: Setting up smart prompts...');
+      console.log('🧠 ScoBro Logbook: Setting up smart prompts...');
+      setupSmartPrompts();
+      // FileLogger.info('✅ ScoBro Logbook: App useEffect completed successfully');
+      console.log('✅ ScoBro Logbook: App useEffect completed successfully');
+    } catch (error) {
+      // FileLogger.error('💥 ScoBro Logbook: Error in App useEffect', { message: error.message, stack: error.stack });
+      console.error('💥 ScoBro Logbook: Error in App useEffect:', error);
+      console.error('Stack trace:', error.stack);
+    }
   }, []);
 
   // Set up smart prompts nudges
@@ -88,41 +107,82 @@ export default function App() {
     };
   }, [isAuthenticated]);
 
+  // Set up debug keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Ctrl+Shift+D to toggle debug button
+      if (event.ctrlKey && event.shiftKey && event.key === 'D') {
+        event.preventDefault();
+        const debugButton = document.getElementById('debug-button');
+        if (debugButton) {
+          debugButton.style.display = debugButton.style.display === 'none' ? 'block' : 'none';
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const checkAuthentication = async () => {
+    console.log('🔐 ScoBro Logbook: checkAuthentication function called');
     try {
+      console.log('🔍 ScoBro Logbook: Checking authentication status...');
       const authStatus = await SupabaseService.isAuthenticated();
+      console.log('✅ ScoBro Logbook: Authentication status:', authStatus);
       setIsAuthenticated(authStatus);
       
       if (authStatus) {
+        console.log('👤 ScoBro Logbook: Getting current user...');
         const { data: { user } } = await SupabaseService.getCurrentUser();
+        console.log('✅ ScoBro Logbook: User loaded:', user?.email || 'Unknown');
         setUser(user);
         setSyncStatus('synced');
       } else {
+        console.log('ℹ️ ScoBro Logbook: User not authenticated, setting offline status');
         setSyncStatus('offline');
       }
     } catch (error) {
-      console.error('Failed to check authentication:', error);
+      console.error('💥 ScoBro Logbook: Failed to check authentication:', error);
+      console.error('Stack trace:', error.stack);
       setIsAuthenticated(false);
       setSyncStatus('offline');
     }
   };
 
   const loadEntries = async () => {
+    // FileLogger.info('📊 ScoBro Logbook: loadEntries function called');
+    console.log('📊 ScoBro Logbook: loadEntries function called');
     try {
+      // FileLogger.info('⏳ ScoBro Logbook: Setting loading state...');
+      console.log('⏳ ScoBro Logbook: Setting loading state...');
       setIsLoading(true);
+      // FileLogger.info('🔍 ScoBro Logbook: Calling DataService.getAllEntries()...');
+      console.log('🔍 ScoBro Logbook: Calling DataService.getAllEntries()...');
       const data = await DataService.getAllEntries();
+      // FileLogger.info('✅ ScoBro Logbook: Entries loaded successfully', { entryCount: data?.length || 0 });
+      console.log('✅ ScoBro Logbook: Entries loaded successfully:', data?.length || 0, 'entries');
       setEntries(data);
     } catch (err) {
-      console.error('Failed to load entries:', err);
+      // FileLogger.error('💥 ScoBro Logbook: Failed to load entries', { message: err.message, stack: err.stack });
+      console.error('💥 ScoBro Logbook: Failed to load entries:', err);
+      console.error('Stack trace:', err.stack);
       // Fallback to localStorage for development
+      // FileLogger.info('🔄 ScoBro Logbook: Attempting localStorage fallback...');
+      console.log('🔄 ScoBro Logbook: Attempting localStorage fallback...');
       const stored = localStorage.getItem('scobro_entries');
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
+          // FileLogger.info('✅ ScoBro Logbook: Loaded entries from localStorage', { entryCount: parsed?.length || 0 });
+          console.log('✅ ScoBro Logbook: Loaded entries from localStorage:', parsed?.length || 0, 'entries');
           setEntries(parsed);
         } catch (parseErr) {
-          console.error('Failed to parse stored entries', parseErr);
+          // FileLogger.error('💥 ScoBro Logbook: Failed to parse stored entries', { message: parseErr.message, stack: parseErr.stack });
+          console.error('💥 ScoBro Logbook: Failed to parse stored entries', parseErr);
         }
+      } else {
+        console.log('ℹ️ ScoBro Logbook: No entries found in localStorage');
       }
     } finally {
       setIsLoading(false);
@@ -227,9 +287,20 @@ export default function App() {
   };
 
   const setupSmartPrompts = () => {
-    const config = SmartPromptsService.getNudgeConfig();
-    if (config.enabled) {
-      checkForSmartPromptNudge();
+    console.log('🧠 ScoBro Logbook: setupSmartPrompts function called');
+    try {
+      console.log('🔍 ScoBro Logbook: Getting nudge config...');
+      const config = SmartPromptsService.getNudgeConfig();
+      console.log('✅ ScoBro Logbook: Nudge config loaded:', config);
+      if (config.enabled) {
+        console.log('🔔 ScoBro Logbook: Smart prompts enabled, checking for nudges...');
+        checkForSmartPromptNudge();
+      } else {
+        console.log('ℹ️ ScoBro Logbook: Smart prompts disabled');
+      }
+    } catch (error) {
+      console.error('💥 ScoBro Logbook: Error in setupSmartPrompts:', error);
+      console.error('Stack trace:', error.stack);
     }
   };
 
@@ -347,6 +418,7 @@ export default function App() {
   };
 
   if (isLoading) {
+    console.log('⏳ ScoBro Logbook: App is loading, showing loading screen');
     return (
       <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
         <h1 style={{ margin: 0, fontSize: '1.5rem' }}>📒 ScoBro Logbook</h1>
@@ -355,9 +427,35 @@ export default function App() {
     );
   }
 
-  return (
+  console.log('🎨 ScoBro Logbook: Rendering main app interface');
+  try {
+    return (
     <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
       <UpdateBanner />
+      
+      {/* Hidden Debug Button - Press Ctrl+Shift+D to show */}
+      <div id="debug-button" style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        right: '10px', 
+        zIndex: 1000,
+        display: 'none'
+      }}>
+        <button 
+          onClick={() => window.showConsoleInDOM && window.showConsoleInDOM()} 
+          style={{ 
+            padding: '5px 10px', 
+            backgroundColor: '#007bff', 
+            color: 'white', 
+            border: 'none', 
+            borderRadius: '4px', 
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+        >
+          🔧 Debug
+        </button>
+      </div>
       <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.5rem' }}>📒 ScoBro Logbook</h1>
@@ -727,5 +825,63 @@ export default function App() {
         </div>
       )}
     </div>
-  );
+    );
+  } catch (error) {
+    console.error('💥 ScoBro Logbook: Error rendering App component:', error);
+    console.error('Stack trace:', error.stack);
+    
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: 'red', maxWidth: '800px', margin: '0 auto' }}>
+        <h2>🚨 ScoBro Logbook Render Error</h2>
+        <p><strong>Error:</strong> {error.message}</p>
+        <p><strong>Stack:</strong></p>
+        <pre style={{ background: '#f5f5f5', padding: '10px', overflow: 'auto', fontSize: '12px' }}>{error.stack}</pre>
+        <p>Check the console for more details.</p>
+        <div style={{ marginTop: '20px' }}>
+          <button 
+            onClick={() => window.showConsoleInDOM && window.showConsoleInDOM()} 
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#007bff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Show Debug Console
+          </button>
+          <button 
+            onClick={() => window.checkAppState && window.checkAppState()} 
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#28a745', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Check App State
+          </button>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#dc3545', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer'
+            }}
+          >
+            Reload App
+          </button>
+        </div>
+        <script src="debug-console.js"></script>
+      </div>
+    );
+  }
 }

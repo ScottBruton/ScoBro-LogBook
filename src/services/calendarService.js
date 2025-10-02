@@ -8,6 +8,10 @@ export class CalendarService {
   static GOOGLE_CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
   static MICROSOFT_GRAPH_API = 'https://graph.microsoft.com/v1.0';
 
+  static {
+    console.log('📅 ScoBro Logbook: CalendarService class loaded');
+  }
+
   /**
    * Get calendar configuration
    */
@@ -65,10 +69,17 @@ export class CalendarService {
   static addCalendar(calendarConfig) {
     try {
       const config = this.getCalendarConfig();
+      
+      // Check for duplicate email addresses
+      if (calendarConfig.email && config.calendars.some(cal => cal.email === calendarConfig.email)) {
+        throw new Error(`Calendar with email ${calendarConfig.email} is already connected`);
+      }
+      
       const newCalendar = {
         id: this.generateCalendarId(),
         provider: calendarConfig.provider, // 'google' or 'microsoft'
         name: calendarConfig.name,
+        email: calendarConfig.email, // User's email address
         accessToken: calendarConfig.accessToken,
         refreshToken: calendarConfig.refreshToken,
         calendarId: calendarConfig.calendarId,
@@ -159,15 +170,20 @@ export class CalendarService {
    */
   static async initializeGoogleCalendar() {
     try {
+      console.log('📅 ScoBro Logbook: Initializing Google Calendar OAuth...');
       // Check if Google OAuth is properly configured
-      const clientId = process.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id';
+      // In Tauri, environment variables are accessed via import.meta.env
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id';
       
       if (clientId === 'your_google_client_id') {
-        throw new Error('Google OAuth not configured. Please set VITE_GOOGLE_CLIENT_ID environment variable.');
+        const error = 'Google OAuth not configured. Please set VITE_GOOGLE_CLIENT_ID environment variable.';
+        console.error('📅 ScoBro Logbook: Google OAuth not configured');
+        throw new Error(error);
       }
       
       // Generate OAuth URL and redirect to Google login
       const authUrl = this.generateGoogleAuthUrl();
+      console.log('📅 ScoBro Logbook: Redirecting to Google OAuth', { authUrl });
       console.log('📅 Redirecting to Google OAuth:', authUrl);
       
       // Open OAuth flow in new window
@@ -195,6 +211,7 @@ export class CalendarService {
             const calendarConfig = {
               provider: 'google',
               name: 'Google Calendar',
+              email: event.data.email || 'Unknown Email',
               accessToken: event.data.accessToken,
               refreshToken: event.data.refreshToken,
               calendarId: 'primary',
@@ -224,15 +241,20 @@ export class CalendarService {
    */
   static async initializeMicrosoftOutlook() {
     try {
+      console.log('📅 ScoBro Logbook: Initializing Microsoft Outlook OAuth...');
       // Check if Microsoft OAuth is properly configured
-      const clientId = process.env.VITE_MICROSOFT_CLIENT_ID || 'your_microsoft_client_id';
+      // In Tauri, environment variables are accessed via import.meta.env
+      const clientId = import.meta.env.VITE_MICROSOFT_CLIENT_ID || 'your_microsoft_client_id';
       
       if (clientId === 'your_microsoft_client_id') {
-        throw new Error('Microsoft OAuth not configured. Please set VITE_MICROSOFT_CLIENT_ID environment variable.');
+        const error = 'Microsoft OAuth not configured. Please set VITE_MICROSOFT_CLIENT_ID environment variable.';
+        console.error('📅 ScoBro Logbook: Microsoft OAuth not configured');
+        throw new Error(error);
       }
       
       // Generate OAuth URL and redirect to Microsoft login
       const authUrl = this.generateMicrosoftAuthUrl();
+      console.log('📅 ScoBro Logbook: Redirecting to Microsoft OAuth', { authUrl });
       console.log('📅 Redirecting to Microsoft OAuth:', authUrl);
       
       // Open OAuth flow in new window
@@ -260,6 +282,7 @@ export class CalendarService {
             const calendarConfig = {
               provider: 'microsoft',
               name: 'Microsoft Calendar',
+              email: event.data.email || 'Unknown Email',
               accessToken: event.data.accessToken,
               refreshToken: event.data.refreshToken,
               calendarId: 'primary',
@@ -289,7 +312,8 @@ export class CalendarService {
    */
   static generateGoogleAuthUrl() {
     // Check if Google OAuth is properly configured
-    const clientId = process.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id';
+    // In Tauri, environment variables are accessed via import.meta.env
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your_google_client_id';
     
     if (clientId === 'your_google_client_id') {
       throw new Error('Google OAuth not configured. Please set VITE_GOOGLE_CLIENT_ID environment variable.');
@@ -312,7 +336,8 @@ export class CalendarService {
    */
   static generateMicrosoftAuthUrl() {
     // Check if Microsoft OAuth is properly configured
-    const clientId = process.env.VITE_MICROSOFT_CLIENT_ID || 'your_microsoft_client_id';
+    // In Tauri, environment variables are accessed via import.meta.env
+    const clientId = import.meta.env.VITE_MICROSOFT_CLIENT_ID || 'your_microsoft_client_id';
     
     if (clientId === 'your_microsoft_client_id') {
       throw new Error('Microsoft OAuth not configured. Please set VITE_MICROSOFT_CLIENT_ID environment variable.');

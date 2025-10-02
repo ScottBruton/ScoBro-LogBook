@@ -45,7 +45,7 @@ This is much safer than storing your email password in the app.
 
 Add to your `.env` file:
 ```env
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+VITE_GOOGLE_CLIENT_ID=104771774918-7p3s0uo9g704q08dqg5luvpimtkj3g2e.apps.googleusercontent.com
 ```
 
 ## Microsoft Outlook Setup
@@ -81,8 +81,8 @@ VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 
 Add to your `.env` file:
 ```env
-VITE_MICROSOFT_CLIENT_ID=your-microsoft-client-id
-VITE_MICROSOFT_CLIENT_SECRET=your-microsoft-client-secret
+VITE_MICROSOFT_CLIENT_ID=4c0f6b17-daab-4acc-abda-f904a01ed80d
+VITE_MICROSOFT_CLIENT_SECRET=c2e09045-3a58-49ab-a65e-c6c152300d6c
 ```
 
 ## How It Works
