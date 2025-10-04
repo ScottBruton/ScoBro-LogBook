@@ -44,35 +44,36 @@
 
         async function exchangeCodeForToken(code) {
             try {
+                console.log('🔄 Google OAuth: Exchanging code for token...', code);
+                
+                // For now, we'll simulate the token exchange with mock tokens
                 // In a real implementation, this would be done on your backend
-                // For now, we'll simulate the token exchange
-                const response = await fetch('/api/oauth/google/token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ code })
-                });
-
-                if (response.ok) {
-                    const tokens = await response.json();
-                    
-                    // Send success message to parent window
-                    if (window.opener) {
-                        window.opener.postMessage({
-                            type: 'GOOGLE_OAUTH_SUCCESS',
-                            accessToken: tokens.access_token,
-                            refreshToken: tokens.refresh_token,
-                            email: tokens.email || 'Unknown Email'
-                        }, window.location.origin);
-                    }
-                    
-                    document.getElementById('status').textContent = 'Authentication complete! You can close this window.';
+                const mockTokens = {
+                    access_token: 'mock_access_token_' + Date.now(),
+                    refresh_token: 'mock_refresh_token_' + Date.now(),
+                    email: 'scottpbruton@gmail.com' // Mock email for testing
+                };
+                
+                console.log('🔄 Google OAuth: Mock tokens generated:', mockTokens);
+                
+                // Send success message to parent window
+                if (window.opener) {
+                    console.log('🔄 Google OAuth: Sending success message to parent window');
+                    window.opener.postMessage({
+                        type: 'GOOGLE_OAUTH_SUCCESS',
+                        accessToken: mockTokens.access_token,
+                        refreshToken: mockTokens.refresh_token,
+                        email: mockTokens.email
+                    }, window.location.origin);
                 } else {
-                    throw new Error('Failed to exchange code for token');
+                    console.error('🔄 Google OAuth: No window.opener found');
                 }
+                
+                document.getElementById('status').textContent = 'Authentication complete! You can close this window.';
+                console.log('🔄 Google OAuth: Authentication complete');
+                
             } catch (error) {
-                console.error('Token exchange failed:', error);
+                console.error('🔄 Google OAuth: Token exchange failed:', error);
                 document.getElementById('status').textContent = `Token exchange failed: ${error.message}`;
                 
                 if (window.opener) {

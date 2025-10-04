@@ -4,7 +4,9 @@
   "private": true,
   "description": "ScoBro Logbook – a lightweight desktop journal and productivity tracker built with React and Tauri 1.x.",
   "scripts": {
-    "dev": "vite",
+    "start": "tauri dev",
+    "dev": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",
+    "vite": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri dev",

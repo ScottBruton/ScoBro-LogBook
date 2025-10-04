@@ -205,7 +205,7 @@ export class CalendarService {
           if (event.data.type === 'GOOGLE_OAUTH_SUCCESS') {
             clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
-            authWindow.close();
+            // Don't close window due to COOP restrictions - let user close manually
             
             // Create calendar configuration with real tokens
             const calendarConfig = {
@@ -223,7 +223,7 @@ export class CalendarService {
           } else if (event.data.type === 'GOOGLE_OAUTH_ERROR') {
             clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
-            authWindow.close();
+            // Don't close window due to COOP restrictions - let user close manually
             reject(new Error(event.data.error));
           }
         };
@@ -258,7 +258,9 @@ export class CalendarService {
       console.log('📅 Redirecting to Microsoft OAuth:', authUrl);
       
       // Open OAuth flow in new window
+      console.log('📅 ScoBro Logbook: About to open Microsoft OAuth popup...');
       const authWindow = window.open(authUrl, 'microsoft-oauth', 'width=600,height=700');
+      console.log('📅 ScoBro Logbook: Microsoft OAuth popup opened:', authWindow);
       
       // Listen for OAuth callback
       return new Promise((resolve, reject) => {
@@ -271,12 +273,20 @@ export class CalendarService {
         
         // Listen for OAuth callback message
         const messageHandler = (event) => {
-          if (event.origin !== window.location.origin) return;
+          console.log('📅 ScoBro Logbook: Received message event:', event);
+          console.log('📅 ScoBro Logbook: Event origin:', event.origin, 'Expected:', window.location.origin);
+          console.log('📅 ScoBro Logbook: Event data:', event.data);
+          
+          if (event.origin !== window.location.origin) {
+            console.log('📅 ScoBro Logbook: Ignoring message from different origin');
+            return;
+          }
           
           if (event.data.type === 'MICROSOFT_OAUTH_SUCCESS') {
+            console.log('📅 ScoBro Logbook: Received MICROSOFT_OAUTH_SUCCESS message');
             clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
-            authWindow.close();
+            // Don't close window due to COOP restrictions - let user close manually
             
             // Create calendar configuration with real tokens
             const calendarConfig = {
@@ -292,10 +302,13 @@ export class CalendarService {
             const calendar = this.addCalendar(calendarConfig);
             resolve(calendar);
           } else if (event.data.type === 'MICROSOFT_OAUTH_ERROR') {
+            console.log('📅 ScoBro Logbook: Received MICROSOFT_OAUTH_ERROR message:', event.data.error);
             clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
-            authWindow.close();
+            // Don't close window due to COOP restrictions - let user close manually
             reject(new Error(event.data.error));
+          } else {
+            console.log('📅 ScoBro Logbook: Received unknown message type:', event.data.type);
           }
         };
         
@@ -319,7 +332,8 @@ export class CalendarService {
       throw new Error('Google OAuth not configured. Please set VITE_GOOGLE_CLIENT_ID environment variable.');
     }
     
-    const redirectUri = encodeURIComponent(window.location.origin + '/auth/google/callback');
+    const redirectUri = encodeURIComponent(window.location.origin + '/google-callback.html');
+    console.log('📅 ScoBro Logbook: Redirect URI', redirectUri);
     const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar.readonly');
     
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -343,16 +357,23 @@ export class CalendarService {
       throw new Error('Microsoft OAuth not configured. Please set VITE_MICROSOFT_CLIENT_ID environment variable.');
     }
     
-    const redirectUri = encodeURIComponent(window.location.origin + '/auth/microsoft/callback');
+    const redirectUri = encodeURIComponent(window.location.origin + '/microsoft-callback.html');
     const scope = encodeURIComponent('https://graph.microsoft.com/calendars.read');
     
-    return `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
+    const authUrl = `https://login.microsoftonline.com/d620d048-fd69-4b9f-adf6-2cfd9b766119/oauth2/v2.0/authorize?` +
            `client_id=${clientId}&` +
            `response_type=code&` +
            `redirect_uri=${redirectUri}&` +
            `scope=${scope}&` +
            `response_mode=query&` +
            `state=calendar_sync`;
+    
+    console.log('📅 Microsoft OAuth URL generated:', authUrl);
+    console.log('📅 Client ID:', clientId);
+    console.log('📅 Redirect URI:', window.location.origin + '/microsoft-callback.html');
+    console.log('📅 Scope:', 'https://graph.microsoft.com/calendars.read');
+    
+    return authUrl;
   }
 
   /**

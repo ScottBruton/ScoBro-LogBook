@@ -16,4 +16,12 @@ export default defineConfig({
     // the settings in src-tauri/tauri.conf.json.
     outDir: 'dist',
   },
+  server: {
+    // Configure Vite dev server to serve OAuth callback files directly
+    middlewareMode: false,
+    port: 5173, // Fixed port for OAuth consistency
+    strictPort: true, // Fail if port is already in use
+  },
+  // Configure how static files are served
+  publicDir: 'public',
 });
