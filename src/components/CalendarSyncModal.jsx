@@ -140,26 +140,43 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const handleExportCalendar = async (calendar) => {
     try {
       setIsLoading(true);
+      
       // Get events for the past and future month
       const now = new Date();
       const pastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
       const futureMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
       
-      // For now, we'll create a mock export since we don't have real API integration
-      const mockEvents = [
-        {
-          title: 'Sample Meeting',
-          start: new Date().toISOString(),
-          end: new Date(Date.now() + 3600000).toISOString(),
-          description: 'This is a sample event for export',
-          location: 'Conference Room A'
-        }
-      ];
+      // Fetch real calendar events
+      const events = await CalendarService.fetchCalendarEvents(calendar, pastMonth, futureMonth);
+      
+      // If no events, show informative message
+      if (events.length === 0) {
+        const csvContent = [
+          'Title,Start Date,Start Time,End Date,End Time,Description,Location',
+          `"No Events Found","${now.toLocaleDateString()}","${now.toLocaleTimeString()}","${now.toLocaleDateString()}","${now.toLocaleTimeString()}","No calendar events found for the specified date range.","Calendar API"`
+        ].join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `${calendar.provider}_${calendar.name}_no_events.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setTestResult({
+          success: true,
+          message: `Calendar export created: ${calendar.provider}_${calendar.name}_no_events.csv (No events found)`
+        });
+        return;
+      }
 
-      // Create Excel-like CSV content
+      // Create Excel-like CSV content with real events
       const csvContent = [
-        'Title,Start Date,Start Time,End Date,End Time,Description,Location',
-        ...mockEvents.map(event => {
+        'Title,Start Date,Start Time,End Date,End Time,Description,Location,Provider',
+        ...events.map(event => {
           const start = new Date(event.start);
           const end = new Date(event.end);
           return [
@@ -169,7 +186,8 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
             end.toLocaleDateString(),
             end.toLocaleTimeString(),
             `"${event.description || ''}"`,
-            `"${event.location || ''}"`
+            `"${event.location || ''}"`,
+            `"${event.provider || calendar.provider}"`
           ].join(',');
         })
       ].join('\n');
@@ -187,7 +205,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
       
       setTestResult({
         success: true,
-        message: `Calendar exported successfully: ${calendar.provider}_${calendar.name}_export.csv`
+        message: `Calendar exported successfully: ${calendar.provider}_${calendar.name}_export.csv (${events.length} events)`
       });
     } catch (error) {
       setTestResult({
@@ -211,9 +229,8 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   };
 
   const getStatusPill = (calendar) => {
-    // For now, assume all connected calendars are authorized
-    // In a real implementation, you'd check the actual OAuth token status
-    const isAuthorized = calendar.accessToken && calendar.accessToken !== 'mock_access_token';
+    // Check if we have a real access token (from backend OAuth)
+    const hasAccessToken = calendar.accessToken && calendar.accessToken !== 'mock_access_token';
     
     return (
       <span
@@ -222,12 +239,12 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
           borderRadius: '12px',
           fontSize: '10px',
           fontWeight: 'bold',
-          backgroundColor: isAuthorized ? '#28a745' : '#ffc107',
-          color: isAuthorized ? 'white' : 'black',
+          backgroundColor: hasAccessToken ? '#28a745' : '#ffc107',
+          color: hasAccessToken ? 'white' : 'black',
           textTransform: 'uppercase'
         }}
       >
-        {isAuthorized ? 'Authorized' : 'Mock'}
+        {hasAccessToken ? 'Authorized' : 'Mock'}
       </span>
     );
   };

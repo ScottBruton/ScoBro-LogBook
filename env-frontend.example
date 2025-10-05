@@ -1,0 +1,12 @@
+# Frontend Environment Variables
+# Copy this to .env and fill in your values
+
+# Google OAuth Configuration
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+
+# Microsoft OAuth Configuration  
+VITE_MICROSOFT_CLIENT_ID=your_microsoft_client_id_here
+
+# Supabase Configuration (if you're using it)
+VITE_SUPABASE_URL=your_supabase_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here

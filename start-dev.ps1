@@ -10,8 +10,8 @@ $processes = netstat -ano | Select-String ":5173" | ForEach-Object {
     }
 }
 
-# Also kill any remaining Node.js processes
-taskkill /F /IM node.exe 2>$null
+# Don't kill all Node.js processes - let backend server keep running
+# taskkill /F /IM node.exe 2>$null
 
 Write-Host "Port 5173 is now free!" -ForegroundColor Green
 Write-Host "Starting Vite dev server..." -ForegroundColor Cyan

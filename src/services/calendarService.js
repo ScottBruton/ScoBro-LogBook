@@ -47,13 +47,14 @@ export class CalendarService {
     try {
       console.log(`📅 ScoBro Logbook: Handling ${provider} OAuth success:`, data);
       
-      // Create calendar configuration
+      // Create calendar configuration with real access tokens
       const calendarConfig = {
         provider: provider,
         name: provider === 'google' ? 'Google Calendar' : 'Microsoft Calendar',
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
         email: data.email || 'Unknown Email',
+        name: data.name || 'Unknown Name',
         enabled: true
       };
       
@@ -149,9 +150,9 @@ export class CalendarService {
         provider: calendarConfig.provider, // 'google' or 'microsoft'
         name: calendarConfig.name,
         email: calendarConfig.email, // User's email address
-        accessToken: calendarConfig.accessToken,
-        refreshToken: calendarConfig.refreshToken,
-        calendarId: calendarConfig.calendarId,
+        accessToken: calendarConfig.accessToken, // Real access token from backend
+        refreshToken: calendarConfig.refreshToken, // Refresh token for token renewal
+        calendarId: calendarConfig.calendarId || 'primary',
         enabled: true,
         addedAt: new Date().toISOString()
       };
@@ -420,6 +421,8 @@ export class CalendarService {
     
     const redirectUri = encodeURIComponent(window.location.origin + '/google-callback.html');
     console.log('📅 ScoBro Logbook: Redirect URI', redirectUri);
+    console.log('🔍 Frontend window.location.origin:', window.location.origin);
+    console.log('🔍 Frontend full redirect URI:', window.location.origin + '/google-callback.html');
     const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar.readonly');
     
     return `https://accounts.google.com/o/oauth2/v2/auth?` +
@@ -517,22 +520,59 @@ export class CalendarService {
   }
 
   /**
+   * Fetch calendar events (generic function that calls the appropriate provider)
+   */
+  static async fetchCalendarEvents(calendar, startDate, endDate) {
+    try {
+      if (calendar.provider === 'google') {
+        return await this.fetchGoogleCalendarEvents(calendar, startDate, endDate);
+      } else if (calendar.provider === 'microsoft') {
+        return await this.fetchMicrosoftCalendarEvents(calendar, startDate, endDate);
+      } else {
+        throw new Error(`Unsupported calendar provider: ${calendar.provider}`);
+      }
+    } catch (error) {
+      console.error('Failed to fetch calendar events:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch Google Calendar events
    */
   static async fetchGoogleCalendarEvents(config, startDate, endDate) {
     try {
-      console.log('📅 Google Calendar API integration not yet implemented');
-      console.log('📅 Would fetch events from:', config.calendarId);
+      console.log('📅 Fetching Google Calendar events...');
+      console.log('📅 Calendar ID:', config.calendarId);
       console.log('📅 Date range:', startDate.toISOString(), 'to', endDate.toISOString());
       
-      // TODO: Implement real Google Calendar API integration
-      // This would require:
-      // 1. OAuth 2.0 authentication flow
-      // 2. Google Calendar API client setup
-      // 3. Proper error handling for API limits and permissions
+      // Check if we have an access token
+      if (!config.accessToken) {
+        throw new Error('No access token available for Google Calendar');
+      }
+
+      // Call backend API to fetch Google Calendar events
+      const response = await fetch('http://localhost:3001/api/calendar/google/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          access_token: config.accessToken,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch Google Calendar events');
+      }
+
+      const data = await response.json();
+      console.log(`✅ Retrieved ${data.events.length} Google Calendar events`);
       
-      // For now, return empty array to avoid showing fake data
-      return [];
+      return data.events;
     } catch (error) {
       console.error('Failed to fetch Google Calendar events:', error);
       throw error;
@@ -544,18 +584,37 @@ export class CalendarService {
    */
   static async fetchMicrosoftCalendarEvents(config, startDate, endDate) {
     try {
-      console.log('📅 Microsoft Calendar API integration not yet implemented');
-      console.log('📅 Would fetch events from:', config.calendarId);
+      console.log('📅 Fetching Microsoft Calendar events...');
+      console.log('📅 Calendar ID:', config.calendarId);
       console.log('📅 Date range:', startDate.toISOString(), 'to', endDate.toISOString());
       
-      // TODO: Implement real Microsoft Graph API integration
-      // This would require:
-      // 1. Microsoft OAuth 2.0 authentication flow
-      // 2. Microsoft Graph API client setup
-      // 3. Proper error handling for API limits and permissions
+      // Check if we have an access token
+      if (!config.accessToken) {
+        throw new Error('No access token available for Microsoft Calendar');
+      }
+
+      // Call backend API to fetch Microsoft Calendar events
+      const response = await fetch('http://localhost:3001/api/calendar/microsoft/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          access_token: config.accessToken,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to fetch Microsoft Calendar events');
+      }
+
+      const data = await response.json();
+      console.log(`✅ Retrieved ${data.events.length} Microsoft Calendar events`);
       
-      // For now, return empty array to avoid showing fake data
-      return [];
+      return data.events;
     } catch (error) {
       console.error('Failed to fetch Microsoft Calendar events:', error);
       throw error;
