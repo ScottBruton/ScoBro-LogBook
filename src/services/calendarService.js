@@ -10,6 +10,74 @@ export class CalendarService {
 
   static {
     console.log('📅 ScoBro Logbook: CalendarService class loaded');
+    // Set up global message listener for OAuth callbacks
+    this.setupGlobalMessageListener();
+  }
+
+  static setupGlobalMessageListener() {
+    // Only set up once
+    if (window.calendarOAuthListener) return;
+    
+    window.calendarOAuthListener = (event) => {
+      console.log('📅 ScoBro Logbook: Global message listener received:', event);
+      
+      if (event.origin !== window.location.origin) {
+        console.log('📅 ScoBro Logbook: Ignoring message from different origin');
+        return;
+      }
+      
+      if (event.data.type === 'GOOGLE_OAUTH_SUCCESS') {
+        console.log('📅 ScoBro Logbook: Global listener - Google OAuth success');
+        // Mark this message as processed by global listener
+        event.data._processedByGlobal = true;
+        this.handleOAuthSuccess('google', event.data);
+      } else if (event.data.type === 'MICROSOFT_OAUTH_SUCCESS') {
+        console.log('📅 ScoBro Logbook: Global listener - Microsoft OAuth success');
+        // Mark this message as processed by global listener
+        event.data._processedByGlobal = true;
+        this.handleOAuthSuccess('microsoft', event.data);
+      }
+    };
+    
+    window.addEventListener('message', window.calendarOAuthListener);
+    console.log('📅 ScoBro Logbook: Global OAuth message listener set up');
+  }
+
+  static handleOAuthSuccess(provider, data) {
+    try {
+      console.log(`📅 ScoBro Logbook: Handling ${provider} OAuth success:`, data);
+      
+      // Create calendar configuration
+      const calendarConfig = {
+        provider: provider,
+        name: provider === 'google' ? 'Google Calendar' : 'Microsoft Calendar',
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        email: data.email || 'Unknown Email',
+        enabled: true
+      };
+      
+      const calendar = this.addCalendar(calendarConfig);
+      console.log(`📅 ScoBro Logbook: ${provider} calendar added successfully:`, calendar);
+      
+      // Dispatch a custom event to notify the UI
+      const event = new CustomEvent('calendarConnected', { 
+        detail: { provider, calendar, data } 
+      });
+      window.dispatchEvent(event);
+      
+    } catch (error) {
+      console.error(`📅 ScoBro Logbook: Error handling ${provider} OAuth success:`, error);
+      
+      // If it's a duplicate error, still dispatch the event to update the UI
+      if (error.message.includes('already connected')) {
+        console.log(`📅 ScoBro Logbook: ${provider} calendar already connected, updating UI anyway`);
+        const event = new CustomEvent('calendarConnected', { 
+          detail: { provider, data, error: error.message } 
+        });
+        window.dispatchEvent(event);
+      }
+    }
   }
 
   /**
@@ -70,9 +138,10 @@ export class CalendarService {
     try {
       const config = this.getCalendarConfig();
       
-      // Check for duplicate email addresses
-      if (calendarConfig.email && config.calendars.some(cal => cal.email === calendarConfig.email)) {
-        throw new Error(`Calendar with email ${calendarConfig.email} is already connected`);
+      // Check for duplicate email addresses with the same provider
+      if (calendarConfig.email && config.calendars.some(cal => 
+        cal.email === calendarConfig.email && cal.provider === calendarConfig.provider)) {
+        throw new Error(`${calendarConfig.provider} calendar with email ${calendarConfig.email} is already connected`);
       }
       
       const newCalendar = {
@@ -203,6 +272,14 @@ export class CalendarService {
           if (event.origin !== window.location.origin) return;
           
           if (event.data.type === 'GOOGLE_OAUTH_SUCCESS') {
+            // Skip if already processed by global listener
+            if (event.data._processedByGlobal) {
+              console.log('📅 ScoBro Logbook: Google message already processed by global listener, skipping');
+              clearTimeout(timeout);
+              window.removeEventListener('message', messageHandler);
+              return;
+            }
+            
             clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
             // Don't close window due to COOP restrictions - let user close manually
@@ -284,6 +361,15 @@ export class CalendarService {
           
           if (event.data.type === 'MICROSOFT_OAUTH_SUCCESS') {
             console.log('📅 ScoBro Logbook: Received MICROSOFT_OAUTH_SUCCESS message');
+            
+            // Skip if already processed by global listener
+            if (event.data._processedByGlobal) {
+              console.log('📅 ScoBro Logbook: Message already processed by global listener, skipping');
+              clearTimeout(timeout);
+              window.removeEventListener('message', messageHandler);
+              return;
+            }
+            
             clearTimeout(timeout);
             window.removeEventListener('message', messageHandler);
             // Don't close window due to COOP restrictions - let user close manually

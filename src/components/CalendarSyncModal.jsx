@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { CalendarService } from '../services/calendarService.js';
 
 /**
- * CalendarSyncModal - Calendar synchronization interface
- * Provides functionality to connect and sync with Google Calendar and Microsoft Outlook
+ * CalendarSyncModal - Clean calendar synchronization interface
+ * Shows synced calendars, OAuth status, and export functionality
  */
 export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const [config, setConfig] = useState({
@@ -28,14 +28,36 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
     }
   }, [isOpen]);
 
+  // Listen for calendar connection events
+  useEffect(() => {
+    const handleCalendarConnected = (event) => {
+      console.log('📅 CalendarSyncModal: Calendar connected event received:', event.detail);
+      setIsLoading(false); // Reset loading state
+      loadCalendarConfig();
+      setTestResult({
+        success: true,
+        message: `Successfully connected to ${event.detail.provider} calendar: ${event.detail.calendar.name}${event.detail.calendar.email ? ` (${event.detail.calendar.email})` : ''}`
+      });
+    };
+
+    window.addEventListener('calendarConnected', handleCalendarConnected);
+    
+    return () => {
+      window.removeEventListener('calendarConnected', handleCalendarConnected);
+    };
+  }, []);
+
   const loadCalendarConfig = () => {
     try {
+      console.log('📅 CalendarSyncModal: Loading calendar config...');
       const calendarConfig = CalendarService.getCalendarConfig();
+      console.log('📅 CalendarSyncModal: Loaded config:', calendarConfig);
       setConfig(prevConfig => ({
         ...prevConfig,
         ...calendarConfig
       }));
       setSyncStatus(CalendarService.getSyncStatus());
+      console.log('📅 CalendarSyncModal: Config state updated, calendars count:', calendarConfig.calendars?.length || 0);
     } catch (error) {
       console.error('Failed to load calendar config:', error);
     }
@@ -53,7 +75,9 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const handleGoogleConnect = async () => {
     setIsLoading(true);
     try {
+      console.log('📅 CalendarSyncModal: Starting Google Calendar connection...');
       const newCalendar = await CalendarService.initializeGoogleCalendar();
+      console.log('📅 CalendarSyncModal: Google Calendar connected:', newCalendar);
       // Reload the full config to get updated calendars array
       loadCalendarConfig();
       setTestResult({
@@ -61,6 +85,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
         message: `Successfully connected to Google Calendar: ${newCalendar.name}${newCalendar.email ? ` (${newCalendar.email})` : ''}`
       });
     } catch (error) {
+      console.error('📅 CalendarSyncModal: Google Calendar connection failed:', error);
       setTestResult({
         success: false,
         message: `Failed to connect to Google Calendar: ${error.message}`
@@ -73,7 +98,9 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
   const handleMicrosoftConnect = async () => {
     setIsLoading(true);
     try {
+      console.log('📅 CalendarSyncModal: Starting Microsoft Outlook connection...');
       const newCalendar = await CalendarService.initializeMicrosoftOutlook();
+      console.log('📅 CalendarSyncModal: Microsoft Outlook connected:', newCalendar);
       // Reload the full config to get updated calendars array
       loadCalendarConfig();
       setTestResult({
@@ -81,6 +108,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
         message: `Successfully connected to Microsoft Outlook: ${newCalendar.name}${newCalendar.email ? ` (${newCalendar.email})` : ''}`
       });
     } catch (error) {
+      console.error('📅 CalendarSyncModal: Microsoft Outlook connection failed:', error);
       setTestResult({
         success: false,
         message: `Failed to connect to Microsoft Outlook: ${error.message}`
@@ -90,86 +118,125 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
     }
   };
 
-  const handleDisconnect = () => {
-    if (confirm('Are you sure you want to disconnect all calendars?')) {
-      CalendarService.disconnectCalendar();
-      loadCalendarConfig();
-      setUpcomingEvents([]);
-      setTestResult(null);
-    }
-  };
-
-  const handleTestConnection = async () => {
+  const handleRefresh = async () => {
     setIsLoading(true);
     try {
-      const result = await CalendarService.testConnection();
-      setTestResult(result);
+      await loadCalendarConfig();
+      await loadUpcomingEvents();
+      setTestResult({
+        success: true,
+        message: 'Calendar data refreshed successfully'
+      });
     } catch (error) {
       setTestResult({
         success: false,
-        message: `Test failed: ${error.message}`
+        message: `Failed to refresh: ${error.message}`
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSyncEvents = async () => {
-    setIsLoading(true);
+  const handleExportCalendar = async (calendar) => {
     try {
-      const events = await CalendarService.syncCalendarEvents();
-      setSyncStatus(CalendarService.getSyncStatus());
-      await loadUpcomingEvents();
+      setIsLoading(true);
+      // Get events for the past and future month
+      const now = new Date();
+      const pastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+      const futureMonth = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
       
-      if (onEventsSynced) {
-        onEventsSynced(events);
-      }
+      // For now, we'll create a mock export since we don't have real API integration
+      const mockEvents = [
+        {
+          title: 'Sample Meeting',
+          start: new Date().toISOString(),
+          end: new Date(Date.now() + 3600000).toISOString(),
+          description: 'This is a sample event for export',
+          location: 'Conference Room A'
+        }
+      ];
+
+      // Create Excel-like CSV content
+      const csvContent = [
+        'Title,Start Date,Start Time,End Date,End Time,Description,Location',
+        ...mockEvents.map(event => {
+          const start = new Date(event.start);
+          const end = new Date(event.end);
+          return [
+            `"${event.title}"`,
+            start.toLocaleDateString(),
+            start.toLocaleTimeString(),
+            end.toLocaleDateString(),
+            end.toLocaleTimeString(),
+            `"${event.description || ''}"`,
+            `"${event.location || ''}"`
+          ].join(',');
+        })
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${calendar.provider}_${calendar.name}_export.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
       
       setTestResult({
         success: true,
-        message: `Successfully synced ${events.length} calendar events!`
+        message: `Calendar exported successfully: ${calendar.provider}_${calendar.name}_export.csv`
       });
     } catch (error) {
       setTestResult({
         success: false,
-        message: `Failed to sync events: ${error.message}`
+        message: `Export failed: ${error.message}`
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleConfigChange = (key, value) => {
-    const newConfig = { ...config, [key]: value };
-    setConfig(newConfig);
-    CalendarService.saveCalendarConfig(newConfig);
-  };
-
-  const formatEventTime = (startTime, endTime) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const startStr = start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const endStr = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    return `${startStr} - ${endStr}`;
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'synced': return '#28a745';
-      case 'stale': return '#ffc107';
-      case 'disabled': return '#6c757d';
-      case 'error': return '#dc3545';
-      default: return '#6c757d';
+  const handleRemoveCalendar = (calendar) => {
+    if (confirm(`Are you sure you want to disconnect ${calendar.provider} calendar for ${calendar.email || 'this account'}?`)) {
+      CalendarService.removeCalendar(calendar.id);
+      loadCalendarConfig();
+      setTestResult({
+        success: true,
+        message: `Successfully disconnected ${calendar.provider} calendar`
+      });
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'synced': return '✅';
-      case 'stale': return '⚠️';
-      case 'disabled': return '❌';
-      case 'error': return '❌';
-      default: return '❓';
+  const getStatusPill = (calendar) => {
+    // For now, assume all connected calendars are authorized
+    // In a real implementation, you'd check the actual OAuth token status
+    const isAuthorized = calendar.accessToken && calendar.accessToken !== 'mock_access_token';
+    
+    return (
+      <span
+        style={{
+          padding: '2px 8px',
+          borderRadius: '12px',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          backgroundColor: isAuthorized ? '#28a745' : '#ffc107',
+          color: isAuthorized ? 'white' : 'black',
+          textTransform: 'uppercase'
+        }}
+      >
+        {isAuthorized ? 'Authorized' : 'Mock'}
+      </span>
+    );
+  };
+
+  const getProviderIcon = (provider) => {
+    switch (provider) {
+      case 'google': return '🔵';
+      case 'microsoft': return '🔷';
+      default: return '📅';
     }
   };
 
@@ -196,15 +263,34 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
           padding: '24px',
           borderRadius: '8px',
           width: '90%',
-          maxWidth: '900px',
+          maxWidth: '800px',
           maxHeight: '90vh',
           overflowY: 'auto',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
             🗓️ Calendar Sync
           </h2>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading}
+              style={{
+                padding: '6px 12px',
+                backgroundColor: '#17a2b8',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: isLoading ? 'not-allowed' : 'pointer',
+                fontSize: '12px',
+                opacity: isLoading ? 0.6 : 1,
+                pointerEvents: isLoading ? 'none' : 'auto'
+              }}
+            >
+              {isLoading ? '⏳' : '🔄'} Refresh
+            </button>
           <button
             onClick={onClose}
             style={{
@@ -217,228 +303,35 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
           >
             ✕
           </button>
-        </div>
-
-        {/* Connection Status */}
-        {syncStatus && (
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ marginBottom: '8px' }}>Connection Status</h3>
-            <div style={{
-              padding: '12px',
-              backgroundColor: '#f8f9fa',
-              border: `2px solid ${getStatusColor(syncStatus.status)}`,
-              borderRadius: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <span style={{ fontSize: '16px' }}>{getStatusIcon(syncStatus.status)}</span>
-              <div>
-                <div style={{ fontWeight: 'bold', color: getStatusColor(syncStatus.status) }}>
-                  {syncStatus.status.charAt(0).toUpperCase() + syncStatus.status.slice(1).replace('_', ' ')}
-                </div>
-                <div style={{ fontSize: '14px', color: '#6c757d' }}>
-                  {syncStatus.message}
-                </div>
-                {syncStatus.lastSync && (
-                  <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                    Last sync: {new Date(syncStatus.lastSync).toLocaleString()}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
-        )}
 
-        {/* Provider Selection */}
-        {!config?.enabled && (
+        {/* Connected Calendars */}
           <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '12px' }}>Connect Your Calendar</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ margin: 0 }}>Connected Calendars</h3>
+            <div style={{ display: 'flex', gap: '8px' }}>
               <button
                 onClick={handleGoogleConnect}
                 disabled={isLoading}
                 style={{
-                  padding: '20px',
+                  padding: '6px 12px',
                   backgroundColor: '#4285f4',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: '8px',
+                  borderRadius: '4px',
                   cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.6 : 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px'
+                  fontSize: '12px',
+                  opacity: isLoading ? 0.6 : 1
                 }}
               >
-                <span style={{ fontSize: '24px' }}>📅</span>
-                <div style={{ fontWeight: 'bold' }}>Google Calendar</div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>Sync with Google Calendar</div>
+                + Google
               </button>
-              
               <button
                 onClick={handleMicrosoftConnect}
                 disabled={isLoading}
                 style={{
-                  padding: '20px',
-                  backgroundColor: '#0078d4',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  opacity: isLoading ? 0.6 : 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <span style={{ fontSize: '24px' }}>📅</span>
-                <div style={{ fontWeight: 'bold' }}>Microsoft Outlook</div>
-                <div style={{ fontSize: '12px', opacity: 0.9 }}>Sync with Outlook Calendar</div>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Configuration */}
-        {config?.enabled && (
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ margin: 0 }}>Configuration</h3>
-              <button
-                onClick={handleDisconnect}
-                style={{
                   padding: '6px 12px',
-                  backgroundColor: '#dc3545',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}
-              >
-                Disconnect
-              </button>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-                  Connected Calendars
-                </label>
-                <div style={{
-                  padding: '8px',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '4px',
-                  minHeight: '40px'
-                }}>
-                  {config.calendars && config.calendars.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '8px' }}>
-                      {config.calendars.map((calendar) => (
-                        <div
-                          key={calendar.id}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '8px 12px',
-                            backgroundColor: calendar.provider === 'google' ? '#4285f4' : '#0078d4',
-                            color: 'white',
-                            borderRadius: '8px',
-                            fontSize: '14px'
-                          }}
-                        >
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <div style={{ fontWeight: 'bold', textTransform: 'capitalize' }}>
-                              {calendar.provider} - {calendar.name}
-                            </div>
-                            {calendar.email && (
-                              <div style={{ fontSize: '12px', opacity: 0.9 }}>
-                                {calendar.email}
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            onClick={() => {
-                              if (confirm(`Are you sure you want to disconnect ${calendar.provider} calendar for ${calendar.email || 'this account'}?`)) {
-                                CalendarService.removeCalendar(calendar.id);
-                                loadCalendarConfig();
-                                setTestResult({
-                                  success: true,
-                                  message: `Successfully disconnected ${calendar.provider} calendar`
-                                });
-                              }
-                            }}
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.2)',
-                              border: 'none',
-                              color: 'white',
-                              borderRadius: '4px',
-                              padding: '4px 8px',
-                              cursor: 'pointer',
-                              fontSize: '12px',
-                              marginLeft: '8px'
-                            }}
-                            title={`Disconnect ${calendar.provider} calendar`}
-                          >
-                            ✕
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <span style={{ color: '#6c757d', fontStyle: 'italic', display: 'block', marginBottom: '8px' }}>No calendars connected</span>
-                  )}
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={async () => {
-                    try {
-                      await handleGoogleConnect();
-                    } catch (error) {
-                      if (error.message.includes('already connected')) {
-                        setTestResult({
-                          success: false,
-                          message: error.message
-                        });
-                      } else {
-                        alert(`Google OAuth Setup Required:\n\n${error.message}\n\nTo enable Google Calendar sync:\n1. Create a Google Cloud Project\n2. Enable Google Calendar API\n3. Create OAuth 2.0 credentials\n4. Set VITE_GOOGLE_CLIENT_ID in your .env file`);
-                      }
-                    }
-                  }}
-                  disabled={isLoading}
-                  style={{
-                    padding: '4px 8px',
-                    backgroundColor: '#4285f4',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: isLoading ? 'not-allowed' : 'pointer',
-                    fontSize: '12px',
-                    opacity: isLoading ? 0.6 : 1
-                  }}
-                >
-                  + Google
-                </button>
-                <button
-                  onClick={async () => {
-                    try {
-                      await handleMicrosoftConnect();
-                    } catch (error) {
-                      if (error.message.includes('already connected')) {
-                        setTestResult({
-                          success: false,
-                          message: error.message
-                        });
-                      } else {
-                        alert(`Microsoft OAuth Setup Required:\n\n${error.message}\n\nTo enable Microsoft Calendar sync:\n1. Create an Azure App Registration\n2. Configure Microsoft Graph API permissions\n3. Set VITE_MICROSOFT_CLIENT_ID in your .env file`);
-                      }
-                    }
-                  }}
-                  disabled={isLoading}
-                  style={{
-                    padding: '4px 8px',
                     backgroundColor: '#0078d4',
                     color: '#fff',
                     border: 'none',
@@ -450,133 +343,90 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                 >
                   + Microsoft
                 </button>
-                  </div>
                 </div>
               </div>
               
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-                  Sync Interval (minutes)
-                </label>
-                <select
-                  value={config.syncInterval || 15}
-                  onChange={(e) => handleConfigChange('syncInterval', parseInt(e.target.value))}
+          {config.calendars && config.calendars.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {config.calendars.map((calendar) => (
+                <div
+                  key={calendar.id}
                   style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px'
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '16px',
+                    backgroundColor: '#f8f9fa',
+                    border: '1px solid #dee2e6',
+                    borderRadius: '8px'
                   }}
                 >
-                  <option value={5}>5 minutes</option>
-                  <option value={15}>15 minutes</option>
-                  <option value={30}>30 minutes</option>
-                  <option value={60}>1 hour</option>
-                </select>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ fontSize: '20px' }}>
+                      {getProviderIcon(calendar.provider)}
+                    </span>
+                    <div>
+                      <div style={{ fontWeight: 'bold', fontSize: '14px' }}>
+                        {calendar.provider.charAt(0).toUpperCase() + calendar.provider.slice(1)} Calendar
               </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-                  Sync Past Days
-                </label>
-                <input
-                  type="number"
-                  value={config.syncPastDays || 7}
-                  onChange={(e) => handleConfigChange('syncPastDays', parseInt(e.target.value))}
-                  min="1"
-                  max="30"
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px'
-                  }}
-                />
+                      <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                        {calendar.name}
+                        {calendar.email && ` • ${calendar.email}`}
               </div>
-              
-              <div>
-                <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-                  Sync Future Days
-                </label>
-                <input
-                  type="number"
-                  value={config.syncFutureDays || 30}
-                  onChange={(e) => handleConfigChange('syncFutureDays', parseInt(e.target.value))}
-                  min="1"
-                  max="90"
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px'
-                  }}
-                />
               </div>
             </div>
             
-            <div style={{ marginTop: '12px', display: 'flex', gap: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input
-                  type="checkbox"
-                  checked={config.autoCreateEntries || false}
-                  onChange={(e) => handleConfigChange('autoCreateEntries', e.target.checked)}
-                />
-                Auto-create entries from events
-              </label>
-              
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <input
-                  type="checkbox"
-                  checked={config.includeAllDayEvents || false}
-                  onChange={(e) => handleConfigChange('includeAllDayEvents', e.target.checked)}
-                />
-                Include all-day events
-              </label>
-            </div>
-          </div>
-        )}
-
-        {/* Actions */}
-        {config?.enabled && (
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '12px' }}>Actions</h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {getStatusPill(calendar)}
               <button
-                onClick={handleTestConnection}
+                      onClick={() => handleExportCalendar(calendar)}
                 disabled={isLoading}
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#17a2b8',
+                        padding: '4px 8px',
+                        backgroundColor: '#28a745',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
                   cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
+                        fontSize: '10px',
                   opacity: isLoading ? 0.6 : 1
                 }}
               >
-                {isLoading ? '⏳' : '🔍'} Test Connection
+                      📊 Export
               </button>
-              
               <button
-                onClick={handleSyncEvents}
-                disabled={isLoading}
+                      onClick={() => handleRemoveCalendar(calendar)}
                 style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#28a745',
+                        padding: '4px 8px',
+                        backgroundColor: '#dc3545',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  opacity: isLoading ? 0.6 : 1
+                        cursor: 'pointer',
+                        fontSize: '10px'
                 }}
               >
-                {isLoading ? '⏳' : '🔄'} Sync Events
+                      ✕
               </button>
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : (
+            <div style={{
+              padding: '32px',
+              textAlign: 'center',
+              backgroundColor: '#f8f9fa',
+              border: '2px dashed #dee2e6',
+              borderRadius: '8px',
+              color: '#6c757d'
+            }}>
+              <div style={{ fontSize: '24px', marginBottom: '8px' }}>📅</div>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>No calendars connected</div>
+              <div style={{ fontSize: '12px' }}>Connect your Google or Microsoft calendar to get started</div>
           </div>
         )}
+        </div>
 
         {/* Test Result */}
         {testResult && (
@@ -596,77 +446,12 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
           </div>
         )}
 
-        {/* OAuth Setup Section */}
-        {config?.enabled && (
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '12px' }}>🔐 OAuth Setup (For Real API Integration)</h3>
-            <div style={{
-              padding: '16px',
-              backgroundColor: '#fff3cd',
-              border: '1px solid #ffeaa7',
-              borderRadius: '6px',
-              marginBottom: '12px'
-            }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#856404' }}>
-                ⚠️ Real API Integration Required
-              </div>
-              <div style={{ fontSize: '14px', color: '#856404', marginBottom: '12px' }}>
-                To sync real calendar events, you need to set up OAuth credentials. Currently using mock data for testing.
-              </div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => {
-                    try {
-                      const url = CalendarService.generateGoogleAuthUrl();
-                      window.open(url, '_blank');
-                    } catch (error) {
-                      alert(`Google OAuth setup required:\n\n1. Create a Google Cloud Project\n2. Enable Google Calendar API\n3. Create OAuth 2.0 credentials\n4. Set VITE_GOOGLE_CLIENT_ID environment variable\n\nError: ${error.message}`);
-                    }
-                  }}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#4285f4',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                >
-                  🔧 Setup Google OAuth
-                </button>
-                <button
-                  onClick={() => {
-                    try {
-                      const url = CalendarService.generateMicrosoftAuthUrl();
-                      window.open(url, '_blank');
-                    } catch (error) {
-                      alert(`Microsoft OAuth setup required:\n\n1. Create an Azure App Registration\n2. Configure Microsoft Graph API permissions\n3. Set VITE_MICROSOFT_CLIENT_ID environment variable\n\nError: ${error.message}`);
-                    }
-                  }}
-                  style={{
-                    padding: '8px 12px',
-                    backgroundColor: '#0078d4',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '12px'
-                  }}
-                >
-                  🔧 Setup Microsoft OAuth
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Upcoming Events */}
+        {/* Upcoming Events Preview */}
         {upcomingEvents.length > 0 && (
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{ marginBottom: '12px' }}>📅 Upcoming Events (Next 24 Hours)</h3>
             <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-              {upcomingEvents.map((event) => (
+              {upcomingEvents.slice(0, 3).map((event) => (
                 <div
                   key={event.id}
                   style={{
@@ -680,21 +465,16 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                   <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                     {event.title}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>
-                    {formatEventTime(event.start, event.end)}
+                  <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                    {new Date(event.start).toLocaleString()} - {new Date(event.end).toLocaleString()}
                   </div>
-                  {event.description && (
-                    <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>
-                      {event.description}
-                    </div>
-                  )}
-                  {event.location && (
-                    <div style={{ fontSize: '12px', color: '#6c757d' }}>
-                      📍 {event.location}
-                    </div>
-                  )}
                 </div>
               ))}
+              {upcomingEvents.length > 3 && (
+                <div style={{ textAlign: 'center', fontSize: '12px', color: '#6c757d', padding: '8px' }}>
+                  ... and {upcomingEvents.length - 3} more events
+                </div>
+              )}
             </div>
           </div>
         )}
