@@ -178,6 +178,31 @@ export class ConnectionStatusService {
   }
 
   /**
+   * Check Clarizen API status
+   */
+  static async checkClarizenStatus() {
+    try {
+      const { ClarizenApiService } = await import('./clarizenApiService.js');
+      const config = ClarizenApiService.getClarizenConfig();
+      
+      if (!config || !config.baseUrl || !config.username || !config.accessToken) {
+        return this.updateConnectionStatus('clarizen', 'not-configured', false);
+      }
+
+      // Test connection by trying to get user info
+      try {
+        await ClarizenApiService.getUserInfo();
+        return this.updateConnectionStatus('clarizen', 'connected', true);
+      } catch (error) {
+        return this.updateConnectionStatus('clarizen', 'error', false);
+      }
+    } catch (error) {
+      console.error('Failed to check Clarizen status:', error);
+      return this.updateConnectionStatus('clarizen', 'error', false);
+    }
+  }
+
+  /**
    * Check Calendar service status
    */
   static async checkCalendarStatus() {
@@ -232,6 +257,7 @@ export class ConnectionStatusService {
         this.checkSupabaseStatus(),
         this.checkEmailStatus(),
         this.checkJiraStatus(),
+        this.checkClarizenStatus(),
         this.checkCalendarStatus(),
         this.checkAnalyticsStatus()
       ]);
@@ -305,6 +331,7 @@ export class ConnectionStatusService {
       supabase: 'Database',
       email: 'Email',
       jira: 'Jira',
+      clarizen: 'Clarizen',
       calendar: 'Calendar',
       analytics: 'Analytics'
     };

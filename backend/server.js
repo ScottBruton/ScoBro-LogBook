@@ -4,6 +4,7 @@ const axios = require('axios');
 const { google } = require('googleapis');
 const { ConfidentialClientApplication } = require('@azure/msal-node');
 const jiraService = require('./jiraService');
+const clarizenService = require('./clarizenService');
 require('dotenv').config();
 
 const app = express();
@@ -36,6 +37,8 @@ const msalInstance = new ConfidentialClientApplication(msalConfig);
 
 // Store Jira config in memory after successful test
 let jiraConfig = null;
+// Store Clarizen config in memory after successful test
+let clarizenConfig = null;
 
 // Routes
 
@@ -413,6 +416,128 @@ app.get('/api/jira/stats', async (req, res) => {
     console.error('❌ Failed to get Jira statistics:', error);
     res.status(500).json({ 
       error: 'Failed to get Jira statistics',
+      details: error.message 
+    });
+  }
+});
+
+// Clarizen API Routes
+
+// Test Clarizen connection
+app.post('/api/clarizen/test', async (req, res) => {
+  try {
+    console.log('📥 Received Clarizen test request:', {
+      baseUrl: req.body.baseUrl,
+      username: req.body.username,
+      password: req.body.password ? '***PROVIDED***' : 'NOT PROVIDED'
+    });
+
+    const result = await clarizenService.testConnection(req.body);
+    
+    // Store config if test was successful
+    if (result.success) {
+      clarizenConfig = {
+        ...req.body,
+        accessToken: result.accessToken
+      };
+      console.log('✅ Clarizen config stored successfully');
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Clarizen test connection failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to test Clarizen connection',
+      details: error.message 
+    });
+  }
+});
+
+// Get user information
+app.get('/api/clarizen/user', async (req, res) => {
+  try {
+    if (!clarizenConfig) {
+      return res.status(400).json({ 
+        error: 'Clarizen not configured. Please test connection first.',
+        details: 'No Clarizen configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log('👤 Fetching user info with stored config');
+    const user = await clarizenService.getUserInfo(clarizenConfig, clarizenConfig.accessToken);
+    res.json({ user });
+  } catch (error) {
+    console.error('❌ Failed to fetch Clarizen user info:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Clarizen user info',
+      details: error.message 
+    });
+  }
+});
+
+// Get all projects
+app.get('/api/clarizen/projects', async (req, res) => {
+  try {
+    if (!clarizenConfig) {
+      return res.status(400).json({ 
+        error: 'Clarizen not configured. Please test connection first.',
+        details: 'No Clarizen configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log('📁 Fetching projects with stored config');
+    const projects = await clarizenService.getProjects(clarizenConfig, clarizenConfig.accessToken);
+    res.json({ projects });
+  } catch (error) {
+    console.error('❌ Failed to fetch Clarizen projects:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Clarizen projects',
+      details: error.message 
+    });
+  }
+});
+
+// Get resourcing data
+app.get('/api/clarizen/resourcing', async (req, res) => {
+  try {
+    if (!clarizenConfig) {
+      return res.status(400).json({ 
+        error: 'Clarizen not configured. Please test connection first.',
+        details: 'No Clarizen configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log('📊 Fetching resourcing data with stored config');
+    const resourcing = await clarizenService.getResourcingData(clarizenConfig, clarizenConfig.accessToken);
+    res.json({ resourcing });
+  } catch (error) {
+    console.error('❌ Failed to fetch Clarizen resourcing data:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Clarizen resourcing data',
+      details: error.message 
+    });
+  }
+});
+
+// Get project details
+app.get('/api/clarizen/projects/:projectId', async (req, res) => {
+  try {
+    if (!clarizenConfig) {
+      return res.status(400).json({ 
+        error: 'Clarizen not configured. Please test connection first.',
+        details: 'No Clarizen configuration found. Test the connection first.' 
+      });
+    }
+
+    const { projectId } = req.params;
+    console.log(`📋 Fetching project ${projectId} with stored config`);
+    const project = await clarizenService.getProject(projectId, clarizenConfig, clarizenConfig.accessToken);
+    res.json({ project });
+  } catch (error) {
+    console.error('❌ Failed to fetch Clarizen project:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Clarizen project',
       details: error.message 
     });
   }

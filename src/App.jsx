@@ -11,6 +11,7 @@ import SmartPromptsModal from './components/SmartPromptsModal.jsx';
 import TimeTrackingModal from './components/TimeTrackingModal.jsx';
 import CalendarSyncModal from './components/CalendarSyncModal.jsx';
 import JiraApiModal from './components/JiraApiModal.jsx';
+import ClarizenApiModal from './components/ClarizenApiModal.jsx';
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
 import StatusPills from './components/StatusPills.jsx';
 import { DataService } from './services/dataService.js';
@@ -46,6 +47,7 @@ export default function App() {
   const [showTimeTracking, setShowTimeTracking] = useState(false);
   const [showCalendarSync, setShowCalendarSync] = useState(false);
   const [showJiraApi, setShowJiraApi] = useState(false);
+  const [showClarizenApi, setShowClarizenApi] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [syncStatus, setSyncStatus] = useState('offline');
@@ -399,6 +401,29 @@ export default function App() {
     }
   };
 
+  const handleClarizenResourcingSynced = async (resourcing) => {
+    try {
+      // Create entries from synced Clarizen resourcing data
+      const entries = resourcing.map(resource => ({
+        item_type: 'Note',
+        content: `📊 Clarizen: ${resource.projectName} - ${resource.hours} hours allocated`,
+        project: resource.projectName,
+        tags: ['clarizen', 'resourcing', 'allocation'],
+        people: [resource.userName].filter(Boolean),
+        metadata: {
+          clarizenResource: resource,
+          syncedAt: new Date().toISOString()
+        }
+      }));
+      
+      if (entries.length > 0) {
+        await handleSaveItems(entries);
+      }
+    } catch (error) {
+      console.error('Failed to create entries from Clarizen resourcing:', error);
+    }
+  };
+
   const handleStatusClick = (service) => {
     switch (service) {
       case 'supabase':
@@ -409,6 +434,9 @@ export default function App() {
         break;
       case 'jira':
         setShowJiraApi(true);
+        break;
+      case 'clarizen':
+        setShowClarizenApi(true);
         break;
       case 'calendar':
         setShowCalendarSync(true);
@@ -589,6 +617,20 @@ export default function App() {
             🔗 Jira API
           </button>
           <button
+            onClick={() => setShowClarizenApi(true)}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#e83e8c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            📊 Clarizen
+          </button>
+          <button
             onClick={() => setShowAnalytics(true)}
             style={{
               padding: '6px 12px',
@@ -754,6 +796,11 @@ export default function App() {
         isOpen={showJiraApi}
         onClose={() => setShowJiraApi(false)}
         onIssuesSynced={handleJiraIssuesSynced}
+      />
+      <ClarizenApiModal
+        isOpen={showClarizenApi}
+        onClose={() => setShowClarizenApi(false)}
+        onResourcingSynced={handleClarizenResourcingSynced}
       />
       <AnalyticsDashboard
         isOpen={showAnalytics}
