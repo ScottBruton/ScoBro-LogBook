@@ -3,6 +3,7 @@ const cors = require('cors');
 const axios = require('axios');
 const { google } = require('googleapis');
 const { ConfidentialClientApplication } = require('@azure/msal-node');
+const jiraService = require('./jiraService');
 require('dotenv').config();
 
 const app = express();
@@ -32,6 +33,9 @@ const msalConfig = {
 };
 
 const msalInstance = new ConfidentialClientApplication(msalConfig);
+
+// Store Jira config in memory after successful test
+let jiraConfig = null;
 
 // Routes
 
@@ -250,6 +254,170 @@ app.post('/api/calendar/microsoft/events', async (req, res) => {
   }
 });
 
+// Jira API Routes
+
+// Test Jira connection
+app.post('/api/jira/test', async (req, res) => {
+  try {
+    console.log('📥 Received Jira test request:', {
+      baseUrl: req.body.baseUrl,
+      username: req.body.username,
+      apiToken: req.body.apiToken ? `${req.body.apiToken.substring(0, 10)}...` : 'NOT PROVIDED'
+    });
+
+    const result = await jiraService.testConnection(req.body);
+    
+    // Store config if test was successful
+    if (result.success) {
+      jiraConfig = req.body;
+      console.log('✅ Jira config stored successfully');
+    }
+    
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Jira test connection failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to test Jira connection',
+      details: error.message 
+    });
+  }
+});
+
+// Get all projects
+app.get('/api/jira/projects', async (req, res) => {
+  try {
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log('📁 Fetching projects with stored config');
+    const projects = await jiraService.getProjects(jiraConfig);
+    res.json({ projects });
+  } catch (error) {
+    console.error('❌ Failed to fetch Jira projects:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Jira projects',
+      details: error.message 
+    });
+  }
+});
+
+// Get project details
+app.get('/api/jira/projects/:projectKey', async (req, res) => {
+  try {
+    const { projectKey } = req.params;
+    const project = await jiraService.getProject(projectKey);
+    res.json({ project });
+  } catch (error) {
+    console.error(`❌ Failed to fetch Jira project ${req.params.projectKey}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Jira project',
+      details: error.message 
+    });
+  }
+});
+
+// Get assigned issues
+app.get('/api/jira/issues/assigned', async (req, res) => {
+  try {
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    const issues = await jiraService.getAssignedIssues(jiraConfig);
+    res.json({ issues });
+  } catch (error) {
+    console.error('❌ Failed to fetch assigned Jira issues:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch assigned Jira issues',
+      details: error.message 
+    });
+  }
+});
+
+// Get recent issues
+app.get('/api/jira/issues/recent', async (req, res) => {
+  try {
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    const { days = 7 } = req.query;
+    const issues = await jiraService.getRecentIssues(jiraConfig, parseInt(days));
+    res.json({ issues });
+  } catch (error) {
+    console.error('❌ Failed to fetch recent Jira issues:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch recent Jira issues',
+      details: error.message 
+    });
+  }
+});
+
+// Search issues
+app.post('/api/jira/issues/search', async (req, res) => {
+  try {
+    const { jql, maxResults = 50 } = req.body;
+    
+    if (!jql) {
+      return res.status(400).json({ error: 'JQL query is required' });
+    }
+
+    const result = await jiraService.searchIssues(jql, maxResults);
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Failed to search Jira issues:', error);
+    res.status(500).json({ 
+      error: 'Failed to search Jira issues',
+      details: error.message 
+    });
+  }
+});
+
+// Fetch specific issues
+app.post('/api/jira/issues/fetch', async (req, res) => {
+  try {
+    const { issueKeys } = req.body;
+    
+    if (!issueKeys || !Array.isArray(issueKeys)) {
+      return res.status(400).json({ error: 'Issue keys array is required' });
+    }
+
+    const issues = await jiraService.fetchIssues(issueKeys);
+    res.json({ issues });
+  } catch (error) {
+    console.error('❌ Failed to fetch Jira issues:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Jira issues',
+      details: error.message 
+    });
+  }
+});
+
+// Get Jira statistics
+app.get('/api/jira/stats', async (req, res) => {
+  try {
+    const stats = await jiraService.getJiraStats();
+    res.json({ stats });
+  } catch (error) {
+    console.error('❌ Failed to get Jira statistics:', error);
+    res.status(500).json({ 
+      error: 'Failed to get Jira statistics',
+      details: error.message 
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 ScoBro Logbook Backend Server running on port ${PORT}`);
@@ -264,6 +432,21 @@ app.listen(PORT, () => {
     'MICROSOFT_CLIENT_SECRET',
     'MICROSOFT_TENANT_ID'
   ];
+
+  // Check optional Jira environment variables
+  const jiraEnvVars = [
+    'JIRA_COMPANY_EMAIL',
+    'JIRA_USER_EMAIL',
+    'JIRA_KEY'
+  ];
+  
+  const missingJiraVars = jiraEnvVars.filter(varName => !process.env[varName]);
+  if (missingJiraVars.length > 0) {
+    console.warn('⚠️  Missing Jira environment variables:', missingJiraVars.join(', '));
+    console.warn('📝 Jira integration will be disabled');
+  } else {
+    console.log('✅ Jira environment variables are set');
+  }
   
   const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
   

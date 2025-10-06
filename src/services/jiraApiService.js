@@ -5,10 +5,11 @@
 
 export class JiraApiService {
   static STORAGE_KEY = 'jiraApiConfig';
+  static BACKEND_URL = 'http://localhost:3001';
   static DEFAULT_CONFIG = {
     enabled: false,
-    baseUrl: '',
-    username: '',
+    baseUrl: 'https://idegroup.atlassian.net/',
+    username: 'scott@idegroup.com.au',
     apiToken: '',
     projectKeys: [],
     syncInterval: 30, // minutes
@@ -52,19 +53,49 @@ export class JiraApiService {
     try {
       const jiraConfig = config || this.getJiraConfig();
       
-      if (!jiraConfig.enabled || !jiraConfig.baseUrl || !jiraConfig.username || !jiraConfig.apiToken) {
-        throw new Error('Jira configuration is incomplete');
+      console.log('🔍 Frontend Jira config:', {
+        baseUrl: jiraConfig.baseUrl,
+        username: jiraConfig.username,
+        apiToken: jiraConfig.apiToken ? `${jiraConfig.apiToken.substring(0, 10)}...` : 'NOT PROVIDED'
+      });
+      
+      if (!jiraConfig.baseUrl || !jiraConfig.username || !jiraConfig.apiToken) {
+        const missing = [];
+        if (!jiraConfig.baseUrl) missing.push('baseUrl');
+        if (!jiraConfig.username) missing.push('username');
+        if (!jiraConfig.apiToken) missing.push('apiToken');
+        throw new Error(`Jira configuration is incomplete. Missing: ${missing.join(', ')}`);
       }
 
-      // Test connection by fetching user info
-      const response = await this.makeApiRequest('/myself', jiraConfig);
-      
-      return {
-        success: true,
-        message: `Successfully connected to Jira as ${response.displayName}`,
-        user: response
+      // Test connection via backend API
+      const requestBody = {
+        baseUrl: jiraConfig.baseUrl,
+        username: jiraConfig.username,
+        apiToken: jiraConfig.apiToken
       };
+
+      console.log('📤 Sending request to backend:', {
+        url: `${this.BACKEND_URL}/api/jira/test`,
+        body: {
+          baseUrl: requestBody.baseUrl,
+          username: requestBody.username,
+          apiToken: requestBody.apiToken ? `${requestBody.apiToken.substring(0, 10)}...` : 'NOT PROVIDED'
+        }
+      });
+
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/test`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const result = await response.json();
+      console.log('📥 Backend response:', result);
+      return result;
     } catch (error) {
+      console.error('❌ Frontend Jira test failed:', error);
       return {
         success: false,
         message: `Failed to connect to Jira: ${error.message}`,
@@ -74,32 +105,49 @@ export class JiraApiService {
   }
 
   /**
-   * Make authenticated API request to Jira
+   * Get all projects from Jira
+   */
+  static async getProjects() {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/projects`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch projects');
+      }
+      
+      return data.projects;
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get project details by key
+   */
+  static async getProject(projectKey) {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/projects/${projectKey}`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch project');
+      }
+      
+      return data.project;
+    } catch (error) {
+      console.error(`Failed to fetch project ${projectKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Make authenticated API request to Jira (legacy method - now uses backend)
    */
   static async makeApiRequest(endpoint, config = null) {
-    const jiraConfig = config || this.getJiraConfig();
-    
-    if (!jiraConfig.enabled) {
-      throw new Error('Jira API is not enabled');
-    }
-
-    const url = `${jiraConfig.baseUrl.replace(/\/$/, '')}/rest/api/3${endpoint}`;
-    const auth = btoa(`${jiraConfig.username}:${jiraConfig.apiToken}`);
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Jira API request failed: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
+    // This method is now deprecated in favor of backend API calls
+    throw new Error('Direct API calls are deprecated. Use backend API methods instead.');
   }
 
   /**
@@ -107,15 +155,23 @@ export class JiraApiService {
    */
   static async fetchIssue(issueKey, config = null) {
     try {
-      const jiraConfig = config || this.getJiraConfig();
-      
-      if (!jiraConfig.enabled) {
-        throw new Error('Jira API is not enabled');
-      }
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/fetch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          issueKeys: [issueKey]
+        })
+      });
 
-      const issue = await this.makeApiRequest(`/issue/${issueKey}`, jiraConfig);
+      const data = await response.json();
       
-      return this.formatIssueData(issue, jiraConfig);
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch issue');
+      }
+      
+      return data.issues[0] || null;
     } catch (error) {
       console.error(`Failed to fetch issue ${issueKey}:`, error);
       throw error;
@@ -127,25 +183,27 @@ export class JiraApiService {
    */
   static async fetchIssues(issueKeys, config = null) {
     try {
-      const jiraConfig = config || this.getJiraConfig();
-      
-      if (!jiraConfig.enabled || !issueKeys.length) {
+      if (!issueKeys.length) {
         return [];
       }
 
-      // Jira API allows fetching up to 50 issues at once
-      const chunks = this.chunkArray(issueKeys, 50);
-      const allIssues = [];
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/fetch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          issueKeys: issueKeys
+        })
+      });
 
-      for (const chunk of chunks) {
-        const jql = `key in (${chunk.join(', ')})`;
-        const response = await this.makeApiRequest(`/search?jql=${encodeURIComponent(jql)}&maxResults=50`, jiraConfig);
-        
-        const formattedIssues = response.issues.map(issue => this.formatIssueData(issue, jiraConfig));
-        allIssues.push(...formattedIssues);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch issues');
       }
-
-      return allIssues;
+      
+      return data.issues;
     } catch (error) {
       console.error('Failed to fetch issues:', error);
       throw error;
@@ -157,19 +215,24 @@ export class JiraApiService {
    */
   static async searchIssues(jql, config = null, maxResults = 50) {
     try {
-      const jiraConfig = config || this.getJiraConfig();
-      
-      if (!jiraConfig.enabled) {
-        throw new Error('Jira API is not enabled');
-      }
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          jql: jql,
+          maxResults: maxResults
+        })
+      });
 
-      const response = await this.makeApiRequest(`/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`, jiraConfig);
+      const data = await response.json();
       
-      return {
-        issues: response.issues.map(issue => this.formatIssueData(issue, jiraConfig)),
-        total: response.total,
-        maxResults: response.maxResults
-      };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to search issues');
+      }
+      
+      return data;
     } catch (error) {
       console.error('Failed to search issues:', error);
       throw error;
@@ -181,20 +244,14 @@ export class JiraApiService {
    */
   static async getRecentIssues(config = null, days = 7) {
     try {
-      const jiraConfig = config || this.getJiraConfig();
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/recent?days=${days}`);
+      const data = await response.json();
       
-      if (!jiraConfig.enabled) {
-        return [];
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch recent issues');
       }
-
-      const date = new Date();
-      date.setDate(date.getDate() - days);
-      const dateStr = date.toISOString().split('T')[0];
-
-      const jql = `updated >= "${dateStr}" ORDER BY updated DESC`;
-      const result = await this.searchIssues(jql, jiraConfig, 20);
       
-      return result.issues;
+      return data.issues;
     } catch (error) {
       console.error('Failed to get recent issues:', error);
       return [];
@@ -206,16 +263,14 @@ export class JiraApiService {
    */
   static async getAssignedIssues(config = null) {
     try {
-      const jiraConfig = config || this.getJiraConfig();
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/assigned`);
+      const data = await response.json();
       
-      if (!jiraConfig.enabled) {
-        return [];
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch assigned issues');
       }
-
-      const jql = `assignee = currentUser() AND status != Done ORDER BY priority DESC, updated DESC`;
-      const result = await this.searchIssues(jql, jiraConfig, 20);
       
-      return result.issues;
+      return data.issues;
     } catch (error) {
       console.error('Failed to get assigned issues:', error);
       return [];
@@ -397,21 +452,17 @@ export class JiraApiService {
    */
   static async getJiraStats(config = null) {
     try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/stats`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch Jira statistics');
+      }
+      
       const jiraConfig = config || this.getJiraConfig();
       
-      if (!jiraConfig.enabled) {
-        return null;
-      }
-
-      const [assignedIssues, recentIssues] = await Promise.all([
-        this.getAssignedIssues(jiraConfig),
-        this.getRecentIssues(jiraConfig, 7)
-      ]);
-
       return {
-        assignedCount: assignedIssues.length,
-        recentCount: recentIssues.length,
-        lastSync: jiraConfig.lastSync,
+        ...data.stats,
         config: {
           baseUrl: jiraConfig.baseUrl,
           projectKeys: jiraConfig.projectKeys,

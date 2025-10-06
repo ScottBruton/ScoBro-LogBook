@@ -13,6 +13,8 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
   const [syncStatus, setSyncStatus] = useState(null);
   const [recentIssues, setRecentIssues] = useState([]);
   const [assignedIssues, setAssignedIssues] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [selectedProjects, setSelectedProjects] = useState([]);
 
   useEffect(() => {
     if (isOpen) {
@@ -25,6 +27,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     try {
       const jiraConfig = JiraApiService.getJiraConfig();
       setConfig(jiraConfig);
+      setSelectedProjects(jiraConfig.projectKeys || []);
       setSyncStatus(JiraApiService.getSyncStatus());
     } catch (error) {
       console.error('Failed to load Jira config:', error);
@@ -37,17 +40,35 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     try {
       setIsLoading(true);
       
-      const [stats, recent, assigned] = await Promise.all([
+      const [stats, recent, assigned, projectsData] = await Promise.all([
         JiraApiService.getJiraStats(),
         JiraApiService.getRecentIssues(),
-        JiraApiService.getAssignedIssues()
+        JiraApiService.getAssignedIssues(),
+        JiraApiService.getProjects()
       ]);
 
       setJiraStats(stats);
       setRecentIssues(recent);
       setAssignedIssues(assigned);
+      setProjects(projectsData);
     } catch (error) {
       console.error('Failed to load Jira data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadProjects = async () => {
+    try {
+      setIsLoading(true);
+      const projectsData = await JiraApiService.getProjects();
+      setProjects(projectsData);
+    } catch (error) {
+      console.error('Failed to load projects:', error);
+      setTestResult({
+        success: false,
+        message: `Failed to load projects: ${error.message}`
+      });
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +86,9 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
         setConfig(newConfig);
         JiraApiService.saveJiraConfig(newConfig);
         setSyncStatus(JiraApiService.getSyncStatus());
+        
+        // Load projects after successful connection
+        await loadProjects();
       }
     } catch (error) {
       setTestResult({
@@ -145,8 +169,20 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     setConfig(newConfig);
   };
 
+  const handleProjectSelection = (projectKey, isSelected) => {
+    let newSelectedProjects;
+    if (isSelected) {
+      newSelectedProjects = [...selectedProjects, projectKey];
+    } else {
+      newSelectedProjects = selectedProjects.filter(key => key !== projectKey);
+    }
+    setSelectedProjects(newSelectedProjects);
+    handleConfigChange('projectKeys', newSelectedProjects);
+  };
+
   const handleProjectKeyChange = (value) => {
     const projectKeys = value.split(',').map(key => key.trim()).filter(key => key);
+    setSelectedProjects(projectKeys);
     handleConfigChange('projectKeys', projectKeys);
   };
 
@@ -331,22 +367,70 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               </div>
             </div>
             
-            <div>
-              <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
-                Project Keys (comma-separated)
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
+                Available Projects
               </label>
-              <input
-                type="text"
-                value={config?.projectKeys?.join(', ') || ''}
-                onChange={(e) => handleProjectKeyChange(e.target.value)}
-                placeholder="PROJ, TASK, BUG"
-                style={{
-                  width: '100%',
-                  padding: '8px',
+              {projects.length > 0 ? (
+                <div style={{
+                  maxHeight: '200px',
+                  overflowY: 'auto',
                   border: '1px solid #ccc',
-                  borderRadius: '4px'
-                }}
-              />
+                  borderRadius: '4px',
+                  padding: '8px',
+                  backgroundColor: '#f8f9fa'
+                }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+                    {projects.map(project => (
+                      <label
+                        key={project.key}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px',
+                          backgroundColor: selectedProjects.includes(project.key) ? '#e3f2fd' : 'white',
+                          border: `1px solid ${selectedProjects.includes(project.key) ? '#2196f3' : '#ddd'}`,
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '14px'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedProjects.includes(project.key)}
+                          onChange={(e) => handleProjectSelection(project.key, e.target.checked)}
+                          style={{ margin: 0 }}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 'bold', color: '#2196f3' }}>
+                            {project.key}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666' }}>
+                            {project.name}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  padding: '16px',
+                  textAlign: 'center',
+                  color: '#666',
+                  border: '1px dashed #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: '#f8f9fa'
+                }}>
+                  {config?.enabled ? 'No projects found. Click "Test Connection" to load projects.' : 'Connect to Jira to see available projects.'}
+                </div>
+              )}
+              {selectedProjects.length > 0 && (
+                <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+                  Selected: {selectedProjects.join(', ')}
+                </div>
+              )}
             </div>
             
             <div>
@@ -442,6 +526,25 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             
             {config?.enabled && (
               <button
+                onClick={loadProjects}
+                disabled={isLoading}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#6f42c1',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {isLoading ? '⏳' : '📁'} Load Projects
+              </button>
+            )}
+            
+            {config?.enabled && (
+              <button
                 onClick={handleSyncIssues}
                 disabled={isLoading}
                 style={{
@@ -493,8 +596,12 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{jiraStats.recentCount}</div>
               </div>
               <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Projects</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{jiraStats.config.projectKeys.length}</div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Selected Projects</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{selectedProjects.length}</div>
+              </div>
+              <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Available Projects</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{projects.length}</div>
               </div>
             </div>
           </div>
