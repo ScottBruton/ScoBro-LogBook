@@ -15,6 +15,8 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
   const [assignedIssues, setAssignedIssues] = useState([]);
   const [projects, setProjects] = useState([]);
   const [selectedProjects, setSelectedProjects] = useState([]);
+  const [assignedTasks, setAssignedTasks] = useState([]);
+  const [taskStatusFilter, setTaskStatusFilter] = useState('all');
 
   useEffect(() => {
     if (isOpen) {
@@ -50,6 +52,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setJiraStats(stats);
       setRecentIssues(recent);
       setAssignedIssues(assigned);
+      setAssignedTasks(assigned); // Set assigned tasks for the new panel
       setProjects(projectsData);
     } catch (error) {
       console.error('Failed to load Jira data:', error);
@@ -68,6 +71,22 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setTestResult({
         success: false,
         message: `Failed to load projects: ${error.message}`
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadAssignedTasks = async () => {
+    try {
+      setIsLoading(true);
+      const tasks = await JiraApiService.getAssignedIssues();
+      setAssignedTasks(tasks);
+    } catch (error) {
+      console.error('Failed to load assigned tasks:', error);
+      setTestResult({
+        success: false,
+        message: `Failed to load assigned tasks: ${error.message}`
       });
     } finally {
       setIsLoading(false);
@@ -184,6 +203,27 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     const projectKeys = value.split(',').map(key => key.trim()).filter(key => key);
     setSelectedProjects(projectKeys);
     handleConfigChange('projectKeys', projectKeys);
+  };
+
+  // Filter assigned tasks by status
+  const getFilteredTasks = () => {
+    if (taskStatusFilter === 'all') {
+      return assignedTasks;
+    }
+    return assignedTasks.filter(task => task.status === taskStatusFilter);
+  };
+
+  // Get unique statuses for filter dropdown
+  const getUniqueStatuses = () => {
+    const statuses = [...new Set(assignedTasks.map(task => task.status))];
+    return statuses.sort();
+  };
+
+  // Format time duration
+  const formatTime = (timeString) => {
+    if (!timeString) return 'Not set';
+    // Jira time format is usually like "1d 2h 30m" or "2h 30m"
+    return timeString;
   };
 
   const formatDate = (dateString) => {
@@ -433,6 +473,139 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               )}
             </div>
             
+            {/* Assigned Tasks Panel */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ fontWeight: 'bold' }}>
+                  Assigned Tasks
+                </label>
+                {assignedTasks.length > 0 && (
+                  <select
+                    value={taskStatusFilter}
+                    onChange={(e) => setTaskStatusFilter(e.target.value)}
+                    style={{
+                      padding: '4px 8px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    <option value="all">All Statuses ({assignedTasks.length})</option>
+                    {getUniqueStatuses().map(status => (
+                      <option key={status} value={status}>
+                        {status} ({assignedTasks.filter(task => task.status === status).length})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+              
+              {assignedTasks.length > 0 ? (
+                <div style={{
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: '#f8f9fa'
+                }}>
+                  {getFilteredTasks().map(task => (
+                    <div
+                      key={task.key}
+                      style={{
+                        padding: '12px',
+                        borderBottom: '1px solid #dee2e6',
+                        backgroundColor: 'white',
+                        margin: '4px',
+                  borderRadius: '4px'
+                }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 'bold', color: '#2196f3' }}>
+                              {task.key}
+                            </span>
+                            <span style={{
+                              padding: '2px 6px',
+                              backgroundColor: JiraApiService.getStatusColor(task.status),
+                              color: '#fff',
+                              borderRadius: '3px',
+                              fontSize: '10px'
+                            }}>
+                              {task.status}
+                            </span>
+                            <span style={{
+                              padding: '2px 6px',
+                              backgroundColor: JiraApiService.getPriorityColor(task.priority),
+                              color: '#fff',
+                              borderRadius: '3px',
+                              fontSize: '10px'
+                            }}>
+                              {task.priority}
+                            </span>
+                          </div>
+                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                            {task.summary}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                            {task.project} • Sprint: {task.sprint}
+                          </div>
+                        </div>
+                        <a
+                          href={task.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#007bff',
+                            color: '#fff',
+                            textDecoration: 'none',
+                            borderRadius: '4px',
+                            fontSize: '12px'
+                          }}
+                        >
+                          Open
+                        </a>
+                      </div>
+                      
+                      {/* Time tracking details */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', fontSize: '11px' }}>
+                        <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
+                          <div style={{ fontWeight: 'bold', color: '#495057' }}>Original Estimate</div>
+                          <div>{formatTime(task.originalEstimate)}</div>
+                        </div>
+                        <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
+                          <div style={{ fontWeight: 'bold', color: '#495057' }}>Time Spent</div>
+                          <div>{formatTime(task.timeSpent)}</div>
+                        </div>
+                        <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
+                          <div style={{ fontWeight: 'bold', color: '#495057' }}>Remaining</div>
+                          <div>{formatTime(task.remainingEstimate)}</div>
+                        </div>
+                        {task.storyPoints && (
+                          <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
+                            <div style={{ fontWeight: 'bold', color: '#495057' }}>Story Points</div>
+                            <div>{task.storyPoints}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{
+                  padding: '16px',
+                  textAlign: 'center',
+                  color: '#666',
+                  border: '1px dashed #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: '#f8f9fa'
+                }}>
+                  {config?.enabled ? 'No assigned tasks found. Click "Load Assigned Tasks" to refresh.' : 'Connect to Jira to see assigned tasks.'}
+                </div>
+              )}
+            </div>
+            
             <div>
               <label style={{ display: 'block', marginBottom: '4px', fontWeight: 'bold' }}>
                 Sync Interval (minutes)
@@ -545,6 +718,25 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             
             {config?.enabled && (
               <button
+                onClick={loadAssignedTasks}
+                disabled={isLoading}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#fd7e14',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {isLoading ? '⏳' : '📋'} Load Assigned Tasks
+              </button>
+            )}
+            
+            {config?.enabled && (
+              <button
                 onClick={handleSyncIssues}
                 disabled={isLoading}
                 style={{
@@ -588,8 +780,8 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             <h3 style={{ marginBottom: '12px' }}>📊 Statistics</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
               <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Assigned Issues</div>
-                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{jiraStats.assignedCount}</div>
+                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Assigned Tasks</div>
+                <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{assignedTasks.length}</div>
               </div>
               <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
                 <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Recent Issues</div>

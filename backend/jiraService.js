@@ -223,6 +223,7 @@ class JiraService {
    */
   formatIssueData(issue) {
     const fields = issue.fields;
+    const baseUrl = this.baseUrl || '';
     
     return {
       key: issue.key,
@@ -241,10 +242,18 @@ class JiraService {
       fixVersions: fields.fixVersions?.map(v => v.name) || [],
       project: fields.project?.name || 'Unknown',
       projectKey: fields.project?.key || 'UNKNOWN',
-      url: `${this.baseUrl.replace(/\/$/, '')}/browse/${issue.key}`,
+      url: `${baseUrl.replace(/\/$/, '')}/browse/${issue.key}`,
       resolution: fields.resolution?.name,
       timeTracking: fields.timetracking,
-      environment: fields.environment
+      environment: fields.environment,
+      // Additional fields for assigned tasks panel
+      originalEstimate: fields.timetracking?.originalEstimate || null,
+      remainingEstimate: fields.timetracking?.remainingEstimate || null,
+      timeSpent: fields.timetracking?.timeSpent || null,
+      sprint: fields.customfield_10020?.[0]?.name || 'No Sprint',
+      epic: fields.customfield_10014 || null,
+      storyPoints: fields.customfield_10016 || null,
+      fixVersion: fields.fixVersions?.[0]?.name || null
     };
   }
 
