@@ -185,16 +185,48 @@ export class ConnectionStatusService {
       const { ClarizenApiService } = await import('./clarizenApiService.js');
       const config = ClarizenApiService.getClarizenConfig();
       
-      if (!config || !config.baseUrl || !config.username || !config.accessToken) {
+      if (!config || !config.baseUrl || !config.username) {
         return this.updateConnectionStatus('clarizen', 'not-configured', false);
       }
 
-      // Test connection by trying to get user info
+      // If we have stored credentials but no access token, or if the token is invalid,
+      // try to re-authenticate
+      if (!config.accessToken || config.accessToken === 'basic-auth-token') {
+        try {
+          console.log('🔄 Clarizen: Re-authenticating with stored credentials...');
+          const authResult = await ClarizenApiService.testConnection(config);
+          if (authResult.success) {
+            return this.updateConnectionStatus('clarizen', 'connected', true);
+          } else {
+            return this.updateConnectionStatus('clarizen', 'not-authenticated', false);
+          }
+        } catch (error) {
+          console.log('❌ Clarizen: Re-authentication failed:', error.message);
+          // Clear the invalid access token
+          ClarizenApiService.clearAccessToken();
+          return this.updateConnectionStatus('clarizen', 'not-authenticated', false);
+        }
+      }
+
+      // Test connection by trying to get user info with existing token
       try {
         await ClarizenApiService.getUserInfo();
         return this.updateConnectionStatus('clarizen', 'connected', true);
       } catch (error) {
-        return this.updateConnectionStatus('clarizen', 'error', false);
+        // If user info fails, try re-authentication
+        console.log('🔄 Clarizen: User info failed, trying re-authentication...');
+        try {
+          const authResult = await ClarizenApiService.testConnection(config);
+          if (authResult.success) {
+            return this.updateConnectionStatus('clarizen', 'connected', true);
+          } else {
+            return this.updateConnectionStatus('clarizen', 'error', false);
+          }
+        } catch (authError) {
+          // Clear the invalid access token
+          ClarizenApiService.clearAccessToken();
+          return this.updateConnectionStatus('clarizen', 'error', false);
+        }
       }
     } catch (error) {
       console.error('Failed to check Clarizen status:', error);

@@ -104,6 +104,42 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
     }
   };
 
+  const handleSyncResourcing = async () => {
+    try {
+      if (resourcingData.length === 0) {
+        setTestResult({
+          success: false,
+          message: 'No resourcing data to sync'
+        });
+        return;
+      }
+
+      setIsLoading(true);
+      
+      // Call the parent component's sync handler
+      if (onResourcingSynced) {
+        await onResourcingSynced(resourcingData);
+        setTestResult({
+          success: true,
+          message: `Successfully synced ${resourcingData.length} resourcing entries to logbook`
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: 'Sync handler not available'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to sync resourcing data:', error);
+      setTestResult({
+        success: false,
+        message: `Failed to sync resourcing data: ${error.message}`
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -364,7 +400,25 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
         {/* Resourcing Data */}
         {resourcingData.length > 0 && (
           <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '12px' }}>📊 Current Resourcing</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0 }}>📊 Current Resourcing</h3>
+              <button
+                onClick={() => handleSyncResourcing()}
+                disabled={isLoading}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#28a745',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {isLoading ? '⏳' : '📝'} Sync to Logbook
+              </button>
+            </div>
             <div style={{
               maxHeight: '400px',
               overflowY: 'auto',

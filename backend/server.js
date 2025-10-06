@@ -465,7 +465,7 @@ app.get('/api/clarizen/user', async (req, res) => {
     }
 
     console.log('👤 Fetching user info with stored config');
-    const user = await clarizenService.getUserInfo(clarizenConfig, clarizenConfig.accessToken);
+    const user = await clarizenService.getUserInfo(clarizenConfig.accessToken);
     res.json({ user });
   } catch (error) {
     console.error('❌ Failed to fetch Clarizen user info:', error);
@@ -477,26 +477,7 @@ app.get('/api/clarizen/user', async (req, res) => {
 });
 
 // Get all projects
-app.get('/api/clarizen/projects', async (req, res) => {
-  try {
-    if (!clarizenConfig) {
-      return res.status(400).json({ 
-        error: 'Clarizen not configured. Please test connection first.',
-        details: 'No Clarizen configuration found. Test the connection first.' 
-      });
-    }
-
-    console.log('📁 Fetching projects with stored config');
-    const projects = await clarizenService.getProjects(clarizenConfig, clarizenConfig.accessToken);
-    res.json({ projects });
-  } catch (error) {
-    console.error('❌ Failed to fetch Clarizen projects:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch Clarizen projects',
-      details: error.message 
-    });
-  }
-});
+// Projects endpoint removed - using CZQL queries instead
 
 // Get resourcing data
 app.get('/api/clarizen/resourcing', async (req, res) => {
@@ -521,27 +502,7 @@ app.get('/api/clarizen/resourcing', async (req, res) => {
 });
 
 // Get project details
-app.get('/api/clarizen/projects/:projectId', async (req, res) => {
-  try {
-    if (!clarizenConfig) {
-      return res.status(400).json({ 
-        error: 'Clarizen not configured. Please test connection first.',
-        details: 'No Clarizen configuration found. Test the connection first.' 
-      });
-    }
-
-    const { projectId } = req.params;
-    console.log(`📋 Fetching project ${projectId} with stored config`);
-    const project = await clarizenService.getProject(projectId, clarizenConfig, clarizenConfig.accessToken);
-    res.json({ project });
-  } catch (error) {
-    console.error('❌ Failed to fetch Clarizen project:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch Clarizen project',
-      details: error.message 
-    });
-  }
-});
+// Individual project endpoint removed - using CZQL queries instead
 
 // Start server
 app.listen(PORT, () => {

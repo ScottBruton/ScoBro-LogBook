@@ -54,8 +54,13 @@ export class ClarizenApiService {
         password: clarizenConfig.password ? '***PROVIDED***' : 'NOT PROVIDED'
       });
 
-      if (!clarizenConfig.baseUrl || !clarizenConfig.username || !clarizenConfig.password) {
-        throw new Error('Please provide Clarizen URL, username, and password');
+      if (!clarizenConfig.baseUrl || !clarizenConfig.username) {
+        throw new Error('Please provide Clarizen URL and username');
+      }
+
+      // If no password is provided, we can't authenticate
+      if (!clarizenConfig.password) {
+        throw new Error('Password required for authentication. Please re-enter your password in the Clarizen modal.');
       }
 
       const requestBody = {
@@ -172,6 +177,20 @@ export class ClarizenApiService {
       console.log('🔌 Clarizen disconnected successfully');
     } catch (error) {
       console.error('Failed to disconnect Clarizen:', error);
+    }
+  }
+
+  /**
+   * Clear stored access token (for re-authentication)
+   */
+  static clearAccessToken() {
+    try {
+      const config = this.getClarizenConfig();
+      config.accessToken = null;
+      this.saveClarizenConfig(config);
+      console.log('🔄 Clarizen access token cleared');
+    } catch (error) {
+      console.error('Failed to clear Clarizen access token:', error);
     }
   }
 
