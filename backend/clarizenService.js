@@ -150,12 +150,15 @@ Response: ${JSON.stringify(response, null, 2)}
       const response = await this.makeApiRequest('/authentication/GetSessionInfo', sessionToken);
       
       console.log('👤 Raw user info response:', JSON.stringify(response, null, 2));
+      console.log('👤 All response keys:', Object.keys(response));
+      console.log('👤 Response values:', Object.values(response));
       
       const userInfo = {
         username: response.userName || response.username,
-        fullName: response.fullName || response.displayName,
+        fullName: response.fullName || response.displayName || response.name || response.Name,
         email: response.email,
-        sessionId: response.sessionId
+        sessionId: response.sessionId,
+        userId: response.userId
       };
       
       console.log('👤 Processed user info:', userInfo);
@@ -185,8 +188,6 @@ Response: ${JSON.stringify(response, null, 2)}
 
       const response = await this.makeApiRequest('/data/query', sessionToken, 'POST', { q: query });
       
-      this.saveResponseToFile('getUserAssignments', response);
-      
       return response;
     } catch (error) {
       console.error('❌ Failed to get user assignments:', error);
@@ -212,8 +213,6 @@ Response: ${JSON.stringify(response, null, 2)}
       
       const response = await this.makeApiRequest('/data/query', sessionToken, 'POST', { q: query });
       
-      this.saveResponseToFile('getProjectResources', response);
-      
       return response;
     } catch (error) {
       console.error('❌ Failed to get project resources:', error);
@@ -224,7 +223,7 @@ Response: ${JSON.stringify(response, null, 2)}
   /**
    * Get timesheet data for actual hours
    */
-  async getTimesheetData(sessionToken, startDate = '2025-01-01', endDate = '2025-12-31') {
+  async getTimesheetData(sessionToken, startDate = '2024-01-01', endDate = '2025-12-31') {
     try {
       console.log('⏰ Getting timesheet data...');
       
@@ -260,8 +259,6 @@ Response: ${JSON.stringify(response, null, 2)}
           console.log(`❌ Query ${i + 1} failed:`, error.message);
         }
       }
-      
-      this.saveResponseToFile('getTimesheetData', response);
       
       return response;
     } catch (error) {
@@ -310,8 +307,6 @@ Response: ${JSON.stringify(response, null, 2)}
         }
       }
       
-      this.saveResponseToFile('getResourceAllocations', response);
-      
       return response;
     } catch (error) {
       console.error('❌ Failed to get resource allocations:', error);
@@ -333,6 +328,10 @@ Response: ${JSON.stringify(response, null, 2)}
       // Get user info first
       const userInfo = await this.getUserInfo(sessionToken);
       console.log('👤 User info:', userInfo);
+      console.log('👤 Current user name:', userInfo.fullName || userInfo.username);
+      console.log('👤 Current user email:', userInfo.email);
+      console.log('👤 Current user ID:', userInfo.userId);
+      console.log('👤 Raw user info keys:', Object.keys(userInfo));
 
       // Get all types of resourcing data
       const [assignments, projectResources, timesheetData, allocations] = await Promise.allSettled([
@@ -344,7 +343,21 @@ Response: ${JSON.stringify(response, null, 2)}
 
       // Process and combine the data
       const resourcingData = [];
-      const currentUser = userInfo.fullName || userInfo.username;
+      
+      // Find the user's name from timesheet data using userId
+      let currentUser = userInfo.fullName || userInfo.username;
+      if (!currentUser && userInfo.userId && timesheetData.status === 'fulfilled' && timesheetData.value && timesheetData.value.entities) {
+        // Look for the user's name in the timesheet data using their userId
+        const userEntry = timesheetData.value.entities.find(entry => 
+          entry.ReportedBy && entry.ReportedBy.id && entry.ReportedBy.id.includes(userInfo.userId)
+        );
+        if (userEntry && userEntry.ReportedBy && userEntry.ReportedBy.Name) {
+          currentUser = userEntry.ReportedBy.Name;
+          console.log(`🔍 Found user name from timesheet data: "${currentUser}" for userId: ${userInfo.userId}`);
+        }
+      }
+      
+      console.log(`🔍 Using currentUser: "${currentUser}"`);
 
       // Process assignments
       if (assignments.status === 'fulfilled' && assignments.value && assignments.value.entities) {
@@ -372,88 +385,148 @@ Response: ${JSON.stringify(response, null, 2)}
 
       // Process project resources
       if (projectResources.status === 'fulfilled' && projectResources.value && projectResources.value.entities) {
+        const userProjectResources = [];
+        
         for (const project of projectResources.value.entities) {
           if (project.Resources && project.Resources.entities) {
-            for (const resource of project.Resources.entities) {
-              // Only include project resources for the current user
-              if (resource.Name === currentUser) {
-                resourcingData.push({
-                  id: `${project.id}-${resource.id}`,
-                  projectId: project.id,
-                  projectName: project.Name,
-                  clarizenTag: 'Project Resource',
-                  userName: resource.Name,
-                  hours: null, // Project resources don't have specific hours
-                  startDate: null,
-                  endDate: null,
-                  status: 'Active',
-                  role: resource.Role || 'Resource',
-                  percentage: null,
-                  type: 'Project Resource'
-                });
-              }
-            }
+            // Filter only resources for the current user
+            const userResources = project.Resources.entities.filter(
+              resource => resource.Name === currentUser
+            );
+            
+            // Map to resourcing data format
+            const projectResourceData = userResources.map(resource => ({
+              id: `${project.id}-${resource.id}`,
+              projectId: project.id,
+              projectName: project.Name,
+              clarizenTag: 'Project Resource',
+              userName: resource.Name,
+              hours: null, // Project resources don't have specific hours
+              startDate: null,
+              endDate: null,
+              status: 'Active',
+              role: resource.Role || 'Resource',
+              percentage: null,
+              type: 'Project Resource'
+            }));
+            
+            userProjectResources.push(...projectResourceData);
           }
         }
+        
+        resourcingData.push(...userProjectResources);
       }
 
       // Process timesheet data (filter by current user)
       if (timesheetData.status === 'fulfilled' && timesheetData.value && timesheetData.value.entities) {
-        for (const timesheet of timesheetData.value.entities) {
-          // Only include timesheet entries for the current user
-          if (timesheet.ReportedBy && timesheet.ReportedBy.Name === currentUser) {
-            resourcingData.push({
-              id: timesheet.id,
-              projectId: timesheet.WorkItem?.id,
-              projectName: timesheet.WorkItem?.Name,
-              clarizenTag: timesheet.WorkItem?.EntityType || 'Timesheet',
-              userName: timesheet.ReportedBy.Name,
-              hours: timesheet.Duration?.value || 0,
-              startDate: timesheet.ReportedDate,
-              endDate: timesheet.ReportedDate,
-              status: 'Logged',
-              role: 'Time Entry',
-              percentage: null,
-              type: 'Timesheet'
-            });
-          }
+        console.log(`🔍 Processing ${timesheetData.value.entities.length} timesheet entries`);
+        console.log(`🔍 Looking for user: "${currentUser}"`);
+        
+        // Debug: Log ALL names found in the data
+        const allNames = timesheetData.value.entities.map(e => e.ReportedBy?.Name).filter(Boolean);
+        console.log(`🔍 Total entries: ${timesheetData.value.entities.length}`);
+        console.log(`🔍 All unique names found:`, [...new Set(allNames)]);
+        
+        // Debug: Show first few user names to see the format
+        const sampleNames = timesheetData.value.entities.slice(0, 5).map(e => e.ReportedBy?.Name);
+        console.log(`🔍 Sample names in data:`, sampleNames);
+        
+        // Debug: Check if Scott Bruton is in the data
+        const scottEntries = timesheetData.value.entities.filter(e => 
+          e.ReportedBy?.Name && e.ReportedBy.Name.includes('Scott')
+        );
+        console.log(`🔍 Found ${scottEntries.length} entries with 'Scott' in the name`);
+        if (scottEntries.length > 0) {
+          console.log(`🔍 Scott entries:`, scottEntries.map(e => ({
+            name: e.ReportedBy?.Name,
+            project: e.WorkItem?.Name,
+            hours: e.Duration?.value
+          })));
         }
+        
+        // Debug: Check exact match
+        const exactMatches = timesheetData.value.entities.filter(e => 
+          e.ReportedBy?.Name === currentUser
+        );
+        console.log(`🔍 Found ${exactMatches.length} exact matches for "${currentUser}"`);
+        
+        // Filter only entries where ReportedBy.Name === currentUser
+        const userTimesheetEntries = timesheetData.value.entities.filter(
+          e => e.ReportedBy?.Name === currentUser
+        );
+        
+        console.log(`🔍 Found ${userTimesheetEntries.length} entries for user "${currentUser}"`);
+        
+        // Map to resourcing data format
+        const userTimesheetData = userTimesheetEntries.map(timesheet => ({
+          id: timesheet.id,
+          projectId: timesheet.WorkItem?.id,
+          projectName: timesheet.WorkItem?.Name,
+          clarizenTag: timesheet.WorkItem?.EntityType || 'Timesheet',
+          userName: timesheet.ReportedBy.Name,
+          hours: timesheet.Duration?.value || 0,
+          startDate: timesheet.ReportedDate,
+          endDate: timesheet.ReportedDate,
+          status: 'Logged',
+          role: 'Time Entry',
+          percentage: null,
+          type: 'Timesheet'
+        }));
+        
+        resourcingData.push(...userTimesheetData);
       }
 
       // Process allocations
       if (allocations.status === 'fulfilled' && allocations.value && allocations.value.entities) {
-        for (const allocation of allocations.value.entities) {
-          // Only include allocations for the current user
-          if (allocation.Resource && allocation.Resource.Name === currentUser) {
-            resourcingData.push({
-              id: allocation.id,
-              projectId: allocation.WorkItem?.id,
-              projectName: allocation.WorkItem?.Name,
-              clarizenTag: allocation.WorkItem?.EntityType || 'Allocation',
-              userName: allocation.Resource.Name,
-              hours: allocation.Work || allocation.Units || 0,
-              startDate: null,
-              endDate: null,
-              status: 'Active',
-              role: 'Allocated',
-              percentage: null,
-              type: 'Allocation'
-            });
-          }
-        }
+        // Filter only entries where Resource.Name === currentUser
+        const userAllocationEntries = allocations.value.entities.filter(
+          e => e.Resource?.Name === currentUser
+        );
+        
+        // Map to resourcing data format
+        const userAllocationData = userAllocationEntries.map(allocation => ({
+          id: allocation.id,
+          projectId: allocation.WorkItem?.id,
+          projectName: allocation.WorkItem?.Name,
+          clarizenTag: allocation.WorkItem?.EntityType || 'Allocation',
+          userName: allocation.Resource.Name,
+          hours: allocation.Work || allocation.Units || 0,
+          startDate: null,
+          endDate: null,
+          status: 'Active',
+          role: 'Allocated',
+          percentage: null,
+          type: 'Allocation'
+        }));
+        
+        resourcingData.push(...userAllocationData);
       }
 
-      // Save final result summary
-      this.saveResponseToFile('FINAL_RESULT', {
-        totalDataSources: 4,
+      // Save raw responses to clarizen_responses.txt
+      this.saveResponseToFile('RAW_RESPONSES', {
         currentUser: currentUser,
-        assignmentsFound: assignments.status === 'fulfilled' && assignments.value ? assignments.value.entities?.length || 0 : 0,
-        projectResourcesFound: projectResources.status === 'fulfilled' && projectResources.value ? projectResources.value.entities?.length || 0 : 0,
-        timesheetEntriesFound: timesheetData.status === 'fulfilled' && timesheetData.value ? timesheetData.value.entities?.length || 0 : 0,
-        allocationsFound: allocations.status === 'fulfilled' && allocations.value ? allocations.value.entities?.length || 0 : 0,
-        totalResourcingEntries: resourcingData.length,
-        resourcingData: resourcingData
-      });
+        userEmail: userInfo.email,
+        rawResponses: {
+          assignments: assignments.status === 'fulfilled' ? assignments.value : assignments.reason,
+          projectResources: projectResources.status === 'fulfilled' ? projectResources.value : projectResources.reason,
+          timesheetData: timesheetData.status === 'fulfilled' ? timesheetData.value : timesheetData.reason,
+          allocations: allocations.status === 'fulfilled' ? allocations.value : allocations.reason
+        }
+      }, 'clarizen_responses.txt');
+
+      // Save filtered results to separate file
+      this.saveResponseToFile('FILTERED_RESULTS', {
+        currentUser: currentUser,
+        userEmail: userInfo.email,
+        totalFilteredEntries: resourcingData.length,
+        breakdown: {
+          assignments: resourcingData.filter(r => r.type === 'Assignment').length,
+          projectResources: resourcingData.filter(r => r.type === 'Project Resource').length,
+          timesheetEntries: resourcingData.filter(r => r.type === 'Timesheet').length,
+          allocations: resourcingData.filter(r => r.type === 'Allocation').length
+        },
+        filteredResourcingData: resourcingData
+      }, 'clarizen_filtered_results.txt');
 
       console.log(`✅ Retrieved ${resourcingData.length} resourcing entries from Clarizen REST API`);
       return resourcingData;

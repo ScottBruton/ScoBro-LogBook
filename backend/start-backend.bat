@@ -29,7 +29,15 @@ if not exist node_modules (
 )
 
 echo.
-echo [3/3] Starting backend server...
+echo [3/4] Checking for existing processes on port 3001...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :3001') do (
+    echo Found process %%a on port 3001, killing it...
+    taskkill /F /PID %%a >nul 2>&1
+)
+echo [OK] Port 3001 is now free
+
+echo.
+echo [4/4] Starting backend server...
 echo.
 echo Backend server will run on: http://localhost:3001
 echo Health check: http://localhost:3001/health

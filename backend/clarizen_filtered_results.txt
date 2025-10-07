@@ -1,0 +1,46 @@
+
+========================================
+Timestamp: 2025-10-07T08:29:15.195Z
+Endpoint: FILTERED_RESULTS
+Response: {
+  "currentUser": "Scott Bruton",
+  "totalFilteredEntries": 2,
+  "breakdown": {
+    "assignments": 0,
+    "projectResources": 0,
+    "timesheetEntries": 2,
+    "allocations": 0
+  },
+  "filteredResourcingData": [
+    {
+      "id": "/Timesheet/mg548isk70t4si5ywis5jjb91512",
+      "projectId": "/Task/4uzsdciqmia2j9fnv8g6enwp4821",
+      "projectName": "Detail Design - Chassis",
+      "clarizenTag": "Task",
+      "userName": "Scott Bruton",
+      "hours": 4,
+      "startDate": "2024-02-29T00:00:00.0000000",
+      "endDate": "2024-02-29T00:00:00.0000000",
+      "status": "Logged",
+      "role": "Time Entry",
+      "percentage": null,
+      "type": "Timesheet"
+    },
+    {
+      "id": "/Timesheet/3hep02z396dqd2q8t92nk3fv1886",
+      "projectId": "/Task/u99ht4sf8f2uya6yvp47kr5d453",
+      "projectName": "Update Design - Chassis",
+      "clarizenTag": "Task",
+      "userName": "Scott Bruton",
+      "hours": 3,
+      "startDate": "2024-02-22T00:00:00.0000000",
+      "endDate": "2024-02-22T00:00:00.0000000",
+      "status": "Logged",
+      "role": "Time Entry",
+      "percentage": null,
+      "type": "Timesheet"
+    }
+  ]
+}
+========================================
+

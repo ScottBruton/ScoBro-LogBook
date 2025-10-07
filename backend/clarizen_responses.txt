@@ -1,1751 +1,1730 @@
 
 ========================================
-Timestamp: 2025-10-06T08:43:26.319Z
-Endpoint: getUserAssignments
+Timestamp: 2025-10-07T08:29:15.176Z
+Endpoint: RAW_RESPONSES
 Response: {
-  "entities": [],
-  "paging": {
-    "from": 0,
-    "limit": 100,
-    "hasMore": false
+  "currentUser": "Scott Bruton",
+  "rawResponses": {
+    "assignments": {
+      "entities": [],
+      "paging": {
+        "from": 0,
+        "limit": 100,
+        "hasMore": false
+      }
+    },
+    "projectResources": {},
+    "timesheetData": {
+      "entities": [
+        {
+          "id": "/Timesheet/78dt9y3q982pagolfmola0x3h1362",
+          "ReportedBy": {
+            "id": "/User/2imlu39z26s805lvpv6y4dfmj720",
+            "Name": "Jeevan Shah"
+          },
+          "WorkItem": {
+            "id": "/Task/37p87f7pexnhoilot3gxhwego67",
+            "Name": "7.001 - Project Management Sprint 8 & 9",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-20T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/4z8l5cuucdcy2d9sfk3ykm3kj3",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/5nict4xuomepj7iu5hs6wr1qr130",
+            "Name": "2.000.03 - USE WITH CAUTION Email backlog",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-02-22T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/67ax6alksdzs3q98bt4ffs3q522",
+          "ReportedBy": {
+            "id": "/User/73vdnrb547kxri1p4djy0fk3q494",
+            "Name": "Brian Oh"
+          },
+          "WorkItem": {
+            "id": "/Task/6oqrtelb6mdnjkidhdsmgpvg38824",
+            "Name": "2.007 - Business Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.5
+          },
+          "ReportedDate": "2024-02-23T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/19cde7ewlro6pq5rf0z8inik7219",
+          "ReportedBy": {
+            "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
+            "Name": "Jason Ryan"
+          },
+          "WorkItem": {
+            "id": "/Task/37p87f7pexnhoilot3gxhwego67",
+            "Name": "7.001 - Project Management Sprint 8 & 9",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 4
+          },
+          "ReportedDate": "2024-02-22T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5bqld4snf3kjfms144vylordp51",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69221",
+            "Name": "Andrew Kang"
+          },
+          "WorkItem": {
+            "id": "/Task/2sv9d4rl7b7rqxfff3or8an7g8232",
+            "Name": "2.003 - Quality Compliance Training (QMS,WHS, Induction)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-22T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/mg548isk70t4si5ywis5jjb91512",
+          "ReportedBy": {
+            "id": "/User/5v6a9bh39b69d8c2n5x73olwb31",
+            "Name": "Scott Bruton"
+          },
+          "WorkItem": {
+            "id": "/Task/4uzsdciqmia2j9fnv8g6enwp4821",
+            "Name": "Detail Design - Chassis",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 4
+          },
+          "ReportedDate": "2024-02-29T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3v58wgmtvaj0n1irct568gh6j11",
+          "ReportedBy": {
+            "id": "/User/4ug7kd98u1bfbz4gowwol8j56958",
+            "Name": "Nikolai Chikovskii"
+          },
+          "WorkItem": {
+            "id": "/Task/6n4c4s7syjnynne4atqo3c0au223",
+            "Name": "Project Management",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-27T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2wepetg49ijpdj37zrpqmdbx1806",
+          "ReportedBy": {
+            "id": "/User/4ug7kd98u1bfbz4gowwol8j56958",
+            "Name": "Nikolai Chikovskii"
+          },
+          "WorkItem": {
+            "id": "/Task/6n4c4s7syjnynne4atqo3c0au223",
+            "Name": "Project Management",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-02-26T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3bpl3s6zxwyf09k68cr62e1f9128",
+          "ReportedBy": {
+            "id": "/User/5v5kyjzqn5plv4mfrdh9axung2619",
+            "Name": "Mathias Berg-Johansen"
+          },
+          "WorkItem": {
+            "id": "/Task/2saynv1p5af002depbcvyjil7168",
+            "Name": "4.009 - Look-Like Prototype & Architecture Update",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.25
+          },
+          "ReportedDate": "2024-02-26T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6vyx39ixwwygyc485yxzo31mm278",
+          "ReportedBy": {
+            "id": "/User/5v5kyjzqn5plv4mfrdh9axung2619",
+            "Name": "Mathias Berg-Johansen"
+          },
+          "WorkItem": {
+            "id": "/Task/64b7f2v3wdjzog7u36y8aew0045",
+            "Name": "4.001.02 - Team Meetings (S4)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-28T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5xqjibv3dephek5ea2eb7bn3632",
+          "ReportedBy": {
+            "id": "/User/b2773b0c-88f0-4009-889a-61d1da362181",
+            "Name": "Glenn Griffioen"
+          },
+          "WorkItem": {
+            "id": "/Task/1htlbh481pz8scqzt2b4rfaij5632",
+            "Name": "1.001 - Professional Development (self managed activities)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3
+          },
+          "ReportedDate": "2024-02-29T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1lxyi2n2f3axxvtbcq6dbiq4e851",
+          "ReportedBy": {
+            "id": "/User/89455d3f-a5a6-4450-b574-fde1b630fb8f",
+            "Name": "Aaron Russell"
+          },
+          "WorkItem": {
+            "id": "/Task/2hakn7p5hjtgnuosfj46wmkv8170",
+            "Name": "4.007 - Software Architecture & Development",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/27szuk05cd53jrkwwgqko7mdu8",
+          "ReportedBy": {
+            "id": "/User/5nwtaj8ehq8s2p898jmpwsydz2248",
+            "Name": "Ryland Jin"
+          },
+          "WorkItem": {
+            "id": "/Task/75l9686evmv1lgvmbd0vdj7vo375",
+            "Name": "obs_1.002 Financial Reporting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3
+          },
+          "ReportedDate": "2024-03-04T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5y0kf3cuaoqcuv1zto1aw2745159",
+          "ReportedBy": {
+            "id": "/User/55q0h8mf2vlml85vsha6pytac1923",
+            "Name": "Alexandra Smythe"
+          },
+          "WorkItem": {
+            "id": "/Task/27mu5wbgk280hmcy1asaaf8rl6756",
+            "Name": "3.005 - NBD Meeting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-07T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6r0eziwf2ib9gbnulf7tv3yf41870",
+          "ReportedBy": {
+            "id": "/User/5ab03321-4a30-4bb8-8501-6bcb15a55e81",
+            "Name": "Mitchell Graessle"
+          },
+          "WorkItem": {
+            "id": "/Task/1thcub1d14etb8hxi0uqmh9em135",
+            "Name": "2.003.02.03 - QCP",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.5
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2yor8tk5mmkv6ea9nuasp253f2097",
+          "ReportedBy": {
+            "id": "/User/5ab03321-4a30-4bb8-8501-6bcb15a55e81",
+            "Name": "Mitchell Graessle"
+          },
+          "WorkItem": {
+            "id": "/Task/1sxlnkff6lgtgj58qyojisno26185",
+            "Name": "2.007 - Business Unit Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/17rltvioum7keonixyg3h1sz12102",
+          "ReportedBy": {
+            "id": "/User/82c4e105-cba4-4244-a59e-95226d481d08",
+            "Name": "Morgan James"
+          },
+          "WorkItem": {
+            "id": "/Task/u99ht4sf8f2uya6yvp47kr5d795",
+            "Name": "PSUs",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3va709ymg9u4s9wskmskbv1i21774",
+          "ReportedBy": {
+            "id": "/User/82c4e105-cba4-4244-a59e-95226d481d08",
+            "Name": "Morgan James"
+          },
+          "WorkItem": {
+            "id": "/Task/1thcub1d14etb8hxi0uqmh9em135",
+            "Name": "2.003.02.03 - QCP",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/60a84mscuv7dcbid5gtmfutds1402",
+          "ReportedBy": {
+            "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
+            "Name": "Akshay Fernando"
+          },
+          "WorkItem": {
+            "id": "/Task/4pj55xbyti0rylhewqfyqtzbd845",
+            "Name": "7.048 - (S8) - Reader Manufacture for Trial (n=1)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5800000000000003
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1l6j9kflilvx5cwjx7cbqquud661",
+          "ReportedBy": {
+            "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
+            "Name": "Akshay Fernando"
+          },
+          "WorkItem": {
+            "id": "/Task/3beu3iplaadhaeg8pyvxbmq561",
+            "Name": "16.005.1 - Weekly Runs & Support",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-07T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6234q3y48yxzn3litmko3vpqt494",
+          "ReportedBy": {
+            "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
+            "Name": "Akshay Fernando"
+          },
+          "WorkItem": {
+            "id": "/Task/1bo2yhghwww08mcmvtjmewuuu1776",
+            "Name": "Elbow CAD Iteration #1",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/4xjvxv2pam5qrvptdn415sc7z2253",
+          "ReportedBy": {
+            "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
+            "Name": "Akshay Fernando"
+          },
+          "WorkItem": {
+            "id": "/Task/3nlvh1czmu5x6hhs26l03xufy1260",
+            "Name": "Admin Weekly catch-up",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.0800000000000003
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/fqevrx20iwtbm7uld9kg5fjn735",
+          "ReportedBy": {
+            "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
+            "Name": "Akshay Fernando"
+          },
+          "WorkItem": {
+            "id": "/Task/3nlvh1czmu5x6hhs26l03xufy1254",
+            "Name": "Project Internal Reporting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3ulpay6w3en5txlbb11sg8exv91",
+          "ReportedBy": {
+            "id": "/User/2cilneevd4r5libzsdh5jrthb1001",
+            "Name": "Yukai Fu"
+          },
+          "WorkItem": {
+            "id": "/Task/4uzsdciqmia2j9fnv8g6enwp4897",
+            "Name": "Detail Design - Frame",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3.7
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2o60qgqwx7m85hr48t4rjxsoy2355",
+          "ReportedBy": {
+            "id": "/User/2cilneevd4r5libzsdh5jrthb1001",
+            "Name": "Yukai Fu"
+          },
+          "WorkItem": {
+            "id": "/Task/4uzsdciqmia2j9fnv8g6enwp4897",
+            "Name": "Detail Design - Frame",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5s4mpqhx7b1lbpiiwsylody6w11",
+          "ReportedBy": {
+            "id": "/User/b52bc5cd-72ec-4a6e-af10-f8f2eec6f7e9",
+            "Name": "Eric Siu"
+          },
+          "WorkItem": {
+            "id": "/Task/u99ht4sf8f2uya6yvp47kr5d459",
+            "Name": "Update Design - Frame",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/7bdm61uaxoccgdrocj6231d7y1038",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/37p87f7pexnhoilot3gxhwego67",
+            "Name": "7.001 - Project Management Sprint 8 & 9",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-07T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5xit3e3fdpim11cba2z0uu5lw1379",
+          "ReportedBy": {
+            "id": "/User/5v5kyjzqn5plv4mfrdh9axung2619",
+            "Name": "Mathias Berg-Johansen"
+          },
+          "WorkItem": {
+            "id": "/Task/1e5p1g5124qqqa5fmk6nowf9r1422",
+            "Name": "Ongoing Support",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5xit3e3fdpim11cba2z0uu5lw1387",
+          "ReportedBy": {
+            "id": "/User/5v5kyjzqn5plv4mfrdh9axung2619",
+            "Name": "Mathias Berg-Johansen"
+          },
+          "WorkItem": {
+            "id": "/Task/64b7f2v3wdjzog7u36y8aew0045",
+            "Name": "4.001.02 - Team Meetings (S4)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-03-07T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3g58eofb0twnbt2eba48syo3t1163",
+          "ReportedBy": {
+            "id": "/User/bf476155-5d60-43e1-84a8-cd8eafa22c5d",
+            "Name": "Lloyd Coleman"
+          },
+          "WorkItem": {
+            "id": "/Task/27qqlht6j6h06wzw4voi25nfi137",
+            "Name": "4.004 - OEM Integration & Electrical Architecture",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/74odmlr2n9q4639g73ssp6ggd371",
+          "ReportedBy": {
+            "id": "/User/5dtgahkvw129udmltllwe69ce1148",
+            "Name": "Nicolette Muller"
+          },
+          "WorkItem": {
+            "id": "/Task/tbwholdjmstqmfdcp699t0st172",
+            "Name": "2.003.02.02 - Work Instruction Review",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1iiubalsbdu4i23ntg5gtmf95680",
+          "ReportedBy": {
+            "id": "/User/5dtgahkvw129udmltllwe69ce1148",
+            "Name": "Nicolette Muller"
+          },
+          "WorkItem": {
+            "id": "/Task/706re0pms9pr0vmevaxe5pron315",
+            "Name": "2.001 - P2 - Regulatory Plan Update + Substantial Equiv",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 6
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/15uqey5drhzo93rr5o77rb5af563",
+          "ReportedBy": {
+            "id": "/User/5dtgahkvw129udmltllwe69ce1148",
+            "Name": "Nicolette Muller"
+          },
+          "WorkItem": {
+            "id": "/Task/1thcub1d14etb8hxi0uqmh9em135",
+            "Name": "2.003.02.03 - QCP",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2bbpq724yuqqhy8mrnmja87vf1429",
+          "ReportedBy": {
+            "id": "/User/89455d3f-a5a6-4450-b574-fde1b630fb8f",
+            "Name": "Aaron Russell"
+          },
+          "WorkItem": {
+            "id": "/Task/2is6v4lp2qpoi6h8qmhi1hq7795",
+            "Name": "4.005 - Transducer Research & Procurement",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.75
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5wxtzntnkxtck76rrnv47fc2a1825",
+          "ReportedBy": {
+            "id": "/User/39vhzhdi1yswxy9xlq8ekxhc992",
+            "Name": "Aarathi Ajish"
+          },
+          "WorkItem": {
+            "id": "/Task/svpiwciky87zk1phc433ihry4078",
+            "Name": "obs_1.008 Finance - Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 4
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1vu62irojds7a6s3dy35l73ps1038",
+          "ReportedBy": {
+            "id": "/User/b2773b0c-88f0-4009-889a-61d1da362181",
+            "Name": "Glenn Griffioen"
+          },
+          "WorkItem": {
+            "id": "/Task/27qqlht6j6h06wzw4voi25nfi137",
+            "Name": "4.004 - OEM Integration & Electrical Architecture",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 4
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1erecydra50cuna0rwhdgzqws2989",
+          "ReportedBy": {
+            "id": "/User/b2773b0c-88f0-4009-889a-61d1da362181",
+            "Name": "Glenn Griffioen"
+          },
+          "WorkItem": {
+            "id": "/Task/5c8nxmae9cl8ot8ywebj82p526799",
+            "Name": "1.006 - Weekly Team Meeting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/4yv7e3erkj441945smvfvh16k871",
+          "ReportedBy": {
+            "id": "/User/45hbrfkf5cpmxb8t9fciac8i58",
+            "Name": "Alessia Pernice"
+          },
+          "WorkItem": {
+            "id": "/Task/6xgafjbwe31qjaiiqt0jktzcf1559",
+            "Name": "Plans & Protocols P3",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3.5
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/52dbum0lvu00w0hi6l9kmbxh4630",
+          "ReportedBy": {
+            "id": "/User/6us5igk952ogmkipsevkz7lum288",
+            "Name": "Jessica Dunn"
+          },
+          "WorkItem": {
+            "id": "/Task/1k5ljtwdvbk3qb93xxczaoiqy4478",
+            "Name": "1.001 - Professional Development (self managed activities)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-12T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3t78wns5nte5haw5jiw0xmfv41973",
+          "ReportedBy": {
+            "id": "/User/5v5kyjzqn5plv4mfrdh9axung2619",
+            "Name": "Mathias Berg-Johansen"
+          },
+          "WorkItem": {
+            "id": "/Task/1435y125nxo59zm6qtz4adwyp295",
+            "Name": "4.006 - Work-Like Prototype & Refine System Requirements",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-03-07T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3w4y9jj32oihlsy1fl5ei81w31009",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69221",
+            "Name": "Andrew Kang"
+          },
+          "WorkItem": {
+            "id": "/Task/4t48vpps2957xjchxqxz3fvc861",
+            "Name": "3.002 [Pascal Add] Pascal General NCR management",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-19T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3hep02z396dqd2q8t92nk3fv1886",
+          "ReportedBy": {
+            "id": "/User/5v6a9bh39b69d8c2n5x73olwb31",
+            "Name": "Scott Bruton"
+          },
+          "WorkItem": {
+            "id": "/Task/u99ht4sf8f2uya6yvp47kr5d453",
+            "Name": "Update Design - Chassis",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3
+          },
+          "ReportedDate": "2024-02-22T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6xbmeos2anoxtrqknuplttwgu824",
+          "ReportedBy": {
+            "id": "/User/45hbrfkf5cpmxb8t9fciac8i59",
+            "Name": "Andy Partington"
+          },
+          "WorkItem": {
+            "id": "/Task/5ysvz6qhjeh9y2glipc0yqvqf2100",
+            "Name": "SOW Retrospectives",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-08T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1pwotp8yywdqcbo0qvelogzv1871",
+          "ReportedBy": {
+            "id": "/User/tyafaw79l5yi9xcp9b3zbsak34",
+            "Name": "Charlotte Blankensteijn"
+          },
+          "WorkItem": {
+            "id": "/Task/1sxlnkff6lgtgj58qyojisno26185",
+            "Name": "2.007 - Business Unit Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-22T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3t2i79e0tnfp5dy8yj30q83py1294",
+          "ReportedBy": {
+            "id": "/User/5f1xns8oswjjab0e1vzx2qgom1",
+            "Name": "Peter Van Ruijven"
+          },
+          "WorkItem": {
+            "id": "/Task/5c8nxmae9cl8ot8ywebj82p526799",
+            "Name": "1.006 - Weekly Team Meeting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-19T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/12z7gme022d10323dlnh0zna40",
+          "ReportedBy": {
+            "id": "/User/5f1xns8oswjjab0e1vzx2qgom1",
+            "Name": "Peter Van Ruijven"
+          },
+          "WorkItem": {
+            "id": "/Task/3r3tyn2pb5wnh8iuu3cov6fq82354",
+            "Name": "NBD work (outreaches / research potential new clients)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-19T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2etn8twzx821fuvbhzc4n2ng1319",
+          "ReportedBy": {
+            "id": "/User/2imlu39z26s805lvpv6y4dfmj720",
+            "Name": "Jeevan Shah"
+          },
+          "WorkItem": {
+            "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64422",
+            "Name": "Connected Care Group",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.75
+          },
+          "ReportedDate": "2024-02-22T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1ltmct1hz98n9i6r8vqas70yn1024",
+          "ReportedBy": {
+            "id": "/User/2imlu39z26s805lvpv6y4dfmj720",
+            "Name": "Jeevan Shah"
+          },
+          "WorkItem": {
+            "id": "/Task/1k5ljtwdvbk3qb93xxczaoiqy4481",
+            "Name": "1.002 - Training Course (Internal & External, unless specified)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.25
+          },
+          "ReportedDate": "2024-02-21T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/79tyblx9zy5dm0lpohiph8gq5891",
+          "ReportedBy": {
+            "id": "/User/5f1xns8oswjjab0e1vzx2qgom1",
+            "Name": "Peter Van Ruijven"
+          },
+          "WorkItem": {
+            "id": "/Task/6ds5naa95fh3x1rv8unrj9byp522",
+            "Name": "Develop Implant Delivery Concepts",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-20T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/f9iwfe123ht6ph6s4ywcdg7e854",
+          "ReportedBy": {
+            "id": "/User/a0ae6c0f-dcd1-4c93-926f-bb90a86868ab",
+            "Name": "Ariella Iskandar"
+          },
+          "WorkItem": {
+            "id": "/Task/5nict4xuomepj7iu5hs6wr1qr130",
+            "Name": "2.000.03 - USE WITH CAUTION Email backlog",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-23T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/4s5nytf4wgq54tniwd2ofvurw77",
+          "ReportedBy": {
+            "id": "/User/d573591c-85ba-4057-a3c0-385589d572d7",
+            "Name": "Jeff Li"
+          },
+          "WorkItem": {
+            "id": "/Task/3a3mgoqe6mt7vr4yz9pczz9gy245",
+            "Name": "1.001.04 - Update Schedule",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.42
+          },
+          "ReportedDate": "2024-02-23T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1edtqwphxh5q9u3fnot2qgmsd184",
+          "ReportedBy": {
+            "id": "/User/d573591c-85ba-4057-a3c0-385589d572d7",
+            "Name": "Jeff Li"
+          },
+          "WorkItem": {
+            "id": "/Task/6oqrtelb6mdnjkidhdsmgpvg38824",
+            "Name": "2.007 - Business Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-02-20T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1v5voaq7kd1vdlo52j4uognx6551",
+          "ReportedBy": {
+            "id": "/User/1430de46-a29d-4a2e-88e9-08a788c93c86",
+            "Name": "Andrea Ranzoni"
+          },
+          "WorkItem": {
+            "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64395",
+            "Name": "3.001 - General Business Development",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.5
+          },
+          "ReportedDate": "2024-02-26T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/7bzn6i31sq4a9wnpsyj9kw01d265",
+          "ReportedBy": {
+            "id": "/User/5nwtaj8ehq8s2p898jmpwsydz2248",
+            "Name": "Ryland Jin"
+          },
+          "WorkItem": {
+            "id": "/Task/5k9hn9y70x3o3x4qkm1y1ury4130",
+            "Name": "Sick Leave",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 8
+          },
+          "ReportedDate": "2024-02-26T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2j7rtvxe660b47r40gs63cn8s1891",
+          "ReportedBy": {
+            "id": "/User/tyafaw79l5yi9xcp9b3zbsak33",
+            "Name": "Kristin Nagy"
+          },
+          "WorkItem": {
+            "id": "/Task/u99ht4sf8f2uya6yvp47kr5d798",
+            "Name": "Budget & Scheduling",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-02-28T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2jg233vwgorhtqd7crwl10zro940",
+          "ReportedBy": {
+            "id": "/User/tyafaw79l5yi9xcp9b3zbsak33",
+            "Name": "Kristin Nagy"
+          },
+          "WorkItem": {
+            "id": "/Task/7br1ko0j12mue0lc7ddtso9od711",
+            "Name": "2.016.02 - Communication with Customer (PM only)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-29T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/7373e9kb5mofqubnohe15agtu1030",
+          "ReportedBy": {
+            "id": "/User/89455d3f-a5a6-4450-b574-fde1b630fb8f",
+            "Name": "Aaron Russell"
+          },
+          "WorkItem": {
+            "id": "/Task/4wd35fggjzueimcvylbws67ip108",
+            "Name": "4.003 - UNSW Deliverables Support",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-29T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/7acbz0kanr3fnhsmtqijhfvhb2409",
+          "ReportedBy": {
+            "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
+            "Name": "Jason Ryan"
+          },
+          "WorkItem": {
+            "id": "/Task/6okvcz34n6a33v0dly38782ej818",
+            "Name": "Generic NBD - proposals/reviews/bbfh/other intakes",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-27T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/37odnbyexhixftjrdl1b6gzof2996",
+          "ReportedBy": {
+            "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
+            "Name": "Jason Ryan"
+          },
+          "WorkItem": {
+            "id": "/Task/6okvcz34n6a33v0dly38782ej818",
+            "Name": "Generic NBD - proposals/reviews/bbfh/other intakes",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.25
+          },
+          "ReportedDate": "2024-02-28T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/46c7bvha6qa3r8dinznlmxnau2063",
+          "ReportedBy": {
+            "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
+            "Name": "Jason Ryan"
+          },
+          "WorkItem": {
+            "id": "/Task/5tcgrvpapn5f0fue763uo6oqr2066",
+            "Name": "Training workshop related activities & Training Preparation workshop related tasks",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-28T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3669bo3sue7ebm8pgmkn0go3c1302",
+          "ReportedBy": {
+            "id": "/User/6us5igk952ogmkipsevkz7lum288",
+            "Name": "Jessica Dunn"
+          },
+          "WorkItem": {
+            "id": "/Task/1bo2yhghwww08mcmvtjmewuuu1761",
+            "Name": "Detail Design - Materials Selection / Sock(?)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.25
+          },
+          "ReportedDate": "2024-02-29T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/q0qt3ofk14b9jlzc3s1ajenf43",
+          "ReportedBy": {
+            "id": "/User/4sf9j5yjopojnxviyvw0127jx357",
+            "Name": "Daan Hittema"
+          },
+          "WorkItem": {
+            "id": "/Task/2psp7ak6njcnroyft7tq11qa6141",
+            "Name": "1.001 NBD Planning & Reporting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.5
+          },
+          "ReportedDate": "2024-02-26T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6u1bz9daxa28btghiiclyriw8163",
+          "ReportedBy": {
+            "id": "/User/82c4e105-cba4-4244-a59e-95226d481d08",
+            "Name": "Morgan James"
+          },
+          "WorkItem": {
+            "id": "/Task/1bo2yhghwww08mcmvtjmewuuu1824",
+            "Name": "DFMA (Tool Design Review cushion, chassis)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-01T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5guacmaaa8m9lx8cn12flcdij865",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/1sxlnkff6lgtgj58qyojisno26152",
+            "Name": "1.002 - Resource Planning & Planning Meeting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.75
+          },
+          "ReportedDate": "2024-03-01T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6pb9n2q2yt5o4aw76wn3lukrf1216",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/5nict4xuomepj7iu5hs6wr1qr130",
+            "Name": "2.000.03 - USE WITH CAUTION Email backlog",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-03-01T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2cokp4qpr1s18203svqunuwvq1323",
+          "ReportedBy": {
+            "id": "/User/5c066ae2-26ad-48a8-bcbf-5b6647009890",
+            "Name": "Tom Croston"
+          },
+          "WorkItem": {
+            "id": "/Task/z6ueyi365q9fddwoj1d2xvep47",
+            "Name": "SUDS Sensor Carriage Design Investigation",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-03-01T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/FD9BA3DB-C972-4910-8573-1B6B5176C40F",
+          "ReportedBy": {
+            "id": "/User/4ug7kd98u1bfbz4gowwol8j56958",
+            "Name": "Nikolai Chikovskii"
+          },
+          "WorkItem": {
+            "id": "/Task/1htlbh481pz8scqzt2b4rfaij5638",
+            "Name": "2.003 - Quality Compliance Training (QMS,WHS, Induction)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-01T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/79ang34fovkybtexr4yuiyw6u1778",
+          "ReportedBy": {
+            "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
+            "Name": "Jacob Tsagaris"
+          },
+          "WorkItem": {
+            "id": "/Task/5ysvz6qhjeh9y2glipc0yqvqf2088",
+            "Name": "Budget & Scheduling",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-08T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6yzqo7kgte532h4c2po2xsut01201",
+          "ReportedBy": {
+            "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
+            "Name": "Jason Ryan"
+          },
+          "WorkItem": {
+            "id": "/Task/37p87f7pexnhoilot3gxhwego67",
+            "Name": "7.001 - Project Management Sprint 8 & 9",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-11T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2job53nxhtetyny851jy7vm8l320",
+          "ReportedBy": {
+            "id": "/User/73vdnrb547kxri1p4djy0fk3q494",
+            "Name": "Brian Oh"
+          },
+          "WorkItem": {
+            "id": "/Task/1sxlnkff6lgtgj58qyojisno26185",
+            "Name": "2.007 - Business Unit Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-03-11T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5t6kqj8529qps3yupaja5yykp171",
+          "ReportedBy": {
+            "id": "/User/a5bk5cxivu3zvkboeiy9rr5q1011",
+            "Name": "Ali Goname"
+          },
+          "WorkItem": {
+            "id": "/Task/6loihd8ic1v9folvze7xrq6ct615",
+            "Name": "7.001 - Project Management Sprint 7",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-15T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1ynqvwlpea04d01g0siytsj7e413",
+          "ReportedBy": {
+            "id": "/User/a5bk5cxivu3zvkboeiy9rr5q1011",
+            "Name": "Ali Goname"
+          },
+          "WorkItem": {
+            "id": "/Task/4pj55xbyti0rylhewqfyqtzbd845",
+            "Name": "7.048 - (S8) - Reader Manufacture for Trial (n=1)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.5
+          },
+          "ReportedDate": "2024-02-15T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/1s3uy5b0902is0dnqwbeh1j4u394",
+          "ReportedBy": {
+            "id": "/User/a5bk5cxivu3zvkboeiy9rr5q1011",
+            "Name": "Ali Goname"
+          },
+          "WorkItem": {
+            "id": "/Task/4pj55xbyti0rylhewqfyqtzbd845",
+            "Name": "7.048 - (S8) - Reader Manufacture for Trial (n=1)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-16T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3djwx110oi9emqn95gnmqa42s282",
+          "ReportedBy": {
+            "id": "/User/a5bk5cxivu3zvkboeiy9rr5q1011",
+            "Name": "Ali Goname"
+          },
+          "WorkItem": {
+            "id": "/Task/1k5ljtwdvbk3qb93xxczaoiqy4478",
+            "Name": "1.001 - Professional Development (self managed activities)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-02-14T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3cxqtbt44drflfeizkubk53eq1474",
+          "ReportedBy": {
+            "id": "/User/1430de46-a29d-4a2e-88e9-08a788c93c86",
+            "Name": "Andrea Ranzoni"
+          },
+          "WorkItem": {
+            "id": "/Task/3qew2vxhkxykhhwguysyvih9u297",
+            "Name": "Plasma device - WA",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-09T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3tk1rq1tyuqyq53yuhrrhaagm1677",
+          "ReportedBy": {
+            "id": "/User/5c066ae2-26ad-48a8-bcbf-5b6647009890",
+            "Name": "Tom Croston"
+          },
+          "WorkItem": {
+            "id": "/Task/2u5t7hbqgyulhazawhknmjexw1112",
+            "Name": "13.019 - Scale Manufacturing Strategy",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.5
+          },
+          "ReportedDate": "2024-02-14T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6373ezdjj9rewi42mtthsk6sk1886",
+          "ReportedBy": {
+            "id": "/User/5c066ae2-26ad-48a8-bcbf-5b6647009890",
+            "Name": "Tom Croston"
+          },
+          "WorkItem": {
+            "id": "/Task/27ly15g3deyhuq9a3z1hwhy6o224",
+            "Name": "13.002.3 - Weekly Team Meetings",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-02-15T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/rk5wr39syjf9casnm89gpql61066",
+          "ReportedBy": {
+            "id": "/User/5c066ae2-26ad-48a8-bcbf-5b6647009890",
+            "Name": "Tom Croston"
+          },
+          "WorkItem": {
+            "id": "/Task/4t9vdlbyime9v5u34b718dtk563",
+            "Name": "16.004.1 - Machine Maintenance",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-02-16T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/4iwaj1b7lwhaa2h89ltdim53j236",
+          "ReportedBy": {
+            "id": "/User/1s5j2gb9ewc6enpvrkc7excb12129",
+            "Name": "Philip van Griethuijsen"
+          },
+          "WorkItem": {
+            "id": "/Task/72rk1ivp7zvj7iwb7i5w13agp203",
+            "Name": "POCP5 Build Sprint 8",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 4.5
+          },
+          "ReportedDate": "2024-02-23T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/ety3tgq9kna0ssqox6q1prio20",
+          "ReportedBy": {
+            "id": "/User/1rrjcec4cv18qvecuwih9c7cq0",
+            "Name": "India Star Macpherson"
+          },
+          "WorkItem": {
+            "id": "/Task/5tcgrvpapn5f0fue763uo6oqr2697",
+            "Name": "Material Orders",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-02-26T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/65ij2l39tndv4vqc8mdm640kj409",
+          "ReportedBy": {
+            "id": "/User/5ab03321-4a30-4bb8-8501-6bcb15a55e81",
+            "Name": "Mitchell Graessle"
+          },
+          "WorkItem": {
+            "id": "/Task/7br1ko0j12mue0lc7ddtso9od696",
+            "Name": "2.012.03 - PFMEA Update",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-27T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/28hsyhswdjgy7og798aal7ogw426",
+          "ReportedBy": {
+            "id": "/User/39vhzhdi1yswxy9xlq8ekxhc992",
+            "Name": "Aarathi Ajish"
+          },
+          "WorkItem": {
+            "id": "/Task/6igq8wky29q16ycf5wfha6tux1068",
+            "Name": "1.011 Account Payable",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 5.5
+          },
+          "ReportedDate": "2024-02-28T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3coutsou196emp3pcxi10ft08275",
+          "ReportedBy": {
+            "id": "/User/55q0h8mf2vlml85vsha6pytac1923",
+            "Name": "Alexandra Smythe"
+          },
+          "WorkItem": {
+            "id": "/Task/27mu5wbgk280hmcy1asaaf8rl6711",
+            "Name": "1.003 - Mentoring (non-project related)",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-02-28T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/57a1jhck0gr29fcxhafoh1z44298",
+          "ReportedBy": {
+            "id": "/User/a5bk5cxivu3zvkboeiy9rr5q1011",
+            "Name": "Ali Goname"
+          },
+          "WorkItem": {
+            "id": "/Task/2a9fo347vgz5sxtyy3obutrt3682",
+            "Name": "7.054 - HW Reliability",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 6
+          },
+          "ReportedDate": "2024-02-29T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/h6bobr3mvsb59mh7wwb1w4cy75",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69221",
+            "Name": "Andrew Kang"
+          },
+          "WorkItem": {
+            "id": "/Task/34dtao5ilx096yqpi6mpuif7t67",
+            "Name": "6.001 - Kenta Audit",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-01T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6yu4mt8gjp6nf70c5z9l0o29u105",
+          "ReportedBy": {
+            "id": "/User/89455d3f-a5a6-4450-b574-fde1b630fb8f",
+            "Name": "Aaron Russell"
+          },
+          "WorkItem": {
+            "id": "/Task/6k3w3q1cw50igx9kdvji0gr7w1165",
+            "Name": "General PO Approval",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-03-04T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6muebxp71lepcnj4scncl71u9209",
+          "ReportedBy": {
+            "id": "/User/tyafaw79l5yi9xcp9b3zbsak34",
+            "Name": "Charlotte Blankensteijn"
+          },
+          "WorkItem": {
+            "id": "/Task/1bo2yhghwww08mcmvtjmewuuu1758",
+            "Name": "Update & Detail Design - Clips",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 3
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/53fdcs6e2fj6t9wta6akunok41425",
+          "ReportedBy": {
+            "id": "/User/5acfb790-6a0d-493c-9b09-db85bf465ec5",
+            "Name": "George Sidis"
+          },
+          "WorkItem": {
+            "id": "/Task/40me1ki05qsth1vrutpo8v5y664",
+            "Name": "Finance Function Management 2023/24",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1.25
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/65yzzje1p2ggzt0rcola4eal82493",
+          "ReportedBy": {
+            "id": "/User/tyafaw79l5yi9xcp9b3zbsak35",
+            "Name": "Hani Ajani"
+          },
+          "WorkItem": {
+            "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64377",
+            "Name": "2.002 - Resource Management",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-04T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/7odmgo95q0tirs49lg8jg4pd979",
+          "ReportedBy": {
+            "id": "/User/1rrjcec4cv18qvecuwih9c7cq0",
+            "Name": "India Star Macpherson"
+          },
+          "WorkItem": {
+            "id": "/Task/6ds5naa95fh3x1rv8unrj9byp522",
+            "Name": "Develop Implant Delivery Concepts",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 5.5
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/cn2kfm3bjplyywx2h626f3vx1174",
+          "ReportedBy": {
+            "id": "/User/1rrjcec4cv18qvecuwih9c7cq0",
+            "Name": "India Star Macpherson"
+          },
+          "WorkItem": {
+            "id": "/Task/2saynv1p5af002depbcvyjil7168",
+            "Name": "4.009 - Look-Like Prototype & Architecture Update",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5flk09zmam19hj226fd28yqkh2764",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/7br1ko0j12mue0lc7ddtso9od696",
+            "Name": "2.012.03 - PFMEA Update",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.5
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/3sokhugnocmh01vfaksbicppx3002",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/1thcub1d14etb8hxi0uqmh9em135",
+            "Name": "2.003.02.03 - QCP",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/6av4e3usyeaszcnpatjnr42ki4601",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/6v7y1vqvnywt46r1v98zvgva4108",
+            "Name": "2.003.02.04 - pDMR",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/5ehkn252cipfn6bbzc1p4jom83184",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/7br1ko0j12mue0lc7ddtso9od648",
+            "Name": "2.007.02 - Hazard Analysis",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 1
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/kxiukul06zorbujj10jdc2rg1409",
+          "ReportedBy": {
+            "id": "/User/69edx76xmxlvxq8x04cy22u062",
+            "Name": "Tong Shen"
+          },
+          "WorkItem": {
+            "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64359",
+            "Name": "1.002 - Resource Planning & Planning Meeting",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/64zcjdj67bh2v2tpvzkmhmejl1788",
+          "ReportedBy": {
+            "id": "/User/69edx76xmxlvxq8x04cy22u062",
+            "Name": "Tong Shen"
+          },
+          "WorkItem": {
+            "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64392",
+            "Name": "2.007 - Business Operations",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 0.25
+          },
+          "ReportedDate": "2024-03-05T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/8u0pnf0hig7nithuuw1voeup3507",
+          "ReportedBy": {
+            "id": "/User/59euq52uc2omqshq4b97ig69219",
+            "Name": "Charles Ma"
+          },
+          "WorkItem": {
+            "id": "/Task/649nnhne26d2gv10u4w2n62s1650",
+            "Name": "3.002.01 - Project Handover",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 5
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/qmzmihv9rpo35j4jnl0dywoi1891",
+          "ReportedBy": {
+            "id": "/User/45hbrfkf5cpmxb8t9fciac8i58",
+            "Name": "Alessia Pernice"
+          },
+          "WorkItem": {
+            "id": "/Task/1bo2yhghwww08mcmvtjmewuuu1728",
+            "Name": "Plans & Protocols",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2.25
+          },
+          "ReportedDate": "2024-03-06T00:00:00.0000000"
+        },
+        {
+          "id": "/Timesheet/2jdhxa8c5jqyi1wrv508sz2eh256",
+          "ReportedBy": {
+            "id": "/User/a5bk5cxivu3zvkboeiy9rr5q1011",
+            "Name": "Ali Goname"
+          },
+          "WorkItem": {
+            "id": "/Task/6bfh5a8t2rs47se6bk09atx9v2067",
+            "Name": "7.056 - (S7) - Reader PCBA Update for Manufacture",
+            "EntityType": "Task"
+          },
+          "Duration": {
+            "unit": "Hours",
+            "value": 2
+          },
+          "ReportedDate": "2024-02-21T00:00:00.0000000"
+        }
+      ],
+      "paging": {
+        "from": 100,
+        "limit": 100,
+        "hasMore": true
+      }
+    },
+    "allocations": null
   }
-}
-========================================
-
-
-========================================
-Timestamp: 2025-10-06T08:43:27.141Z
-Endpoint: getResourceAllocations
-Response: null
-========================================
-
-
-========================================
-Timestamp: 2025-10-06T08:43:28.124Z
-Endpoint: getTimesheetData
-Response: {
-  "entities": [
-    {
-      "id": "/Timesheet/7bngub33eff0ty86tmtp9qhtn13",
-      "ReportedBy": {
-        "id": "/User/4zbsbdfnsk5h64dewoq66x3ts1114",
-        "Name": "Keny Ng"
-      },
-      "WorkItem": {
-        "id": "/Task/782asojf23asscq7c9jhwb2dx96",
-        "Name": "1.003.04 Website",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 3
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3dhvnjgd545ot2nhuc7y5rzla675",
-      "ReportedBy": {
-        "id": "/User/47sjjf08u4j4cgp00acdxfnv9164",
-        "Name": "Danielle Aboud"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64422",
-        "Name": "Connected Care Group",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/h97kik6v0yxhlfjv1x3jfv6y19",
-      "ReportedBy": {
-        "id": "/User/52jhpbr3ihrhhyaiyyfdbrbib179",
-        "Name": "Luka Heeraman"
-      },
-      "WorkItem": {
-        "id": "/Task/4p1v8pj34lnn5y6jpe2adcfgy3878",
-        "Name": "1.006.01 - Jira Software Maintenance",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2nz8uedad68lxzd02caghtvxg19",
-      "ReportedBy": {
-        "id": "/User/52jhpbr3ihrhhyaiyyfdbrbib179",
-        "Name": "Luka Heeraman"
-      },
-      "WorkItem": {
-        "id": "/Task/4p1v8pj34lnn5y6jpe2adcfgy3878",
-        "Name": "1.006.01 - Jira Software Maintenance",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/4rlpo6hv3pua68murcwjjueg815",
-      "ReportedBy": {
-        "id": "/User/009ff602-6880-41a2-b5bf-d84ad2c54e9c",
-        "Name": "Huw Wallis"
-      },
-      "WorkItem": {
-        "id": "/Task/g0dn0jxr07wun5jaze44ec921202",
-        "Name": "Public Holliday Leave - IDE Medical Devices",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/13vnpwhpgrmc136xz0690p3ae578",
-      "ReportedBy": {
-        "id": "/User/d3d9d85e-3f4b-4083-b64d-cbf2e56f7cb0",
-        "Name": "Victoria Kolmac"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64383",
-        "Name": "2.004 - Capability Development",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1.9
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6mengzolaumtpbkr4eu3evf8v582",
-      "ReportedBy": {
-        "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
-        "Name": "Akshay Fernando"
-      },
-      "WorkItem": {
-        "id": "/Task/75hlpwwvqahojexm5fvnceq3p1916",
-        "Name": "S17.3 - POCP2 25x Build",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 4.42
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/229wtcwwgi5xzmdhm8ruv2hay58",
-      "ReportedBy": {
-        "id": "/User/8u1ts6omdmoh8vl09jm4i6nc141",
-        "Name": "Rian Mistry"
-      },
-      "WorkItem": {
-        "id": "/Task/11scz7820ohix9q9066w3zeo412556",
-        "Name": "2.012.i3.P4 - Jigs, TM improvement, Sample Selection",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/zc5k1nf2gilj6p0brilyyitn416",
-      "ReportedBy": {
-        "id": "/User/73vdnrb547kxri1p4djy0fk3q494",
-        "Name": "Brian Oh"
-      },
-      "WorkItem": {
-        "id": "/Task/2bumubj5qhxqqdu0p0438porm782",
-        "Name": "1.002 - Resource Planning & Planning Meeting",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7bnkmq817xjmb645qpl3wgpdf346",
-      "ReportedBy": {
-        "id": "/User/5nwtaj8ehq8s2p898jmpwsydz2248",
-        "Name": "Ryland Jin"
-      },
-      "WorkItem": {
-        "id": "/Task/hna6pxmq62fjz3kpsmpd1lio1691",
-        "Name": "1.001 Finance General Operation",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 3
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2upk5k9kgvs3m6ct0xwyjndik1234",
-      "ReportedBy": {
-        "id": "/User/efa8a4bb-993f-4f62-b965-4cba526c408f",
-        "Name": "James Silsby"
-      },
-      "WorkItem": {
-        "id": "/Task/1sxlnkff6lgtgj58qyojisno26185",
-        "Name": "2.007 - Business Unit Operations",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/5oowa8vpkvv53fezo1blq6rhf1130",
-      "ReportedBy": {
-        "id": "/User/69edx76xmxlvxq8x04cy22u062",
-        "Name": "Tong Shen"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64359",
-        "Name": "1.002 - Resource Planning & Planning Meeting",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/56t7wlw7d6ydljofxrfhqkneh447",
-      "ReportedBy": {
-        "id": "/User/461kim3f3vsfs4xsr68jdfjah1325",
-        "Name": "Mitchell Battersby"
-      },
-      "WorkItem": {
-        "id": "/Task/3axlu9o0qrhwurffge2wgrpf8254",
-        "Name": "1.131.S19  - T1  Functional Testing",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2fre9ejybfs51sy459e3wzvi8948",
-      "ReportedBy": {
-        "id": "/User/tyafaw79l5yi9xcp9b3zbsak35",
-        "Name": "Hani Ajani"
-      },
-      "WorkItem": {
-        "id": "/Task/40xsg7atw9o9eij09dn4umwrx1155",
-        "Name": "Project Management & XFT Communication",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/zga9zwi39141yqenqovbh66d1914",
-      "ReportedBy": {
-        "id": "/User/6us5igk952ogmkipsevkz7lum288",
-        "Name": "Jessica Dunn"
-      },
-      "WorkItem": {
-        "id": "/Task/6k5ptorxqf9co7a82d3c3r9hc316",
-        "Name": "Carers Leave (Family/Injury)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/41m5satuofy1bm6r2n8cnrj60673",
-      "ReportedBy": {
-        "id": "/User/9dad930f-cec4-4399-abe3-0662ba6bbeb1",
-        "Name": "Akshay Fernando"
-      },
-      "WorkItem": {
-        "id": "/Task/75hlpwwvqahojexm5fvnceq3p1916",
-        "Name": "S17.3 - POCP2 25x Build",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-08-29T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/17hqckst7jmala1bt991beofo41",
-      "ReportedBy": {
-        "id": "/User/4zbsbdfnsk5h64dewoq66x3ts1115",
-        "Name": "Lewis Millington"
-      },
-      "WorkItem": {
-        "id": "/Task/3hl7tyvbu4a2f09bshppfb9mo147",
-        "Name": "2.007 - POCP2 Hardware Selection and Procurement",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6pa1rdbm2vdr1ku1bj9dfe9v81229",
-      "ReportedBy": {
-        "id": "/User/4zbsbdfnsk5h64dewoq66x3ts1115",
-        "Name": "Lewis Millington"
-      },
-      "WorkItem": {
-        "id": "/Task/3hl7tyvbu4a2f09bshppfb9mo147",
-        "Name": "2.007 - POCP2 Hardware Selection and Procurement",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/t7vzl5ar6zmkf3sfmsthjznx1832",
-      "ReportedBy": {
-        "id": "/User/6us5igk952ogmkipsevkz7lum288",
-        "Name": "Jessica Dunn"
-      },
-      "WorkItem": {
-        "id": "/Task/1k5ljtwdvbk3qb93xxczaoiqy4478",
-        "Name": "1.001 - Professional Development (self managed activities)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 7
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6us1crj7oae2pvnczzfvkbq371941",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/2v5hoso0dinbm6pzt9wbbnbrp680",
-        "Name": "2.003 - Define Risk Control Measures (RCM) From Design Risks as Inputs into Design",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/16rw1ds93w3d7s82ibhjooczz705",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/4n0vr5r7ub8ghle0ppmgwwx9o1608",
-        "Name": "2.009 – Define MFG Strategy for POCP2, PEP and Product",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/ixko48t4f2zl0plkfolm64cb36",
-      "ReportedBy": {
-        "id": "/User/5c066ae2-26ad-48a8-bcbf-5b6647009890",
-        "Name": "Tom Croston"
-      },
-      "WorkItem": {
-        "id": "/Task/q6zyv6w6mx9iwv0o541x6os9336",
-        "Name": "MS6 PDP Updates",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/h5tfjn1bet3aol3zaymeqw08477",
-      "ReportedBy": {
-        "id": "/User/5rw66xv6ta5xltn0udfurtqdl2802",
-        "Name": "Fernando Montero"
-      },
-      "WorkItem": {
-        "id": "/Task/6nd9ml6mbt1djzkw78dnkohxa309",
-        "Name": "Miscellaneous Leave - SMKT",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/453mq79xvejdd5onaxsyyg3t4432",
-      "ReportedBy": {
-        "id": "/User/64tlggsqog5h3tpciiy27kdr3107",
-        "Name": "Grace O'Donnell"
-      },
-      "WorkItem": {
-        "id": "/Task/62leetey1e1qs5nv5r8b1iuj3480",
-        "Name": "1.001 - Professional Development (self managed activities)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6lqumldp0uf7iphfncwuw5ukg7",
-      "ReportedBy": {
-        "id": "/User/509xlutdlsq26jb5uvb4lo3r71",
-        "Name": "Greg Campion"
-      },
-      "WorkItem": {
-        "id": "/Task/r0dwxlrfe3bkc3a2w2ph98wl502",
-        "Name": "1.000.01 - QA Regular Team meetings",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1qpra1gab0k7sg8tafy6awfle1459",
-      "ReportedBy": {
-        "id": "/User/5dtgahkvw129udmltllwe69ce1147",
-        "Name": "Tracy Johns"
-      },
-      "WorkItem": {
-        "id": "/Task/hna6pxmq62fjz3kpsmpd1lio1691",
-        "Name": "1.001 Finance General Operation",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6031dc0za4x8c62iel4ehxj681851",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/4ut7xhggwwtibv13a0pmumvrj2570",
-        "Name": "SI1.2 Fluid Loading December Design Iteration",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1pnfdfr22ys8gmqkihvhcvk4s3383",
-      "ReportedBy": {
-        "id": "/User/28827qrnxy52wf3g9o7rjfsxp263",
-        "Name": "Daniel Giezekamp"
-      },
-      "WorkItem": {
-        "id": "/Task/6yq69oqcde19285zgt4qbdu9f42",
-        "Name": "19.5 SI1.2 Engineering Analysis",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/5px3mb1jquloo4lkvq0xbm4ar915",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/4n0vr5r7ub8ghle0ppmgwwx9o1608",
-        "Name": "2.009 – Define MFG Strategy for POCP2, PEP and Product",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/4o21fbw8to1vghvo2pyhb0sx00",
-      "ReportedBy": {
-        "id": "/User/5dtgahkvw129udmltllwe69ce1147",
-        "Name": "Tracy Johns"
-      },
-      "WorkItem": {
-        "id": "/Task/hna6pxmq62fjz3kpsmpd1lio1697",
-        "Name": "1.003 Billing and Receivable",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2939atq4emcd408v59q81ski33124",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/3y7hjpmbhey2ijzfetajp0d2r85",
-        "Name": "2.001 - Project Management",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/12g5hk008fedsl4uk9sychr7a580",
-      "ReportedBy": {
-        "id": "/User/509xlutdlsq26jb5uvb4lo3r71",
-        "Name": "Greg Campion"
-      },
-      "WorkItem": {
-        "id": "/Task/25evfw58c2ey3wyw6nh1mzoid231",
-        "Name": "4.001 - Modify CO2 Sensor Bracket",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/36nb1iteentscdlbty46kxjs6405",
-      "ReportedBy": {
-        "id": "/User/834390c1-d2f1-4bbd-82bc-42890724ca60",
-        "Name": "Shing Yan Kong"
-      },
-      "WorkItem": {
-        "id": "/Task/5mlqpph727mj8jljndwm08lre460",
-        "Name": "S17.8 - Production Documentation",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/58rbi6916x8npbqxx8e6soib50",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/29fkn7qnxucoiqbaxevqxbjn42549",
-        "Name": "S17.0 - Project Management & XFT Communication",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2ebpa3l0kjez9erfll1bod7s90",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/5mr74i5eg86fqhv5qidwhxp8f204",
-        "Name": "S17.1 - Project Planning",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1oms3mibsvholufuakgjd8xar890",
-      "ReportedBy": {
-        "id": "/User/6kodhbie92q9w1g97kf0t2ii5997",
-        "Name": "Caius Lee"
-      },
-      "WorkItem": {
-        "id": "/Task/2teinn073x39e92wofljlubxu225",
-        "Name": "3.001.03.01 - PO-0067-1 - Line setup - Component Prep",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7kgc11dig7tfiuxwepvhwyr6j1249",
-      "ReportedBy": {
-        "id": "/User/69edx76xmxlvxq8x04cy22u062",
-        "Name": "Tong Shen"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64359",
-        "Name": "1.002 - Resource Planning & Planning Meeting",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2q7pzkkq5d1pqmf251zcwcvp0410",
-      "ReportedBy": {
-        "id": "/User/2i05sq7ov3uoc9wyrvubaynht84",
-        "Name": "Nichole Olsen"
-      },
-      "WorkItem": {
-        "id": "/Task/zucmu7ibo7usebgzw0e3i64q13",
-        "Name": "1.004.01 Research",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1zotaksmk0ez3n7huxonbjh0g1541",
-      "ReportedBy": {
-        "id": "/User/0ffe6bc7-eff9-4efb-b1c9-d5f777778508",
-        "Name": "Connor Williams"
-      },
-      "WorkItem": {
-        "id": "/Task/75hlpwwvqahojexm5fvnceq3p1916",
-        "Name": "S17.3 - POCP2 25x Build",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.75
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/i331k1bdj5fmh73jwe9jn3pa30",
-      "ReportedBy": {
-        "id": "/User/6d966af6-bcfe-486b-b9c3-d1ce222fd435",
-        "Name": "Alaitz Izaguirre"
-      },
-      "WorkItem": {
-        "id": "/Task/4i31onz3tsbqbhqkrgzqau70e462",
-        "Name": "Sick Leave",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 6
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/sj32k25txbz00rralbtg2gs04",
-      "ReportedBy": {
-        "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
-        "Name": "Jason Ryan"
-      },
-      "WorkItem": {
-        "id": "/Task/3ovo9768yrnockk4fzrclhj8z4",
-        "Name": "2.004 - 1-1 Feedback Meetings",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1.75
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3alfod0pl6gi6y1hmv493wafj21",
-      "ReportedBy": {
-        "id": "/User/834390c1-d2f1-4bbd-82bc-42890724ca60",
-        "Name": "Shing Yan Kong"
-      },
-      "WorkItem": {
-        "id": "/Task/3y7hjpmbhey2ijzfetajp0d2r85",
-        "Name": "2.001 - Project Management",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/4lei946hl0qfgq5i4b66fsqut27",
-      "ReportedBy": {
-        "id": "/User/6d966af6-bcfe-486b-b9c3-d1ce222fd435",
-        "Name": "Alaitz Izaguirre"
-      },
-      "WorkItem": {
-        "id": "/Task/55fxusd1f3abfuuyuv50b9sd31804",
-        "Name": "Annual Leave - DDS",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-18T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2c6x77jyzwmv46vudf64b5p0545",
-      "ReportedBy": {
-        "id": "/User/6d966af6-bcfe-486b-b9c3-d1ce222fd435",
-        "Name": "Alaitz Izaguirre"
-      },
-      "WorkItem": {
-        "id": "/Task/55fxusd1f3abfuuyuv50b9sd31804",
-        "Name": "Annual Leave - DDS",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-10-09T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/10hxd9oq9dbx6lu4zehqton6q12",
-      "ReportedBy": {
-        "id": "/User/705uuxtzrhejkgiwt1a80ygi2469",
-        "Name": "Sherry Handoyo"
-      },
-      "WorkItem": {
-        "id": "/Task/1sxlnkff6lgtgj58qyojisno26185",
-        "Name": "2.007 - Business Unit Operations",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Minutes",
-        "value": 30
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3uvohoufikb5di9jzc6eadk3a989",
-      "ReportedBy": {
-        "id": "/User/844f18c6-c75b-499d-93a7-bd8631de3045",
-        "Name": "Amy Bain"
-      },
-      "WorkItem": {
-        "id": "/Task/3xsgiwv9bw2cumdzen2vb3vyo1329",
-        "Name": "Miscellaneous Leave - CC",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-08-27T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1rdltg74drw48sff454uusko710",
-      "ReportedBy": {
-        "id": "/User/45hbrfkf5cpmxb8t9fciac8i55",
-        "Name": "Kent DiasAbeygunawardena"
-      },
-      "WorkItem": {
-        "id": "/Task/c7cpv81yjx96azu8851xrf3f726",
-        "Name": "Public Holiday Leave - USA",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/17yh3gzka43oqa8y3db9gcrv24",
-      "ReportedBy": {
-        "id": "/User/45hbrfkf5cpmxb8t9fciac8i55",
-        "Name": "Kent DiasAbeygunawardena"
-      },
-      "WorkItem": {
-        "id": "/Task/64uhlzggj99y24khrex8z2kkw19",
-        "Name": "Background & Proposal Planning - 0.01",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 3
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3cogo708kq04mrooa528lvi9f18",
-      "ReportedBy": {
-        "id": "/User/45hbrfkf5cpmxb8t9fciac8i55",
-        "Name": "Kent DiasAbeygunawardena"
-      },
-      "WorkItem": {
-        "id": "/Task/2bumubj5qhxqqdu0p0438porm800",
-        "Name": "2.002 - Resource Management",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3hh9p07y83shbtifazzwqwous17",
-      "ReportedBy": {
-        "id": "/User/45hbrfkf5cpmxb8t9fciac8i55",
-        "Name": "Kent DiasAbeygunawardena"
-      },
-      "WorkItem": {
-        "id": "/Task/f46qwee1fya1pfwo7g751ji71216",
-        "Name": "4.008 - SULi Build Out & Maintenance",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/15qxg6bx790z1mpufotrvyoc482",
-      "ReportedBy": {
-        "id": "/User/45hbrfkf5cpmxb8t9fciac8i55",
-        "Name": "Kent DiasAbeygunawardena"
-      },
-      "WorkItem": {
-        "id": "/Task/5i5mmwv00yop34lcacatvc8t8280",
-        "Name": "2.008 - 1:1 Meetings",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6ump7olyzbqilcz6wn1sl8x9f8",
-      "ReportedBy": {
-        "id": "/User/11w60ysvwqfrohgvfcclsbae11229",
-        "Name": "Jason Ryan"
-      },
-      "WorkItem": {
-        "id": "/Task/5ybk14i3hy6cdhwfs2cfvjvi90",
-        "Name": "2.006 - Resource Planning Meeting",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2hdwj4iyh9jentnwml0zsy1r55",
-      "ReportedBy": {
-        "id": "/User/6d966af6-bcfe-486b-b9c3-d1ce222fd435",
-        "Name": "Alaitz Izaguirre"
-      },
-      "WorkItem": {
-        "id": "/Task/55fxusd1f3abfuuyuv50b9sd31804",
-        "Name": "Annual Leave - DDS",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-10-17T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2fi0hctyhyf51gchyfk29ck1r28",
-      "ReportedBy": {
-        "id": "/User/53adebucq4dx0f9mmsvd5ek1b977",
-        "Name": "Olivia Blight"
-      },
-      "WorkItem": {
-        "id": "/Task/6yq69oqcde19285zgt4qbdu9f42",
-        "Name": "19.5 SI1.2 Engineering Analysis",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 3
-      },
-      "ReportedDate": "2025-09-09T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7abl7rtv0rwfoct7oufv5mb135",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64392",
-        "Name": "2.007 - Business Operations",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 4
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7doyer4v63h9tge8efu9in69l0",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/29fkn7qnxucoiqbaxevqxbjn42549",
-        "Name": "S17.0 - Project Management & XFT Communication",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3ktp840g3a9opaqcrhj2he9sz19386",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/3dn60d8llijx6xl56ikf0u96t2575",
-        "Name": "SI1.2 FCM December Design Iteration",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/6vec0zad1ndcxj52pni5iovjd1443",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/e4jgsuiyu883g5e92gbhmii31567",
-        "Name": "2.006 – IDS Enclosure Design Concept",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/69v6tjqiqd1xyxmtf6433qyab565",
-      "ReportedBy": {
-        "id": "/User/b4074e3e-2150-465f-9e5a-578eb3e5a546",
-        "Name": "Thomas Wyatt"
-      },
-      "WorkItem": {
-        "id": "/Task/2wejcpc5dspsikv4lgu7sfoyq0",
-        "Name": "2.008 - Build 3 POCP1.5 units",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7fuu5sfeib87bx4mgmenpqi8u772",
-      "ReportedBy": {
-        "id": "/User/4ftq2gyuzhwhzi328bcbk41d77",
-        "Name": "Emily Seifert"
-      },
-      "WorkItem": {
-        "id": "/Task/3qnzi99xk65k6ghtdbyohut45248",
-        "Name": "2.021 - Wireframes Formative Study",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1.5
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/zx5qy4ew47uhpfuifi754oo927",
-      "ReportedBy": {
-        "id": "/User/8b5fef42-d74b-4b4d-a08e-dde373a8ae87",
-        "Name": "Richard Sokolov"
-      },
-      "WorkItem": {
-        "id": "/Task/14795nhgq3wwx66u3peqe9q224623",
-        "Name": "1.003 - Business Operations",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/eiw6fnfcetot0whlq9ageu4p189",
-      "ReportedBy": {
-        "id": "/User/8b5fef42-d74b-4b4d-a08e-dde373a8ae87",
-        "Name": "Richard Sokolov"
-      },
-      "WorkItem": {
-        "id": "/Task/14795nhgq3wwx66u3peqe9q224623",
-        "Name": "1.003 - Business Operations",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 4
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/4uh0k9qxx46rkxjhtu1jw2dhc0",
-      "ReportedBy": {
-        "id": "/User/1430de46-a29d-4a2e-88e9-08a788c93c86",
-        "Name": "Andrea Ranzoni"
-      },
-      "WorkItem": {
-        "id": "/Task/q6zyv6w6mx9iwv0o541x6os9324",
-        "Name": "MS6 XFT Calls",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/27eakrstlgq9pom3skl6g5iod6",
-      "ReportedBy": {
-        "id": "/User/1430de46-a29d-4a2e-88e9-08a788c93c86",
-        "Name": "Andrea Ranzoni"
-      },
-      "WorkItem": {
-        "id": "/Task/458vaak3r2x4pttljj1wuo2bk71",
-        "Name": "2.035.S17 - Strategy Update",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/441uo3wxh0g2ucrbhgmhf2y6t6",
-      "ReportedBy": {
-        "id": "/User/1430de46-a29d-4a2e-88e9-08a788c93c86",
-        "Name": "Andrea Ranzoni"
-      },
-      "WorkItem": {
-        "id": "/Task/20al5sfbamohqu5eqkjpqrtcn981",
-        "Name": "1.010 - Finalise Pitch Deck and Support Pitch for TF",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-09-07T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/4rpchsmvxklxpftgxr36rn0wo1",
-      "ReportedBy": {
-        "id": "/User/1hvfr9h7gwe29hgguk5mvmp9913",
-        "Name": "Aquib Fateh"
-      },
-      "WorkItem": {
-        "id": "/Task/45df7lw2afeeli9zee0o5gyu702",
-        "Name": "S17.6 - S17.6 – USB Data Extraction Tool (Trial Only)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/e9a4vv4or5drs594tiyrr7xq13",
-      "ReportedBy": {
-        "id": "/User/1hvfr9h7gwe29hgguk5mvmp9913",
-        "Name": "Aquib Fateh"
-      },
-      "WorkItem": {
-        "id": "/Task/5mr74i5eg86fqhv5qidwhxp8f204",
-        "Name": "S17.1 - Project Planning",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/t3f97gexkwdxf99d020o9jwr597",
-      "ReportedBy": {
-        "id": "/User/d3d9d85e-3f4b-4083-b64d-cbf2e56f7cb0",
-        "Name": "Victoria Kolmac"
-      },
-      "WorkItem": {
-        "id": "/Task/561t2td0ydirsim89nuzot4rd92",
-        "Name": "1.001.7 - WG Software Management",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.16
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/5bbys6ithrel6gu5p1h5gz8up24",
-      "ReportedBy": {
-        "id": "/User/705uuxtzrhejkgiwt1a80ygi2469",
-        "Name": "Sherry Handoyo"
-      },
-      "WorkItem": {
-        "id": "/Task/34l8ut8i13asq0y9apzp9cw0y1954",
-        "Name": "2.012.i3.P4 -  Design Inputs/ Documentation/ V&V Plans/Protocols",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 3
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1kzfmmuo9po5812jkp2j8l1pa8",
-      "ReportedBy": {
-        "id": "/User/705uuxtzrhejkgiwt1a80ygi2469",
-        "Name": "Sherry Handoyo"
-      },
-      "WorkItem": {
-        "id": "/Task/5pql8sdc3367pr958j7ac4z20244",
-        "Name": "2.012.i3.P4 - TMV Support, 2nd Metrology Evaluation & Recommendation",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 5
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1t7luyuuvtj51q9tdvt4sk5gl34",
-      "ReportedBy": {
-        "id": "/User/678483c8-7179-4617-a022-5acbee6011c3",
-        "Name": "Rebecca Edwards"
-      },
-      "WorkItem": {
-        "id": "/Task/etxgppm6s9v7re2tfnk4tbs5920",
-        "Name": "AU HR Other Activities FY25/26",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/71bcsljnwuo79tusg5blbf6o31250",
-      "ReportedBy": {
-        "id": "/User/efa8a4bb-993f-4f62-b965-4cba526c408f",
-        "Name": "James Silsby"
-      },
-      "WorkItem": {
-        "id": "/Task/1sxlnkff6lgtgj58qyojisno26185",
-        "Name": "2.007 - Business Unit Operations",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-08T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/48uqz7vzjoi4379goeeuq1r0l1120",
-      "ReportedBy": {
-        "id": "/User/bf476155-5d60-43e1-84a8-cd8eafa22c5d",
-        "Name": "Lloyd Coleman"
-      },
-      "WorkItem": {
-        "id": "/Task/45df7lw2afeeli9zee0o5gyu702",
-        "Name": "S17.6 - S17.6 – USB Data Extraction Tool (Trial Only)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7d7k7my4bjw58mw8xq9m97zah1163",
-      "ReportedBy": {
-        "id": "/User/bf476155-5d60-43e1-84a8-cd8eafa22c5d",
-        "Name": "Lloyd Coleman"
-      },
-      "WorkItem": {
-        "id": "/Task/75hlpwwvqahojexm5fvnceq3p1916",
-        "Name": "S17.3 - POCP2 25x Build",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1aallwxmmhjt8tgg9l8llx4h91466",
-      "ReportedBy": {
-        "id": "/User/64tlggsqog5h3tpciiy27kdr3107",
-        "Name": "Grace O'Donnell"
-      },
-      "WorkItem": {
-        "id": "/Task/25ilm250xcpkiiz5htzkkkos01068",
-        "Name": "2.003 - Quality Compliance Training (QMS,WHS, Induction)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-09T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2t4y4pxn3i4aiznbqahda22s00",
-      "ReportedBy": {
-        "id": "/User/233b36bf-4bd1-4118-b3e6-bf0f6e88b13f",
-        "Name": "Kirsty Amland"
-      },
-      "WorkItem": {
-        "id": "/Task/782asojf23asscq7c9jhwb2dx87",
-        "Name": "1.003.01 SEM/SEO",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1ty9rjoqmvnw2xzfbw349l7sa110",
-      "ReportedBy": {
-        "id": "/User/4ftq2gyuzhwhzi328bcbk41d77",
-        "Name": "Emily Seifert"
-      },
-      "WorkItem": {
-        "id": "/Task/6x8d9b6b59tbixrh8ygvn292t591",
-        "Name": "2.003 - Quality Compliance Training (QMS,WHS, Induction)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-08T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/51mohuzatlhfxndamo48b8o220",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64362",
-        "Name": "1.003 - Mentoring (non-project related)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1zluwfrc9uqgfuvgkkm94qfvb1036",
-      "ReportedBy": {
-        "id": "/User/b52bc5cd-72ec-4a6e-af10-f8f2eec6f7e9",
-        "Name": "Eric Siu"
-      },
-      "WorkItem": {
-        "id": "/Task/e4jgsuiyu883g5e92gbhmii31567",
-        "Name": "2.006 – IDS Enclosure Design Concept",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 4
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/761g7gvkmy4lmyr7tv2kfrbgn460",
-      "ReportedBy": {
-        "id": "/User/2i05sq7ov3uoc9wyrvubaynht84",
-        "Name": "Nichole Olsen"
-      },
-      "WorkItem": {
-        "id": "/Task/7i8hcw3uocy25mq6d5jfxmb6e36",
-        "Name": "1.004.02 Cold Outreach",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/4dna8xk1yrixq7ggedce73ho91697",
-      "ReportedBy": {
-        "id": "/User/17q8rokrerastbgk9wb7408t224",
-        "Name": "Dan Korus"
-      },
-      "WorkItem": {
-        "id": "/Task/2bumubj5qhxqqdu0p0438porm794",
-        "Name": "1.006 - Events (please describe)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3gt4npoy05lr38r1i1lhq0bhn769",
-      "ReportedBy": {
-        "id": "/User/36xk6ql8s3tx9g2sz0oikajl00",
-        "Name": "Daniel Pasqualino"
-      },
-      "WorkItem": {
-        "id": "/Task/44191ltb46h5ak8a7t9clt20k425",
-        "Name": "1.002.1 - Training Labour",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/ep64tyyaue20uqspjm0xuxae635",
-      "ReportedBy": {
-        "id": "/User/36xk6ql8s3tx9g2sz0oikajl00",
-        "Name": "Daniel Pasqualino"
-      },
-      "WorkItem": {
-        "id": "/Task/44191ltb46h5ak8a7t9clt20k425",
-        "Name": "1.002.1 - Training Labour",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/wwutbd65tixb1twyrouztz721051",
-      "ReportedBy": {
-        "id": "/User/6kodhbie92q9w1g97kf0t2ii5997",
-        "Name": "Caius Lee"
-      },
-      "WorkItem": {
-        "id": "/Task/2teinn073x39e92wofljlubxu247",
-        "Name": "3.001.03.02 - PO-0067-1 - Component Prep",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-01T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3zh00sn7d9kbpr11mrfjv4rhn60",
-      "ReportedBy": {
-        "id": "/User/5nwtaj8ehq8s2p898jmpwsydz2248",
-        "Name": "Ryland Jin"
-      },
-      "WorkItem": {
-        "id": "/Task/hna6pxmq62fjz3kpsmpd1lio1700",
-        "Name": "1.004 Taxation",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 4
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3iovptpn8ilto6w1ntcgtehmq59",
-      "ReportedBy": {
-        "id": "/User/5nwtaj8ehq8s2p898jmpwsydz2248",
-        "Name": "Ryland Jin"
-      },
-      "WorkItem": {
-        "id": "/Task/hna6pxmq62fjz3kpsmpd1lio1700",
-        "Name": "1.004 Taxation",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 2
-      },
-      "ReportedDate": "2025-09-08T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/446gjx0wac86q4mgytnxafldz12",
-      "ReportedBy": {
-        "id": "/User/1430de46-a29d-4a2e-88e9-08a788c93c86",
-        "Name": "Andrea Ranzoni"
-      },
-      "WorkItem": {
-        "id": "/Task/20al5sfbamohqu5eqkjpqrtcn981",
-        "Name": "1.010 - Finalise Pitch Deck and Support Pitch for TF",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-08T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/42ru687cgquvfwdag05hykaco4942",
-      "ReportedBy": {
-        "id": "/User/6kodhbie92q9w1g97kf0t2ii5997",
-        "Name": "Caius Lee"
-      },
-      "WorkItem": {
-        "id": "/Task/7bryaqie25387yczhmacqk9gf318",
-        "Name": "3.001.04.02 - PO-0067-1 - Shipment",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0
-      },
-      "ReportedDate": "2025-09-09T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/42lpe2lngfyk7ir92tunervj9811",
-      "ReportedBy": {
-        "id": "/User/5v6a9bh39b69d8c2n5x73olwb31",
-        "Name": "Scott Bruton"
-      },
-      "WorkItem": {
-        "id": "/Task/1a5ypf0mps6qyg6lpuvge9bs8851",
-        "Name": "2.016.1 - POCP2 Enclosure DFMA",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 6
-      },
-      "ReportedDate": "2025-09-02T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/f00dm57k5m7ibsvn7d93g5z3966",
-      "ReportedBy": {
-        "id": "/User/tyafaw79l5yi9xcp9b3zbsak35",
-        "Name": "Hani Ajani"
-      },
-      "WorkItem": {
-        "id": "/Task/45df7lw2afeeli9zee0o5gyu702",
-        "Name": "S17.6 - S17.6 – USB Data Extraction Tool (Trial Only)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-09-10T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/7ej5790ucbuphfcd9ocxoqo3w0",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/m88zngb8vu6ipyw9qbmiqtv5458",
-        "Name": "Neuralert",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/5q0wx5qq747g5osnndnx0o7nx46",
-      "ReportedBy": {
-        "id": "/User/3fu67vsxyta9gxvc8pqp8w96v54",
-        "Name": "Jon Sawdon Smith"
-      },
-      "WorkItem": {
-        "id": "/Task/6j8gltk70n15djtjt0wqh5c691194",
-        "Name": "Annual Leave - CC",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2rdoo378f00wb8ry6awj4jl5m0",
-      "ReportedBy": {
-        "id": "/User/3c9fm7nc0wd5ifai59rg2fhao47",
-        "Name": "Jacob Tsagaris"
-      },
-      "WorkItem": {
-        "id": "/Task/l7k5oykc3bmr3nklu88faynh686",
-        "Name": "S17.2 - NCA - Ethics Approval (APS / Bellberry)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/1ag5evwz2rjkpqsh8i3zpc70431",
-      "ReportedBy": {
-        "id": "/User/53adebucq4dx0f9mmsvd5ek1b977",
-        "Name": "Olivia Blight"
-      },
-      "WorkItem": {
-        "id": "/Task/6yq69oqcde19285zgt4qbdu9f42",
-        "Name": "19.5 SI1.2 Engineering Analysis",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 4.75
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/2sasln4i1x0wyhx8w95d7pfg2115",
-      "ReportedBy": {
-        "id": "/User/4zbsbdfnsk5h64dewoq66x3ts1114",
-        "Name": "Keny Ng"
-      },
-      "WorkItem": {
-        "id": "/Task/782asojf23asscq7c9jhwb2dx96",
-        "Name": "1.003.04 Website",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1.5
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/zdndvf0k6vt0lkj79zrs3ers760",
-      "ReportedBy": {
-        "id": "/User/69edx76xmxlvxq8x04cy22u062",
-        "Name": "Tong Shen"
-      },
-      "WorkItem": {
-        "id": "/Task/1i21fhuvtzvnsk59p4dn9oeaf64371",
-        "Name": "1.006 - Events (please describe)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.25
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/3hyn18vdkc8zl0omu3xe38mgl6750",
-      "ReportedBy": {
-        "id": "/User/69edx76xmxlvxq8x04cy22u062",
-        "Name": "Tong Shen"
-      },
-      "WorkItem": {
-        "id": "/Task/1k5ljtwdvbk3qb93xxczaoiqy4478",
-        "Name": "1.001 - Professional Development (self managed activities)",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 1
-      },
-      "ReportedDate": "2025-09-05T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/5qq5ejcyohenrc9cfz6z9dcv2468",
-      "ReportedBy": {
-        "id": "/User/1hvfr9h7gwe29hgguk5mvmp9914",
-        "Name": "Fergus Williams"
-      },
-      "WorkItem": {
-        "id": "/Task/34l8ut8i13asq0y9apzp9cw0y1954",
-        "Name": "2.012.i3.P4 -  Design Inputs/ Documentation/ V&V Plans/Protocols",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 0.75
-      },
-      "ReportedDate": "2025-09-04T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/79xe5blzsjbzao2fesqtzyzx0355",
-      "ReportedBy": {
-        "id": "/User/73vdnrb547kxri1p4djy0fk3q494",
-        "Name": "Brian Oh"
-      },
-      "WorkItem": {
-        "id": "/Task/3uctk6qyynbgskgnr32cjhr4x3381",
-        "Name": "2.004.04 - US Equipment Management",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 3
-      },
-      "ReportedDate": "2025-09-03T00:00:00.0000000"
-    },
-    {
-      "id": "/Timesheet/tkgz8il71pjyy5xzb4gzculu1635",
-      "ReportedBy": {
-        "id": "/User/3fu67vsxyta9gxvc8pqp8w96v54",
-        "Name": "Jon Sawdon Smith"
-      },
-      "WorkItem": {
-        "id": "/Task/6j8gltk70n15djtjt0wqh5c691194",
-        "Name": "Annual Leave - CC",
-        "EntityType": "Task"
-      },
-      "Duration": {
-        "unit": "Hours",
-        "value": 8
-      },
-      "ReportedDate": "2025-09-26T00:00:00.0000000"
-    }
-  ],
-  "paging": {
-    "from": 100,
-    "limit": 100,
-    "hasMore": true
-  }
-}
-========================================
-
-
-========================================
-Timestamp: 2025-10-06T08:43:28.131Z
-Endpoint: FINAL_RESULT
-Response: {
-  "totalDataSources": 4,
-  "assignmentsFound": 0,
-  "projectResourcesFound": 0,
-  "timesheetEntriesFound": 100,
-  "allocationsFound": 0,
-  "totalResourcingEntries": 0,
-  "resourcingData": []
 }
 ========================================
 
