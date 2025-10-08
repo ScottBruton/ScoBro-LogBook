@@ -1,40 +1,58 @@
 
 ========================================
-Timestamp: 2025-10-07T08:29:15.195Z
+Timestamp: 2025-10-08T08:35:29.922Z
 Endpoint: FILTERED_RESULTS
 Response: {
   "currentUser": "Scott Bruton",
-  "totalFilteredEntries": 2,
+  "totalFilteredEntries": 1,
   "breakdown": {
     "assignments": 0,
     "projectResources": 0,
-    "timesheetEntries": 2,
+    "timesheetEntries": 1,
     "allocations": 0
   },
   "filteredResourcingData": [
     {
-      "id": "/Timesheet/mg548isk70t4si5ywis5jjb91512",
-      "projectId": "/Task/4uzsdciqmia2j9fnv8g6enwp4821",
-      "projectName": "Detail Design - Chassis",
+      "id": "/Timesheet/42lpe2lngfyk7ir92tunervj9811",
+      "projectId": "/Task/1a5ypf0mps6qyg6lpuvge9bs8851",
+      "projectName": "2.016.1 - POCP2 Enclosure DFMA",
       "clarizenTag": "Task",
       "userName": "Scott Bruton",
-      "hours": 4,
-      "startDate": "2024-02-29T00:00:00.0000000",
-      "endDate": "2024-02-29T00:00:00.0000000",
+      "hours": 6,
+      "startDate": "2025-09-01",
+      "endDate": "2025-09-01",
       "status": "Logged",
       "role": "Time Entry",
       "percentage": null,
       "type": "Timesheet"
-    },
+    }
+  ]
+}
+========================================
+
+
+========================================
+Timestamp: 2025-10-08T08:47:35.100Z
+Endpoint: FILTERED_RESULTS
+Response: {
+  "currentUser": "Scott Bruton",
+  "totalFilteredEntries": 1,
+  "breakdown": {
+    "assignments": 0,
+    "projectResources": 0,
+    "timesheetEntries": 1,
+    "allocations": 0
+  },
+  "filteredResourcingData": [
     {
-      "id": "/Timesheet/3hep02z396dqd2q8t92nk3fv1886",
-      "projectId": "/Task/u99ht4sf8f2uya6yvp47kr5d453",
-      "projectName": "Update Design - Chassis",
+      "id": "/Timesheet/42lpe2lngfyk7ir92tunervj9811",
+      "projectId": "/Task/1a5ypf0mps6qyg6lpuvge9bs8851",
+      "projectName": "2.016.1 - POCP2 Enclosure DFMA",
       "clarizenTag": "Task",
       "userName": "Scott Bruton",
-      "hours": 3,
-      "startDate": "2024-02-22T00:00:00.0000000",
-      "endDate": "2024-02-22T00:00:00.0000000",
+      "hours": 6,
+      "startDate": "2025-09-01",
+      "endDate": "2025-09-01",
       "status": "Logged",
       "role": "Time Entry",
       "percentage": null,

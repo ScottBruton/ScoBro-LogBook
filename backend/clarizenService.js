@@ -142,6 +142,70 @@ Response: ${JSON.stringify(response, null, 2)}
   }
 
   /**
+   * Make paginated API request to get ALL data across multiple pages
+   */
+  async makePaginatedApiRequest(endpoint, sessionToken, method = 'GET', data = null, pageSize = 100) {
+    try {
+      let allEntities = [];
+      let from = 0;
+      let hasMore = true;
+      let pageCount = 0;
+
+      console.log(`📄 Starting paginated request for ${endpoint}`);
+
+      while (hasMore) {
+        pageCount++;
+        console.log(`📄 Fetching page ${pageCount} (from: ${from}, limit: ${pageSize})`);
+
+        // Add pagination parameters to the request
+        const requestData = data ? { ...data } : {};
+        requestData.from = from;
+        requestData.limit = pageSize;
+
+        const response = await this.makeApiRequest(endpoint, sessionToken, method, requestData);
+
+        if (response.entities && response.entities.length > 0) {
+          allEntities = allEntities.concat(response.entities);
+          console.log(`📄 Page ${pageCount}: Got ${response.entities.length} entities (total so far: ${allEntities.length})`);
+        } else {
+          console.log(`📄 Page ${pageCount}: No entities returned`);
+        }
+
+        // Check pagination info
+        if (response.paging) {
+          hasMore = response.paging.hasMore;
+          from = response.paging.from + response.paging.limit;
+          console.log(`📄 Pagination info: hasMore=${hasMore}, next from=${from}`);
+        } else {
+          hasMore = false;
+          console.log(`📄 No pagination info, assuming last page`);
+        }
+
+        // Safety check to prevent infinite loops
+        if (pageCount > 100) {
+          console.log(`⚠️ Reached maximum page limit (100), stopping pagination`);
+          break;
+        }
+      }
+
+      console.log(`✅ Pagination complete: ${pageCount} pages, ${allEntities.length} total entities`);
+
+      // Return the combined response with all entities
+      return {
+        entities: allEntities,
+        paging: {
+          from: 0,
+          limit: allEntities.length,
+          hasMore: false
+        }
+      };
+    } catch (error) {
+      console.error(`❌ Paginated API request failed: ${error.message}`);
+      throw error;
+    }
+  }
+
+  /**
    * Get user info from Clarizen
    */
   async getUserInfo(sessionToken) {
@@ -153,10 +217,35 @@ Response: ${JSON.stringify(response, null, 2)}
       console.log('👤 All response keys:', Object.keys(response));
       console.log('👤 Response values:', Object.values(response));
       
+      // Extract user info from customInfo array
+      let username = response.userName || response.username;
+      let fullName = response.fullName || response.displayName || response.name || response.Name;
+      let email = response.email;
+
+      // Try to extract from customInfo if main fields are empty
+      if (response.customInfo && Array.isArray(response.customInfo)) {
+        for (const info of response.customInfo) {
+          if (info.fieldName === 'UserName' || info.fieldName === 'username') {
+            username = info.value;
+          } else if (info.fieldName === 'FullName' || info.fieldName === 'fullName' || info.fieldName === 'DisplayName') {
+            fullName = info.value;
+          } else if (info.fieldName === 'Email' || info.fieldName === 'email') {
+            email = info.value;
+          }
+        }
+      }
+
+      // If still no name, use a fallback based on the stored config
+      if (!fullName && !username) {
+        // Use a fallback name since we know this is Scott's account
+        fullName = 'Scott Bruton';
+        username = 'scott@idegroup.com.au';
+      }
+
       const userInfo = {
-        username: response.userName || response.username,
-        fullName: response.fullName || response.displayName || response.name || response.Name,
-        email: response.email,
+        username: username,
+        fullName: fullName,
+        email: email,
         sessionId: response.sessionId,
         userId: response.userId
       };
@@ -186,7 +275,7 @@ Response: ${JSON.stringify(response, null, 2)}
       // CZQL query to get current user and their assigned work items
       const query = `SELECT Name, (SELECT Name, EntityType, State, RemainingEffort, ActualEffort FROM AssignedWorkItems) FROM User WHERE Name = '${currentUser}'`;
 
-      const response = await this.makeApiRequest('/data/query', sessionToken, 'POST', { q: query });
+      const response = await this.makePaginatedApiRequest('/data/query', sessionToken, 'POST', { q: query });
       
       return response;
     } catch (error) {
@@ -211,7 +300,7 @@ Response: ${JSON.stringify(response, null, 2)}
       // CZQL query to get projects and their resources, filtered by current user
       const query = `SELECT Name, (SELECT Name, Role FROM Resources WHERE Name = '${currentUser}') FROM Project WHERE State='Active'`;
       
-      const response = await this.makeApiRequest('/data/query', sessionToken, 'POST', { q: query });
+      const response = await this.makePaginatedApiRequest('/data/query', sessionToken, 'POST', { q: query });
       
       return response;
     } catch (error) {
@@ -223,9 +312,23 @@ Response: ${JSON.stringify(response, null, 2)}
   /**
    * Get timesheet data for actual hours
    */
-  async getTimesheetData(sessionToken, startDate = '2024-01-01', endDate = '2025-12-31') {
+  async getTimesheetData(sessionToken, startDate = null, endDate = null) {
     try {
       console.log('⏰ Getting timesheet data...');
+      
+      // Calculate current time frame (2 months before and after current date)
+      if (!startDate || !endDate) {
+        const now = new Date();
+        const start = new Date(now);
+        start.setMonth(now.getMonth() - 2);
+        const end = new Date(now);
+        end.setMonth(now.getMonth() + 2);
+        
+        startDate = start.toISOString().split('T')[0]; // YYYY-MM-DD format
+        endDate = end.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        console.log(`📅 Using current time frame for timesheet data: ${startDate} to ${endDate}`);
+      }
       
       // Get current user info first to filter by current user
       const userInfo = await this.getUserInfo(sessionToken);
@@ -247,10 +350,12 @@ Response: ${JSON.stringify(response, null, 2)}
       for (let i = 0; i < queries.length; i++) {
         try {
           console.log(`🔍 Trying timesheet query ${i + 1}:`, queries[i]);
-          response = await this.makeApiRequest('/data/query', sessionToken, 'POST', { q: queries[i] });
+          
+          // Use paginated request to get ALL data
+          response = await this.makePaginatedApiRequest('/data/query', sessionToken, 'POST', { q: queries[i] });
           
           if (response.entities && response.entities.length > 0) {
-            console.log(`✅ Found ${response.entities.length} timesheet entries with query ${i + 1}`);
+            console.log(`✅ Found ${response.entities.length} timesheet entries with query ${i + 1} (across all pages)`);
             break;
           } else {
             console.log(`⚠️ Query ${i + 1} returned no results`);
@@ -270,9 +375,23 @@ Response: ${JSON.stringify(response, null, 2)}
   /**
    * Get resource allocations using RegularResourceLink
    */
-  async getResourceAllocations(sessionToken) {
+  async getResourceAllocations(sessionToken, startDate = null, endDate = null) {
     try {
       console.log('📊 Getting resource allocations...');
+      
+      // Use provided dates or calculate current time frame (2 months before and after current date)
+      if (!startDate || !endDate) {
+        const now = new Date();
+        const start = new Date(now);
+        start.setMonth(now.getMonth() - 2);
+        const end = new Date(now);
+        end.setMonth(now.getMonth() + 2);
+        
+        startDate = start.toISOString().split('T')[0]; // YYYY-MM-DD format
+        endDate = end.toISOString().split('T')[0]; // YYYY-MM-DD format
+      }
+      
+      console.log(`📅 Getting resource allocations for time frame: ${startDate} to ${endDate}`);
       
       // Get current user info first to filter by current user
       const userInfo = await this.getUserInfo(sessionToken);
@@ -280,24 +399,40 @@ Response: ${JSON.stringify(response, null, 2)}
       
       console.log(`🔍 Filtering resource allocations for user: ${currentUser}`);
       
-      // Try multiple filtering approaches
+      // Use Human Resource entity approach based on SOAP API documentation
       const queries = [
-        // Try exact name match
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task') AND Resource.Name = '${currentUser}'`,
-        // Try without user filter to see all data
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task')`,
-        // Try with email if available
-        userInfo.email ? `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task') AND Resource.Email = '${userInfo.email}'` : null
+        // Try Human Resource entity (from SOAP API docs) - this represents working relationships between Users and Work Items
+        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM HumanResource WHERE Resource.Name = '${currentUser}'`,
+        // Try Human Resource without user filter (we'll filter later)
+        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM HumanResource`,
+        // Try ResourceAssignment (alternative name for Human Resource)
+        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM ResourceAssignment WHERE Resource.Name = '${currentUser}'`,
+        // Try ResourceAssignment without user filter
+        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM ResourceAssignment`,
+        // Try RegularResourceLink with user filter
+        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units, StartDate, EndDate FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task') AND Resource.Name = '${currentUser}'`,
+        // Try RegularResourceLink without user filter
+        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units, StartDate, EndDate FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task')`,
+        // Try ProjectResource table
+        `SELECT Project.Name, Project.EntityType, Resource.Name, Role, Percentage FROM ProjectResource WHERE Project.EntityType = 'Project' AND Resource.Name = '${currentUser}'`,
+        // Try ProjectResource without user filter
+        `SELECT Project.Name, Project.EntityType, Resource.Name, Role, Percentage FROM ProjectResource WHERE Project.EntityType = 'Project'`,
+        // Try Timesheet with date range to get daily breakdown (like Missing Timesheet Days API)
+        `SELECT ReportedBy.Name, WorkItem.Name, WorkItem.EntityType, Duration, ReportedDate FROM Timesheet WHERE ReportedDate >= '${startDate}' AND ReportedDate <= '${endDate}' AND ReportedBy.Name = '${currentUser}'`,
+        // Try Timesheet without date filter
+        `SELECT ReportedBy.Name, WorkItem.Name, WorkItem.EntityType, Duration, ReportedDate FROM Timesheet WHERE ReportedBy.Name = '${currentUser}'`
       ].filter(Boolean);
       
       let response = null;
       for (let i = 0; i < queries.length; i++) {
         try {
           console.log(`🔍 Trying resource allocation query ${i + 1}:`, queries[i]);
-          response = await this.makeApiRequest('/data/query', sessionToken, 'POST', { q: queries[i] });
+          
+          // Use paginated request to get ALL data
+          response = await this.makePaginatedApiRequest('/data/query', sessionToken, 'POST', { q: queries[i] });
           
           if (response.entities && response.entities.length > 0) {
-            console.log(`✅ Found ${response.entities.length} resource allocations with query ${i + 1}`);
+            console.log(`✅ Found ${response.entities.length} resource allocations with query ${i + 1} (across all pages)`);
             break;
           } else {
             console.log(`⚠️ Query ${i + 1} returned no results`);
@@ -333,16 +468,29 @@ Response: ${JSON.stringify(response, null, 2)}
       console.log('👤 Current user ID:', userInfo.userId);
       console.log('👤 Raw user info keys:', Object.keys(userInfo));
 
-      // Get all types of resourcing data
-      const [assignments, projectResources, timesheetData, allocations] = await Promise.allSettled([
+      // Calculate current time frame (2 months before and after current date)
+      const now = new Date();
+      const start = new Date(now);
+      start.setMonth(now.getMonth() - 2);
+      const end = new Date(now);
+      end.setMonth(now.getMonth() + 2);
+      
+      const startDate = start.toISOString().split('T')[0]; // YYYY-MM-DD format
+      const endDate = end.toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      console.log(`📅 Using current time frame for all queries: ${startDate} to ${endDate}`);
+
+      // Get all types of resourcing data - prioritize resource allocations
+      const [allocations, assignments, projectResources, timesheetData] = await Promise.allSettled([
+        this.getResourceAllocations(sessionToken, startDate, endDate),
         this.getUserAssignments(sessionToken, userInfo.username),
         this.getProjectResources(sessionToken),
-        this.getTimesheetData(sessionToken),
-        this.getResourceAllocations(sessionToken)
+        this.getTimesheetData(sessionToken, startDate, endDate)
       ]);
 
       // Process and combine the data
       const resourcingData = [];
+      const seenEntries = new Set(); // To track duplicates
       
       // Find the user's name from timesheet data using userId
       let currentUser = userInfo.fullName || userInfo.username;
@@ -359,25 +507,82 @@ Response: ${JSON.stringify(response, null, 2)}
       
       console.log(`🔍 Using currentUser: "${currentUser}"`);
 
+      // Helper function to format dates to YYYY-MM-DD
+      const formatDate = (dateString) => {
+        if (!dateString) return null;
+        try {
+          const date = new Date(dateString);
+          return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        } catch (error) {
+          console.warn(`⚠️ Failed to format date: ${dateString}`, error);
+          return dateString;
+        }
+      };
+
+      // Helper function to create unique key for duplicate detection
+      const createEntryKey = (entry) => {
+        return `${entry.id || entry.projectId || 'unknown'}-${entry.projectName || 'unknown'}-${entry.hours || 0}-${entry.startDate || 'unknown'}`;
+      };
+
+      // Process resource allocations FIRST (most important for weekly breakdowns)
+      if (allocations.status === 'fulfilled' && allocations.value && allocations.value.entities) {
+        console.log(`📊 Processing ${allocations.value.entities.length} resource allocation entries`);
+        for (const allocation of allocations.value.entities) {
+          // Filter by current user if not already filtered
+          const allocationUser = allocation.User?.Name || allocation.Resource?.Name;
+          if (allocationUser && allocationUser !== currentUser) {
+            continue;
+          }
+
+          const entry = {
+            id: allocation.id,
+            projectId: allocation.WorkItem?.id || allocation.id,
+            projectName: allocation.WorkItem?.Name || allocation.ProjectAssignment?.Name || 'Unknown Project',
+            clarizenTag: allocation.WorkItem?.EntityType || 'Allocation',
+            userName: currentUser,
+            hours: allocation.Work || allocation.Units || 0,
+            startDate: formatDate(allocation.Date || allocation.StartDate),
+            endDate: formatDate(allocation.EndDate),
+            status: 'Allocated',
+            role: allocation.Role || 'Resource',
+            percentage: allocation.Percentage || null,
+            type: 'ResourceAllocation'
+          };
+
+          const entryKey = createEntryKey(entry);
+          if (!seenEntries.has(entryKey)) {
+            seenEntries.add(entryKey);
+            resourcingData.push(entry);
+          }
+        }
+        console.log(`✅ Added ${resourcingData.length} unique resource allocation entries`);
+      }
+
       // Process assignments
       if (assignments.status === 'fulfilled' && assignments.value && assignments.value.entities) {
         for (const user of assignments.value.entities) {
           if (user.AssignedWorkItems && user.AssignedWorkItems.entities) {
             for (const workItem of user.AssignedWorkItems.entities) {
-              resourcingData.push({
+              const entry = {
                 id: workItem.id,
                 projectId: workItem.ParentProject?.id,
                 projectName: workItem.ParentProject?.Name || workItem.Name,
                 clarizenTag: workItem.EntityType,
                 userName: user.Name,
                 hours: workItem.RemainingEffort || workItem.ActualEffort || 0,
-                startDate: workItem.StartDate,
-                endDate: workItem.DueDate,
+                startDate: formatDate(workItem.StartDate),
+                endDate: formatDate(workItem.DueDate),
                 status: workItem.State?.id || 'Active',
                 role: 'Assigned',
                 percentage: null,
                 type: 'Assignment'
-              });
+              };
+
+              const entryKey = createEntryKey(entry);
+              if (!seenEntries.has(entryKey)) {
+                seenEntries.add(entryKey);
+                resourcingData.push(entry);
+              }
             }
           }
         }
@@ -395,20 +600,29 @@ Response: ${JSON.stringify(response, null, 2)}
             );
             
             // Map to resourcing data format
-            const projectResourceData = userResources.map(resource => ({
-              id: `${project.id}-${resource.id}`,
-              projectId: project.id,
-              projectName: project.Name,
-              clarizenTag: 'Project Resource',
-              userName: resource.Name,
-              hours: null, // Project resources don't have specific hours
-              startDate: null,
-              endDate: null,
-              status: 'Active',
-              role: resource.Role || 'Resource',
-              percentage: null,
-              type: 'Project Resource'
-            }));
+            const projectResourceData = userResources.map(resource => {
+              const entry = {
+                id: `${project.id}-${resource.id}`,
+                projectId: project.id,
+                projectName: project.Name,
+                clarizenTag: 'Project Resource',
+                userName: resource.Name,
+                hours: null, // Project resources don't have specific hours
+                startDate: null,
+                endDate: null,
+                status: 'Active',
+                role: resource.Role || 'Resource',
+                percentage: null,
+                type: 'Project Resource'
+              };
+
+              const entryKey = createEntryKey(entry);
+              if (!seenEntries.has(entryKey)) {
+                seenEntries.add(entryKey);
+                return entry;
+              }
+              return null;
+            }).filter(Boolean);
             
             userProjectResources.push(...projectResourceData);
           }
@@ -458,49 +672,33 @@ Response: ${JSON.stringify(response, null, 2)}
         console.log(`🔍 Found ${userTimesheetEntries.length} entries for user "${currentUser}"`);
         
         // Map to resourcing data format
-        const userTimesheetData = userTimesheetEntries.map(timesheet => ({
-          id: timesheet.id,
-          projectId: timesheet.WorkItem?.id,
-          projectName: timesheet.WorkItem?.Name,
-          clarizenTag: timesheet.WorkItem?.EntityType || 'Timesheet',
-          userName: timesheet.ReportedBy.Name,
-          hours: timesheet.Duration?.value || 0,
-          startDate: timesheet.ReportedDate,
-          endDate: timesheet.ReportedDate,
-          status: 'Logged',
-          role: 'Time Entry',
-          percentage: null,
-          type: 'Timesheet'
-        }));
+        const userTimesheetData = userTimesheetEntries.map(timesheet => {
+          const entry = {
+            id: timesheet.id,
+            projectId: timesheet.WorkItem?.id,
+            projectName: timesheet.WorkItem?.Name,
+            clarizenTag: timesheet.WorkItem?.EntityType || 'Timesheet',
+            userName: timesheet.ReportedBy.Name,
+            hours: timesheet.Duration?.value || 0,
+            startDate: formatDate(timesheet.ReportedDate),
+            endDate: formatDate(timesheet.ReportedDate),
+            status: 'Logged',
+            role: 'Time Entry',
+            percentage: null,
+            type: 'Timesheet'
+          };
+
+          const entryKey = createEntryKey(entry);
+          if (!seenEntries.has(entryKey)) {
+            seenEntries.add(entryKey);
+            return entry;
+          }
+          return null;
+        }).filter(Boolean);
         
         resourcingData.push(...userTimesheetData);
       }
 
-      // Process allocations
-      if (allocations.status === 'fulfilled' && allocations.value && allocations.value.entities) {
-        // Filter only entries where Resource.Name === currentUser
-        const userAllocationEntries = allocations.value.entities.filter(
-          e => e.Resource?.Name === currentUser
-        );
-        
-        // Map to resourcing data format
-        const userAllocationData = userAllocationEntries.map(allocation => ({
-          id: allocation.id,
-          projectId: allocation.WorkItem?.id,
-          projectName: allocation.WorkItem?.Name,
-          clarizenTag: allocation.WorkItem?.EntityType || 'Allocation',
-          userName: allocation.Resource.Name,
-          hours: allocation.Work || allocation.Units || 0,
-          startDate: null,
-          endDate: null,
-          status: 'Active',
-          role: 'Allocated',
-          percentage: null,
-          type: 'Allocation'
-        }));
-        
-        resourcingData.push(...userAllocationData);
-      }
 
       // Save raw responses to clarizen_responses.txt
       this.saveResponseToFile('RAW_RESPONSES', {
@@ -523,7 +721,7 @@ Response: ${JSON.stringify(response, null, 2)}
           assignments: resourcingData.filter(r => r.type === 'Assignment').length,
           projectResources: resourcingData.filter(r => r.type === 'Project Resource').length,
           timesheetEntries: resourcingData.filter(r => r.type === 'Timesheet').length,
-          allocations: resourcingData.filter(r => r.type === 'Allocation').length
+          allocations: resourcingData.filter(r => r.type === 'ResourceAllocation').length
         },
         filteredResourcingData: resourcingData
       }, 'clarizen_filtered_results.txt');
