@@ -399,28 +399,29 @@ Response: ${JSON.stringify(response, null, 2)}
       
       console.log(`🔍 Filtering resource allocations for user: ${currentUser}`);
       
-      // Use Human Resource entity approach based on SOAP API documentation
+      // Try to discover what entities are actually available in the REST API
       const queries = [
-        // Try Human Resource entity (from SOAP API docs) - this represents working relationships between Users and Work Items
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM HumanResource WHERE Resource.Name = '${currentUser}'`,
-        // Try Human Resource without user filter (we'll filter later)
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM HumanResource`,
-        // Try ResourceAssignment (alternative name for Human Resource)
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM ResourceAssignment WHERE Resource.Name = '${currentUser}'`,
-        // Try ResourceAssignment without user filter
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, ResourceRole, Units FROM ResourceAssignment`,
-        // Try RegularResourceLink with user filter
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units, StartDate, EndDate FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task') AND Resource.Name = '${currentUser}'`,
-        // Try RegularResourceLink without user filter
-        `SELECT WorkItem.Name, WorkItem.EntityType, Resource.Name, Work, Units, StartDate, EndDate FROM RegularResourceLink WHERE WorkItem.EntityType IN ('Project', 'Task')`,
-        // Try ProjectResource table
-        `SELECT Project.Name, Project.EntityType, Resource.Name, Role, Percentage FROM ProjectResource WHERE Project.EntityType = 'Project' AND Resource.Name = '${currentUser}'`,
-        // Try ProjectResource without user filter
-        `SELECT Project.Name, Project.EntityType, Resource.Name, Role, Percentage FROM ProjectResource WHERE Project.EntityType = 'Project'`,
-        // Try Timesheet with date range to get daily breakdown (like Missing Timesheet Days API)
-        `SELECT ReportedBy.Name, WorkItem.Name, WorkItem.EntityType, Duration, ReportedDate FROM Timesheet WHERE ReportedDate >= '${startDate}' AND ReportedDate <= '${endDate}' AND ReportedBy.Name = '${currentUser}'`,
-        // Try Timesheet without date filter
-        `SELECT ReportedBy.Name, WorkItem.Name, WorkItem.EntityType, Duration, ReportedDate FROM Timesheet WHERE ReportedBy.Name = '${currentUser}'`
+        // First, let's try to get all entities that might contain resource allocation data
+        `SELECT * FROM Resource WHERE Name = '${currentUser}'`,
+        `SELECT * FROM Resource`,
+        `SELECT * FROM ResourceAllocation WHERE Resource.Name = '${currentUser}'`,
+        `SELECT * FROM ResourceAllocation`,
+        `SELECT * FROM ResourceAssignment WHERE Resource.Name = '${currentUser}'`,
+        `SELECT * FROM ResourceAssignment`,
+        `SELECT * FROM ProjectResource WHERE Resource.Name = '${currentUser}'`,
+        `SELECT * FROM ProjectResource`,
+        `SELECT * FROM WorkItemResource WHERE Resource.Name = '${currentUser}'`,
+        `SELECT * FROM WorkItemResource`,
+        `SELECT * FROM Assignment WHERE Resource.Name = '${currentUser}'`,
+        `SELECT * FROM Assignment`,
+        // Try some variations based on common naming patterns
+        `SELECT * FROM ResourceLink WHERE Resource.Name = '${currentUser}'`,
+        `SELECT * FROM ResourceLink`,
+        `SELECT * FROM UserAssignment WHERE User.Name = '${currentUser}'`,
+        `SELECT * FROM UserAssignment`,
+        // Try to get all work items that the user is assigned to
+        `SELECT Name, EntityType, Manager, (SELECT Name FROM Resources WHERE Name = '${currentUser}') FROM WorkItem WHERE Manager.Name = '${currentUser}'`,
+        `SELECT Name, EntityType, Manager, (SELECT Name FROM Resources WHERE Name = '${currentUser}') FROM WorkItem`
       ].filter(Boolean);
       
       let response = null;
