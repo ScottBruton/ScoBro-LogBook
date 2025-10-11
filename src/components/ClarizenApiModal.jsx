@@ -10,6 +10,7 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
   const [resourcingData, setResourcingData] = useState([]);
+  const [workItemData, setWorkItemData] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -44,8 +45,8 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
         setIsAuthenticated(true);
         ClarizenApiService.saveClarizenConfig(newConfig);
         
-        // Load resourcing data after successful connection
-        await loadResourcingData();
+        // Load work item data after successful connection
+        await loadWorkItemData();
       }
     } catch (error) {
       setTestResult({
@@ -67,6 +68,43 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
       setTestResult({
         success: false,
         message: `Failed to load resourcing data: ${error.message}`
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const debugClarizenApi = async () => {
+    try {
+      setIsLoading(true);
+      const result = await ClarizenApiService.debugClarizenApi();
+      console.log('🔍 Debug result:', result);
+      setTestResult({
+        success: true,
+        message: `Debug successful: ${JSON.stringify(result, null, 2)}`
+      });
+    } catch (error) {
+      console.error('Failed to debug Clarizen API:', error);
+      setTestResult({
+        success: false,
+        message: `Debug failed: ${error.message}`
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loadWorkItemData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await ClarizenApiService.getWorkItemData();
+      setWorkItemData(data);
+      console.log('📋 Work item data loaded:', data);
+    } catch (error) {
+      console.error('Failed to load work item data:', error);
+      setTestResult({
+        success: false,
+        message: `Failed to load work item data: ${error.message}`
       });
     } finally {
       setIsLoading(false);
@@ -106,10 +144,13 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
 
   const handleSyncResourcing = async () => {
     try {
-      if (resourcingData.length === 0) {
+      // Use work item data if available, otherwise fall back to resourcing data
+      const dataToSync = workItemData ? workItemData : resourcingData;
+      
+      if (!dataToSync || (Array.isArray(dataToSync) && dataToSync.length === 0)) {
         setTestResult({
           success: false,
-          message: 'No resourcing data to sync'
+          message: 'No data to sync. Please load work item data first.'
         });
         return;
       }
@@ -118,10 +159,13 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
       
       // Call the parent component's sync handler
       if (onResourcingSynced) {
-        await onResourcingSynced(resourcingData);
+        await onResourcingSynced(dataToSync);
+        const itemCount = workItemData ? 
+          (workItemData.parentCount + workItemData.childCount) : 
+          resourcingData.length;
         setTestResult({
           success: true,
-          message: `Successfully synced ${resourcingData.length} resourcing entries to logbook`
+          message: `Successfully synced ${itemCount} work items to logbook`
         });
       } else {
         setTestResult({
@@ -130,10 +174,10 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
         });
       }
     } catch (error) {
-      console.error('Failed to sync resourcing data:', error);
+      console.error('Failed to sync work item data:', error);
       setTestResult({
         success: false,
-        message: `Failed to sync resourcing data: ${error.message}`
+        message: `Failed to sync work item data: ${error.message}`
       });
     } finally {
       setIsLoading(false);
@@ -360,6 +404,26 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
             
             {isAuthenticated && (
               <button
+                onClick={debugClarizenApi}
+                disabled={isLoading}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#6c757d',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  opacity: isLoading ? 0.6 : 1,
+                  marginLeft: '8px'
+                }}
+              >
+                {isLoading ? '⏳' : '🔧'} Debug API
+              </button>
+            )}
+            
+            {isAuthenticated && (
+              <button
                 onClick={loadResourcingData}
                 disabled={isLoading}
                 style={{
@@ -397,8 +461,184 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
           </div>
         )}
 
-        {/* Resourcing Data */}
-        {resourcingData.length > 0 && (
+        {/* Work Item Data */}
+        {workItemData && (
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0 }}>📋 Work Items ({workItemData.parentCount + workItemData.childCount} total)</h3>
+              <button
+                onClick={() => handleSyncResourcing()}
+                disabled={isLoading}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#28a745',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '12px',
+                  opacity: isLoading ? 0.6 : 1
+                }}
+              >
+                {isLoading ? '⏳' : '📝'} Sync to Logbook
+              </button>
+            </div>
+            
+            {/* Work Item Summary */}
+            <div style={{
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              backgroundColor: '#f8f9fa',
+              padding: '12px',
+              marginBottom: '12px'
+            }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', fontSize: '14px' }}>
+                <div>
+                  <strong>📅 Timestamp:</strong> {new Date(workItemData.timestamp).toLocaleString()}
+                </div>
+                <div>
+                  <strong>📋 Parent Items:</strong> {workItemData.parentCount}
+                </div>
+                <div>
+                  <strong>👶 Child Items:</strong> {workItemData.childCount}
+                </div>
+                <div>
+                  <strong>📊 Total Items:</strong> {workItemData.parentCount + workItemData.childCount}
+                </div>
+              </div>
+            </div>
+
+            {/* Hierarchy Display */}
+            {workItemData.hierarchy && workItemData.hierarchy.length > 0 && (
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>🏗️ Work Item Hierarchy ({workItemData.hierarchy.length} parents)</h4>
+                <div style={{
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: '#fff',
+                  maxHeight: '400px',
+                  overflowY: 'auto'
+                }}>
+                  {workItemData.hierarchy.map((item, index) => (
+                    <div key={index} style={{
+                      padding: '12px',
+                      borderBottom: index < workItemData.hierarchy.length - 1 ? '1px solid #eee' : 'none',
+                      fontSize: '12px'
+                    }}>
+                      {/* Parent Item */}
+                      <div style={{ 
+                        fontWeight: 'bold', 
+                        marginBottom: '8px',
+                        padding: '8px',
+                        backgroundColor: '#e3f2fd',
+                        borderRadius: '4px',
+                        border: '1px solid #bbdefb'
+                      }}>
+                        <div style={{ fontSize: '14px', marginBottom: '4px' }}>
+                          📋 {item.parentName}
+                        </div>
+                        <div style={{ color: '#666', fontSize: '11px' }}>
+                          <div>🕒 Hours: {item.workHours}</div>
+                          <div>📅 Start: {item.startDate || 'Not set'}</div>
+                          <div>📅 End: {item.endDate || 'Not set'}</div>
+                        </div>
+                      </div>
+                      
+                      {/* Child Items */}
+                      {item.children && item.children.length > 0 && (
+                        <div style={{ marginLeft: '16px' }}>
+                          <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
+                            👶 Children ({item.children.length}):
+                          </div>
+                          {item.children.map((child, childIndex) => (
+                            <div key={childIndex} style={{
+                              padding: '6px',
+                              marginBottom: '4px',
+                              backgroundColor: '#f8f9fa',
+                              borderRadius: '3px',
+                              border: '1px solid #dee2e6'
+                            }}>
+                              <div style={{ fontWeight: 'bold', fontSize: '11px' }}>
+                                {child.name}
+                              </div>
+                              <div style={{ color: '#666', fontSize: '10px' }}>
+                                <div>🕒 Hours: {child.workHours}</div>
+                                <div>📅 Start: {child.startDate || 'Not set'}</div>
+                                <div>📅 End: {child.endDate || 'Not set'}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fallback for old data format */}
+            {workItemData.parents && workItemData.children && !workItemData.hierarchy && (
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>📋 Legacy Format - Parent Work Items ({workItemData.parents.length})</h4>
+                <div style={{
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: '#fff',
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  marginBottom: '16px'
+                }}>
+                  {workItemData.parents.map((item, index) => (
+                    <div key={index} style={{
+                      padding: '8px',
+                      borderBottom: index < workItemData.parents.length - 1 ? '1px solid #eee' : 'none',
+                      fontSize: '12px'
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                        {item.name} ({item.entityType})
+                      </div>
+                      <div style={{ color: '#666' }}>
+                        <div>🕒 Hours: {item.workHours}</div>
+                        <div>📅 Start: {item.startDate || 'Not set'}</div>
+                        <div>📅 End: {item.endDate || 'Not set'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>👶 Legacy Format - Child Work Items ({workItemData.children.length})</h4>
+                <div style={{
+                  border: '1px solid #ccc',
+                  borderRadius: '4px',
+                  backgroundColor: '#fff',
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}>
+                  {workItemData.children.map((item, index) => (
+                    <div key={index} style={{
+                      padding: '8px',
+                      borderBottom: index < workItemData.children.length - 1 ? '1px solid #eee' : 'none',
+                      fontSize: '12px'
+                    }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                        {item.name}
+                      </div>
+                      <div style={{ color: '#666' }}>
+                        <div>👨‍💼 Parent: {item.parentName || 'Unknown'}</div>
+                        <div>🕒 Hours: {item.workHours}</div>
+                        <div>📅 Start: {item.startDate || 'Not set'}</div>
+                        <div>📅 End: {item.endDate || 'Not set'}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Legacy Resourcing Data */}
+        {resourcingData.length > 0 && !workItemData && (
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ margin: 0 }}>📊 Current Resourcing</h3>

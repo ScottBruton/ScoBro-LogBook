@@ -25,15 +25,21 @@ const googleOAuth2Client = new google.auth.OAuth2(
 );
 
 // Microsoft OAuth Configuration
-const msalConfig = {
-  auth: {
-    clientId: process.env.MICROSOFT_CLIENT_ID,
-    clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-    authority: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}`
-  }
-};
-
-const msalInstance = new ConfidentialClientApplication(msalConfig);
+// Initialize MSAL only if credentials are available
+let msalInstance = null;
+if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET && process.env.MICROSOFT_TENANT_ID) {
+  const msalConfig = {
+    auth: {
+      clientId: process.env.MICROSOFT_CLIENT_ID,
+      clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
+      authority: `https://login.microsoftonline.com/${process.env.MICROSOFT_TENANT_ID}`
+    }
+  };
+  msalInstance = new ConfidentialClientApplication(msalConfig);
+  console.log('✅ Azure MSAL initialized');
+} else {
+  console.log('⚠️ Azure MSAL not configured - skipping initialization');
+}
 
 // Store Jira config in memory after successful test
 let jiraConfig = null;
@@ -432,18 +438,37 @@ app.post('/api/clarizen/test', async (req, res) => {
       password: req.body.password ? '***PROVIDED***' : 'NOT PROVIDED'
     });
 
-    const result = await clarizenService.testConnection(req.body);
+    // Set credentials for the service
+    clarizenService.username = req.body.username;
+    clarizenService.password = req.body.password;
+    
+    // Test authentication
+    const sessionId = await clarizenService.authenticate();
+    
+    // Get user info to extract user ID
+    const userInfo = await clarizenService.get('/authentication/GetSessionInfo');
+    const userId = userInfo.userId;
+    
+    console.log('✅ Authentication successful, user ID:', userId);
     
     // Store config if test was successful
-    if (result.success) {
-      clarizenConfig = {
-        ...req.body,
-        accessToken: result.accessToken
-      };
-      console.log('✅ Clarizen config stored successfully');
-    }
+    clarizenConfig = {
+      ...req.body,
+      accessToken: sessionId,
+      userId: userId
+    };
+    console.log('✅ Clarizen config stored successfully');
     
-    res.json(result);
+    res.json({
+      success: true,
+      message: 'Successfully connected to Clarizen REST API',
+      accessToken: sessionId,
+      user: {
+        username: req.body.username,
+        userId: userId,
+        apiBaseUrl: clarizenService.apiBaseUrl
+      }
+    });
   } catch (error) {
     console.error('❌ Clarizen test connection failed:', error);
     res.status(500).json({ 
@@ -479,7 +504,7 @@ app.get('/api/clarizen/user', async (req, res) => {
 // Get all projects
 // Projects endpoint removed - using CZQL queries instead
 
-// Get resourcing data
+// Get resourcing data (legacy endpoint)
 app.get('/api/clarizen/resourcing', async (req, res) => {
   try {
     if (!clarizenConfig) {
@@ -490,12 +515,47 @@ app.get('/api/clarizen/resourcing', async (req, res) => {
     }
 
     console.log('📊 Fetching resourcing data with stored config');
-    const resourcing = await clarizenService.getResourcingData(clarizenConfig, clarizenConfig.accessToken);
+    console.log('🔍 Using access token:', clarizenConfig.accessToken);
+    const resourcing = await clarizenService.getResourcingData(null, clarizenConfig.accessToken);
     res.json({ resourcing });
   } catch (error) {
     console.error('❌ Failed to fetch Clarizen resourcing data:', error);
     res.status(500).json({ 
       error: 'Failed to fetch Clarizen resourcing data',
+      details: error.message 
+    });
+  }
+});
+
+// Get work item data using the new simplified ClarizenService
+app.get('/api/clarizen/workitems', async (req, res) => {
+  try {
+    if (!clarizenConfig) {
+      return res.status(400).json({ 
+        error: 'Clarizen not configured. Please test connection first.',
+        details: 'No Clarizen configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log('📋 Fetching work item data using new service');
+    
+    // Set credentials for the service
+    clarizenService.username = clarizenConfig.username;
+    clarizenService.password = clarizenConfig.password;
+    
+    // Use the stored user ID from the test connection
+    const userId = clarizenConfig.userId;
+    if (!userId) {
+      throw new Error('User ID not found. Please test connection first.');
+    }
+    
+    console.log('🔍 Using user ID:', userId);
+    const workItemData = await clarizenService.fetchWorkItemData(userId);
+    res.json({ workItemData });
+  } catch (error) {
+    console.error('❌ Failed to fetch Clarizen work item data:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Clarizen work item data',
       details: error.message 
     });
   }

@@ -401,26 +401,113 @@ export default function App() {
     }
   };
 
-  const handleClarizenResourcingSynced = async (resourcing) => {
+  const handleClarizenResourcingSynced = async (data) => {
     try {
-      // Create entries from synced Clarizen resourcing data
-      const entries = resourcing.map(resource => ({
-        item_type: 'Note',
-        content: `📊 Clarizen: ${resource.projectName} - ${resource.hours} hours allocated`,
-        project: resource.projectName,
-        tags: ['clarizen', 'resourcing', 'allocation'],
-        people: [resource.userName].filter(Boolean),
-        metadata: {
-          clarizenResource: resource,
-          syncedAt: new Date().toISOString()
-        }
-      }));
+      let entries = [];
+      
+      // Handle new hierarchy data format from the simplified service
+      if (data && data.hierarchy && Array.isArray(data.hierarchy)) {
+        console.log('📋 Processing hierarchy work item data:', data);
+        
+        // Create entries from hierarchy (parent + children)
+        data.hierarchy.forEach(item => {
+          // Create entry for parent
+          const parentEntry = {
+            item_type: 'Note',
+            content: `📋 Clarizen Parent: ${item.parentName} - ${item.workHours} hours`,
+            project: item.parentName,
+            tags: ['clarizen', 'work-item', 'parent'],
+            people: ['Clarizen User'],
+            metadata: {
+              clarizenWorkItem: {
+                id: item.parentId,
+                name: item.parentName,
+                workHours: item.workHours,
+                startDate: item.startDate,
+                endDate: item.endDate
+              },
+              workItemType: 'parent',
+              syncedAt: new Date().toISOString()
+            }
+          };
+          entries.push(parentEntry);
+          
+          // Create entries for children
+          item.children.forEach(child => {
+            const childEntry = {
+              item_type: 'Note',
+              content: `👶 Clarizen Child: ${child.name} - ${child.workHours} hours (Parent: ${child.parentName})`,
+              project: child.parentName || 'Unknown Parent',
+              tags: ['clarizen', 'work-item', 'child'],
+              people: ['Clarizen User'],
+              metadata: {
+                clarizenWorkItem: child,
+                workItemType: 'child',
+                syncedAt: new Date().toISOString()
+              }
+            };
+            entries.push(childEntry);
+          });
+        });
+        
+      } else if (data && data.parents && data.children) {
+        // Handle old work item data format (fallback)
+        console.log('📋 Processing old work item data format:', data);
+        
+        // Create entries from parent work items
+        const parentEntries = data.parents.map(parent => ({
+          item_type: 'Note',
+          content: `📋 Clarizen Parent: ${parent.name} (${parent.entityType}) - ${parent.workHours} hours`,
+          project: parent.name,
+          tags: ['clarizen', 'work-item', 'parent', parent.entityType?.toLowerCase() || 'unknown'],
+          people: [data.userName].filter(Boolean),
+          metadata: {
+            clarizenWorkItem: parent,
+            workItemType: 'parent',
+            syncedAt: new Date().toISOString()
+          }
+        }));
+        
+        // Create entries from child work items
+        const childEntries = data.children.map(child => ({
+          item_type: 'Note',
+          content: `👶 Clarizen Child: ${child.name} - ${child.workHours} hours (Parent: ${child.parentName})`,
+          project: child.parentName || 'Unknown Parent',
+          tags: ['clarizen', 'work-item', 'child'],
+          people: [data.userName].filter(Boolean),
+          metadata: {
+            clarizenWorkItem: child,
+            workItemType: 'child',
+            syncedAt: new Date().toISOString()
+          }
+        }));
+        
+        entries = [...parentEntries, ...childEntries];
+        
+      } else if (Array.isArray(data)) {
+        // Handle legacy resourcing data format
+        console.log('📊 Processing legacy resourcing data:', data);
+        entries = data.map(resource => ({
+          item_type: 'Note',
+          content: `📊 Clarizen: ${resource.projectName} - ${resource.hours} hours allocated`,
+          project: resource.projectName,
+          tags: ['clarizen', 'resourcing', 'allocation'],
+          people: [resource.userName].filter(Boolean),
+          metadata: {
+            clarizenResource: resource,
+            syncedAt: new Date().toISOString()
+          }
+        }));
+      }
       
       if (entries.length > 0) {
         await handleSaveItems(entries);
+        console.log(`✅ Created ${entries.length} entries from Clarizen data`);
+      } else {
+        console.log('⚠️ No entries created from Clarizen data');
       }
     } catch (error) {
-      console.error('Failed to create entries from Clarizen resourcing:', error);
+      console.error('Failed to create entries from Clarizen data:', error);
     }
   };
 

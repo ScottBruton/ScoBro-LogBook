@@ -97,7 +97,7 @@ export class ClarizenApiService {
   }
 
   /**
-   * Get resourcing data from Clarizen
+   * Get resourcing data from Clarizen (legacy method)
    */
   static async getResourcingData() {
     try {
@@ -116,6 +116,52 @@ export class ClarizenApiService {
     } catch (error) {
       console.error('❌ Failed to fetch Clarizen resourcing data:', error);
       throw new Error(`Failed to fetch resourcing data: ${error.message}`);
+    }
+  }
+
+  /**
+   * Debug Clarizen API calls step by step
+   */
+  static async debugClarizenApi() {
+    try {
+      console.log('🔍 Debugging Clarizen API calls...');
+      
+      const response = await fetch(`${this.BACKEND_URL}/api/clarizen/debug`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('📥 Clarizen debug result:', result);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to debug Clarizen API:', error);
+      throw new Error(`Failed to debug API: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get work item data from Clarizen (new method using proven Postman workflow)
+   */
+  static async getWorkItemData() {
+    try {
+      console.log('📋 Fetching Clarizen work item data...');
+      
+      const response = await fetch(`${this.BACKEND_URL}/api/clarizen/workitems`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('📥 Clarizen work item data received:', result);
+      
+      return result.workItemData || null;
+    } catch (error) {
+      console.error('❌ Failed to fetch Clarizen work item data:', error);
+      throw new Error(`Failed to fetch work item data: ${error.message}`);
     }
   }
 
