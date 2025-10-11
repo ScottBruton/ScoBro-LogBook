@@ -3,12 +3,29 @@
 // It authenticates, retrieves parent work items, child work items, and combines them into structured output
 
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 class ClarizenService {
   constructor() {
     this.apiBaseUrl = 'https://api2.clarizen.com/v2.0/services';
     this.username = process.env.CLARIZEN_USERNAME;
     this.password = process.env.CLARIZEN_PASSWORD;
+    this.responsesFile = path.join(__dirname, 'clarizen_responses.txt');
+  }
+
+  /**
+   * Log response data to clarizen_responses.txt
+   */
+  logResponse(endpoint, data) {
+    try {
+      const timestamp = new Date().toISOString();
+      const logEntry = `\n========================================\n${timestamp} - ${endpoint}\n========================================\n${JSON.stringify(data, null, 2)}\n`;
+      fs.appendFileSync(this.responsesFile, logEntry);
+      console.log(`📝 Response logged to ${this.responsesFile}`);
+    } catch (error) {
+      console.error('❌ Failed to log response:', error.message);
+    }
   }
 
   /**
@@ -25,6 +42,10 @@ class ClarizenService {
       if (!response.data?.sessionId) throw new Error('No session ID received');
       this.sessionId = response.data.sessionId;
       console.log('✅ Authentication successful');
+      
+      // Log the authentication response
+      this.logResponse('authentication/login', response.data);
+      
       return this.sessionId;
     } catch (err) {
       console.error('❌ Authentication failed:', err.message);
@@ -43,6 +64,10 @@ class ClarizenService {
       };
     const fullUrl = `${this.apiBaseUrl}${url}`;
     const response = await axios.get(fullUrl, { headers });
+    
+    // Log the response
+    this.logResponse(`GET ${url}`, response.data);
+    
       return response.data;
   }
 
@@ -56,6 +81,10 @@ class ClarizenService {
       'Accept': 'application/json'
     };
     const response = await axios.get(`${this.apiBaseUrl}/data/query?q=${encodeURIComponent(q)}`, { headers });
+    
+    // Log the response
+    this.logResponse(`QUERY: ${q}`, response.data);
+    
     return response.data;
   }
 
@@ -87,14 +116,16 @@ class ClarizenService {
    * Step 1 — Get assigned parent work items
    */
   async getAssignedWorkItems(userId) {
-    // Try different approaches to match your working Postman collection
+    // Match your exact Postman workflow - use the full entity reference format
+    const userEntityRef = `/User/${userId}`;
+    
       const queries = [
-      // Try with user ID as string
-      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units FROM RegularResourceLink WHERE Resource = '${userId}'`,
-      // Try with user ID as entity reference
-      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units FROM RegularResourceLink WHERE Resource.Id = '${userId}'`,
-      // Try without WHERE clause to see all data
-      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units FROM RegularResourceLink`
+      // Exact match to your working Postman query
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units FROM RegularResourceLink WHERE Resource = '${userEntityRef}'`,
+      // Fallback with Resource field included for debugging
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units, Resource FROM RegularResourceLink WHERE Resource = '${userEntityRef}'`,
+      // Last resort - get all and filter
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units, Resource FROM RegularResourceLink`
     ];
     
       for (let i = 0; i < queries.length; i++) {
@@ -104,7 +135,7 @@ class ClarizenService {
         
         if (data.entities && data.entities.length > 0) {
           console.log(`✅ Query ${i + 1} successful, got ${data.entities.length} entities`);
-          return this.processAssignedWorkItems(data);
+          return this.processAssignedWorkItems(data, userId);
           } else {
             console.log(`⚠️ Query ${i + 1} returned no results`);
           }
@@ -119,9 +150,26 @@ class ClarizenService {
   /**
    * Process the assigned work items data
    */
-  processAssignedWorkItems(data) {
+  processAssignedWorkItems(data, userId = null) {
     const entities = data.entities ?? [];
-    const nonZero = entities
+    
+    // Filter by user if we have all data (no WHERE clause was used)
+    let filteredEntities = entities;
+    if (userId && entities.length > 0 && entities[0].Resource) {
+      const userEntityRef = `/User/${userId}`;
+      console.log(`🔍 Filtering ${entities.length} entities by user entity reference: ${userEntityRef}`);
+      filteredEntities = entities.filter(e => {
+        const resourceId = e?.Resource?.id || e?.Resource;
+        const matches = resourceId === userEntityRef;
+        if (!matches) {
+          console.log(`❌ Resource ID ${resourceId} does not match user entity reference ${userEntityRef}`);
+        }
+        return matches;
+      });
+      console.log(`✅ Filtered to ${filteredEntities.length} entities for user ${userEntityRef}`);
+    }
+    
+    const nonZero = filteredEntities
       .map(e => ({
         id: e?.WorkItem?.id,
         name: e?.WorkItem?.Name,
@@ -142,12 +190,20 @@ class ClarizenService {
    */
   async getChildWorkItems(parentIdsCsv) {
     try {
+      // Clean parent IDs like in your Postman pre-script
+      const parentIds = parentIdsCsv.split(',').map(id => id.trim().replace(/'/g, ''));
+      const cleanIds = parentIds.map(id => id.replace(/^\/[A-Za-z]+\/(.+)$/, "$1"));
+      const cleanParentIdsCsv = cleanIds.map(id => `'${id}'`).join(",");
+      
+      console.log(`🔍 Original parent IDs: ${parentIdsCsv}`);
+      console.log(`🔍 Cleaned parent IDs: ${cleanParentIdsCsv}`);
+      
       // Check if the CSV is too long (URL length limit)
-      const query = `SELECT Name, StartDate, DueDate, Work, Parent, Parent.Name FROM WorkItem WHERE Parent IN (${parentIdsCsv})`;
+      const query = `SELECT Name, StartDate, DueDate, Work, Parent, Parent.Name FROM WorkItem WHERE Parent IN (${cleanParentIdsCsv})`;
       
       if (query.length > 2000) {
         console.log('⚠️ Query too long, splitting into chunks...');
-        return await this.getChildWorkItemsInChunks(parentIdsCsv);
+        return await this.getChildWorkItemsInChunks(cleanParentIdsCsv);
       }
       
       const data = await this.query(query);
@@ -182,15 +238,18 @@ class ClarizenService {
    * Get child work items in chunks to avoid URL length limits
    */
   async getChildWorkItemsInChunks(parentIdsCsv) {
+    // Clean parent IDs like in your Postman pre-script
     const parentIds = parentIdsCsv.split(',').map(id => id.trim().replace(/'/g, ''));
+    const cleanIds = parentIds.map(id => id.replace(/^\/[A-Za-z]+\/(.+)$/, "$1"));
+    
     const chunkSize = 20; // Process 20 parent IDs at a time
     const chunks = [];
     
-    for (let i = 0; i < parentIds.length; i += chunkSize) {
-      chunks.push(parentIds.slice(i, i + chunkSize));
+    for (let i = 0; i < cleanIds.length; i += chunkSize) {
+      chunks.push(cleanIds.slice(i, i + chunkSize));
     }
     
-    console.log(`📦 Processing ${parentIds.length} parent IDs in ${chunks.length} chunks`);
+    console.log(`📦 Processing ${cleanIds.length} cleaned parent IDs in ${chunks.length} chunks`);
     
     let allChildren = [];
     
@@ -205,7 +264,7 @@ class ClarizenService {
         const children = this.processChildWorkItems(data);
         allChildren = allChildren.concat(children);
         console.log(`✅ Chunk ${i + 1} returned ${children.length} children`);
-      } catch (error) {
+        } catch (error) {
         console.log(`❌ Chunk ${i + 1} failed:`, error.response?.data?.message || error.message);
       }
     }
@@ -230,12 +289,17 @@ class ClarizenService {
       };
     });
 
-    return {
+    const result = {
       timestamp: new Date().toISOString(),
       parentCount: parents.length,
       childCount: children.length,
       hierarchy
     };
+
+    // Log the final hierarchy result
+    this.logResponse('FINAL_HIERARCHY_RESULT', result);
+
+    return result;
   }
 
   /**

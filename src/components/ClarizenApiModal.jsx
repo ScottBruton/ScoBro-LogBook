@@ -9,7 +9,6 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
   const [config, setConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
-  const [resourcingData, setResourcingData] = useState([]);
   const [workItemData, setWorkItemData] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,41 +57,7 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
     }
   };
 
-  const loadResourcingData = async () => {
-    try {
-      setIsLoading(true);
-      const data = await ClarizenApiService.getResourcingData();
-      setResourcingData(data);
-    } catch (error) {
-      console.error('Failed to load resourcing data:', error);
-      setTestResult({
-        success: false,
-        message: `Failed to load resourcing data: ${error.message}`
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  const debugClarizenApi = async () => {
-    try {
-      setIsLoading(true);
-      const result = await ClarizenApiService.debugClarizenApi();
-      console.log('🔍 Debug result:', result);
-      setTestResult({
-        success: true,
-        message: `Debug successful: ${JSON.stringify(result, null, 2)}`
-      });
-    } catch (error) {
-      console.error('Failed to debug Clarizen API:', error);
-      setTestResult({
-        success: false,
-        message: `Debug failed: ${error.message}`
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const loadWorkItemData = async () => {
     try {
@@ -137,7 +102,6 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
       setConfig(ClarizenApiService.getClarizenConfig());
       setAccessToken(null);
       setIsAuthenticated(false);
-      setResourcingData([]);
       setTestResult(null);
     }
   };
@@ -145,7 +109,7 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
   const handleSyncResourcing = async () => {
     try {
       // Use work item data if available, otherwise fall back to resourcing data
-      const dataToSync = workItemData ? workItemData : resourcingData;
+      const dataToSync = workItemData;
       
       if (!dataToSync || (Array.isArray(dataToSync) && dataToSync.length === 0)) {
         setTestResult({
@@ -161,8 +125,7 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
       if (onResourcingSynced) {
         await onResourcingSynced(dataToSync);
         const itemCount = workItemData ? 
-          (workItemData.parentCount + workItemData.childCount) : 
-          resourcingData.length;
+          (workItemData.parentCount + workItemData.childCount) : 0;
         setTestResult({
           success: true,
           message: `Successfully synced ${itemCount} work items to logbook`
@@ -399,47 +362,10 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
                 opacity: isLoading ? 0.6 : 1
               }}
             >
-              {isLoading ? '⏳' : '🔍'} Test Connection
+              {isLoading ? '⏳' : '📊'} Load Resourcing
             </button>
             
-            {isAuthenticated && (
-              <button
-                onClick={debugClarizenApi}
-                disabled={isLoading}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#6c757d',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  opacity: isLoading ? 0.6 : 1,
-                  marginLeft: '8px'
-                }}
-              >
-                {isLoading ? '⏳' : '🔧'} Debug API
-              </button>
-            )}
             
-            {isAuthenticated && (
-              <button
-                onClick={loadResourcingData}
-                disabled={isLoading}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#e83e8c',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '14px',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                {isLoading ? '⏳' : '📊'} Load Resourcing Data
-              </button>
-            )}
           </div>
         </div>
 
@@ -634,152 +560,6 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Legacy Resourcing Data */}
-        {resourcingData.length > 0 && !workItemData && (
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ margin: 0 }}>📊 Current Resourcing</h3>
-              <button
-                onClick={() => handleSyncResourcing()}
-                disabled={isLoading}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#28a745',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: isLoading ? 'not-allowed' : 'pointer',
-                  fontSize: '12px',
-                  opacity: isLoading ? 0.6 : 1
-                }}
-              >
-                {isLoading ? '⏳' : '📝'} Sync to Logbook
-              </button>
-            </div>
-            
-            {/* Weekly Breakdown Table */}
-            <div style={{
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              backgroundColor: '#f8f9fa',
-              overflow: 'hidden'
-            }}>
-              {/* Table Header */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr',
-                backgroundColor: '#e9ecef',
-                borderBottom: '1px solid #ccc',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                padding: '8px'
-              }}>
-                <div>Project/Activity</div>
-                <div style={{ textAlign: 'center' }}>This Week</div>
-                <div style={{ textAlign: 'center' }}>Next Week</div>
-                <div style={{ textAlign: 'center' }}>Week 3</div>
-                <div style={{ textAlign: 'center' }}>Week 4</div>
-                <div style={{ textAlign: 'center' }}>Week 5</div>
-                <div style={{ textAlign: 'center' }}>Week 6</div>
-                <div style={{ textAlign: 'center' }}>Week 7</div>
-                <div style={{ textAlign: 'center', backgroundColor: '#007bff', color: 'white' }}>Total</div>
-              </div>
-              
-              {/* Resource Rows */}
-              {resourcingData.map((resource, index) => {
-                // Calculate weekly distribution (simplified for now)
-                const totalHours = resource.hours || 0;
-                const weeklyHours = totalHours / 7; // Distribute evenly across weeks
-                
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr',
-                      borderBottom: '1px solid #dee2e6',
-                      backgroundColor: 'white',
-                      fontSize: '11px',
-                      padding: '8px',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
-                        {resource.projectName}
-                      </div>
-                      <div style={{ color: '#666', fontSize: '10px' }}>
-                        {resource.clarizenTag} • {resource.userName}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#fff3cd', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#f8f9fa', borderRadius: '3px' }}>
-                      {weeklyHours.toFixed(1)}h
-                    </div>
-                    <div style={{ textAlign: 'center', padding: '4px', backgroundColor: '#007bff', color: 'white', borderRadius: '3px', fontWeight: 'bold' }}>
-                      {totalHours}h
-                    </div>
-                  </div>
-                );
-              })}
-              
-              {/* Total Row */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr',
-                backgroundColor: '#e9ecef',
-                borderTop: '2px solid #007bff',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                padding: '8px'
-              }}>
-                <div>Total Resourced Hours</div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0) / 7, 0).toFixed(1)}h
-                </div>
-                <div style={{ textAlign: 'center', backgroundColor: '#007bff', color: 'white', borderRadius: '3px' }}>
-                  {resourcingData.reduce((sum, r) => sum + (r.hours || 0), 0)}h
-                </div>
-              </div>
-            </div>
           </div>
         )}
 
