@@ -438,6 +438,25 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
             {workItemData.weekHeaders && workItemData.projects && workItemData.projects.length > 0 ? (
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>📅 Weekly Resource Planning ({workItemData.projects.length} projects)</h4>
+                <div style={{ 
+                  marginBottom: '12px', 
+                  padding: '8px', 
+                  backgroundColor: '#f8f9fa', 
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  color: '#666'
+                }}>
+                  <div style={{ marginBottom: '4px' }}>
+                    <span style={{ color: '#16a34a', fontStyle: 'italic' }}>Green (italic)</span> = Actual hours you've logged (from timesheet)
+                  </div>
+                  <div style={{ marginBottom: '4px' }}>
+                    <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Blue (bold)</span> = Total planned hours for each project (from RegularResourceLink)
+                  </div>
+                  <div style={{ fontSize: '11px', fontStyle: 'italic', color: '#666' }}>
+                    Note: Planned hours show total project allocation, not weekly breakdowns. 
+                    Weekly cells show only actual logged hours.
+                  </div>
+                </div>
                 <div style={{
                   border: '1px solid #ccc',
                   borderRadius: '4px',
@@ -565,7 +584,18 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
                             backgroundColor: '#e8f5e8',
                             fontWeight: 'bold'
                           }}>
-                            {project.totalHours}h
+                            <div style={{ fontSize: '12px' }}>
+                              {project.actualHours && Object.keys(project.actualHours).length > 0 && (
+                                <div style={{ color: '#16a34a', fontSize: '11px', fontStyle: 'italic' }}>
+                                  {Object.values(project.actualHours).reduce((sum, hours) => sum + hours, 0).toFixed(1)}h actual
+                                </div>
+                              )}
+                              {project.totalPlannedHours > 0 && (
+                                <div style={{ color: '#2563eb', fontWeight: 'bold' }}>
+                                  {project.totalPlannedHours.toFixed(1)}h planned
+                                </div>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -583,9 +613,14 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
                         </td>
                         {workItemData.weekHeaders.map((week, weekIndex) => {
                           const weekKey = week.startDate;
-                          const weekTotal = workItemData.projects.reduce((sum, project) => {
-                            return sum + (project.weeklyHours?.[weekKey] || 0);
+                          const plannedTotal = workItemData.projects.reduce((sum, project) => {
+                            return sum + (project.plannedHours?.[weekKey] || 0);
                           }, 0);
+                          const actualTotal = workItemData.projects.reduce((sum, project) => {
+                            return sum + (project.actualHours?.[weekKey] || 0);
+                          }, 0);
+                          const hasData = plannedTotal > 0 || actualTotal > 0;
+                          
                           return (
                             <td key={weekIndex} style={{ 
                               padding: '8px', 
@@ -593,7 +628,30 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
                               textAlign: 'center',
                               backgroundColor: week.isCurrentWeek ? '#bbdefb' : '#e8f5e8'
                             }}>
-                              {weekTotal > 0 ? `${weekTotal}h` : '-'}
+                              {hasData ? (
+                                <div style={{ fontSize: '12px' }}>
+                                  {plannedTotal > 0 && (
+                                    <div style={{ 
+                                      fontWeight: 'bold',
+                                      color: '#2563eb',
+                                      marginBottom: '2px'
+                                    }}>
+                                      {plannedTotal.toFixed(1)}h
+                                    </div>
+                                  )}
+                                  {actualTotal > 0 && (
+                                    <div style={{ 
+                                      color: '#16a34a',
+                                      fontSize: '11px',
+                                      fontStyle: 'italic'
+                                    }}>
+                                      ({actualTotal.toFixed(1)}h)
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span style={{ color: '#999' }}>-</span>
+                              )}
                             </td>
                           );
                         })}

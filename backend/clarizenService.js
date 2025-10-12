@@ -179,6 +179,10 @@ class ClarizenService {
       `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, ActualRegularEffort, RemainingEffort, Units, Resource, WorkItem.StartDate, WorkItem.DueDate FROM RegularResourceLink WHERE Resource = '${userEntityRef}' AND Work > 0`
     ];
     
+      // Collect data from multiple successful queries
+      const allData = { entities: [] };
+      let foundData = false;
+    
       for (let i = 0; i < queries.length; i++) {
         try {
         console.log(`🔍 Trying resource planning query ${i + 1}:`, queries[i]);
@@ -188,7 +192,7 @@ class ClarizenService {
           console.log(`✅ Resource planning query ${i + 1} successful, got ${data.entities.length} entities`);
           
           // Check if this is entity type discovery
-          if (i === 8) { // Query 9 is entity type discovery
+          if (i === 0) { // Query 1 is entity type discovery
             console.log(`🔍 Entity type discovery successful! Found ${data.entities.length} entity types:`);
             data.entities.forEach(entity => {
               console.log(`  - ${entity.EntityType}`);
@@ -197,13 +201,28 @@ class ClarizenService {
             continue;
           }
           
-          return this.processResourcePlanningData(data, userId, startDate, endDate);
+          // Add entities to our collected data
+          allData.entities = allData.entities.concat(data.entities);
+          foundData = true;
+          
+          // If this is timesheet data (query 13), we have actual hours - continue to get planned hours too
+          if (i === 12) { // Query 13 is timesheet
+            console.log(`📊 Found timesheet data (actual hours), continuing to look for planned hours...`);
+            continue;
+          }
+          
           } else {
           console.log(`⚠️ Resource planning query ${i + 1} returned no results`);
           }
         } catch (error) {
         console.log(`❌ Resource planning query ${i + 1} failed:`, error.response?.data?.message || error.message);
       }
+    }
+    
+    // Process all collected data together
+    if (foundData) {
+      console.log(`📊 Processing combined data: ${allData.entities.length} total entities`);
+      return this.processResourcePlanningData(allData, userId, startDate, endDate);
     }
     
     // If all queries failed, try to discover available tables
@@ -327,7 +346,8 @@ class ClarizenService {
             } else if (reportedDate) {
               // For timesheet data, use reported date - this is ACTUAL hours worked
               const totalWorkHours = Number(entity.Duration?.value || 0);
-              if (totalWorkHours > 0) {
+              if (totalWorkHours > 0 && projectName !== 'Unknown Project') {
+                // Skip "Unknown Project" entries - these are duplicates
                 // Initialize project data if not exists
                 if (!projectData[projectName]) {
                   projectData[projectName] = {
@@ -357,6 +377,8 @@ class ClarizenService {
                 projectData[projectName].totalHours += totalWorkHours;
                 
                 console.log(`✅ Found actual hours: ${projectName} - ${totalWorkHours}h on ${date.toISOString().split('T')[0]} (week: ${weekKey})`);
+              } else if (projectName === 'Unknown Project') {
+                console.log(`⚠️ Skipping "Unknown Project" entry - this is likely a duplicate timesheet entry`);
               }
         
             } else if (entity.EntityType) {
@@ -365,10 +387,8 @@ class ClarizenService {
               return;
             } else {
               // This is RegularResourceLink data - contains total project hours
-              // We'll use this to calculate planned hours by distributing across the project timeline
+              // Just store the raw data, no calculations
               const totalWorkHours = Number(entity.Work?.value || entity.Work || 0);
-              const startDate = entity.WorkItem?.StartDate ? new Date(entity.WorkItem.StartDate) : null;
-              const dueDate = entity.WorkItem?.DueDate ? new Date(entity.WorkItem.DueDate) : null;
               
               if (totalWorkHours > 0) {
                 // Initialize project data if not exists
@@ -379,48 +399,22 @@ class ClarizenService {
                     totalHours: 0,
                     weeklyHours: {},
                     plannedHours: {}, // New field for planned hours
-                    actualHours: {}   // New field for actual hours
+                    actualHours: {},   // New field for actual hours
+                    totalPlannedHours: 0  // Store total planned hours separately
                   };
                 }
                 
-                // Distribute planned hours across the project timeline
-                if (startDate && dueDate) {
-                  const weeksInProject = Math.ceil((dueDate - startDate) / (7 * 24 * 60 * 60 * 1000));
-                  const hoursPerWeek = totalWorkHours / Math.max(weeksInProject, 1);
-                  
-                  // Distribute hours across weeks within the project timeline
-                  let currentDate = new Date(startDate);
-                  let remainingHours = totalWorkHours;
-                  
-                  while (currentDate <= dueDate && remainingHours > 0) {
-                    const weekKey = this.getWeekKey(currentDate);
-                    const weekHours = Math.min(hoursPerWeek, remainingHours);
-                    
-                    if (!projectData[projectName].plannedHours[weekKey]) {
-                      projectData[projectName].plannedHours[weekKey] = 0;
-                    }
-                    projectData[projectName].plannedHours[weekKey] += weekHours;
-                    remainingHours -= weekHours;
-                    
-                    // Move to next week
-                    currentDate.setDate(currentDate.getDate() + 7);
-                  }
-                  
-                  console.log(`📅 Distributed ${totalWorkHours}h planned hours for ${projectName} across ${weeksInProject} weeks`);
-                } else {
-                  // If no dates, distribute evenly across the current 6-week window
-                  const weekKeys = this.generateWeekHeaders();
-                  const hoursPerWeek = totalWorkHours / weekKeys.length;
-                  
-                  weekKeys.forEach(weekKey => {
-                    if (!projectData[projectName].plannedHours[weekKey]) {
-                      projectData[projectName].plannedHours[weekKey] = 0;
-                    }
-                    projectData[projectName].plannedHours[weekKey] += hoursPerWeek;
-                  });
-                  
-                  console.log(`📅 Distributed ${totalWorkHours}h planned hours for ${projectName} evenly across current weeks`);
-                }
+                // Store the raw planned hours - no distribution, no calculations
+                console.log(`📊 Found planned hours: ${projectName} - ${totalWorkHours}h (total project hours)`);
+                
+                // Store planned hours separately from actual hours
+                projectData[projectName].totalPlannedHours += totalWorkHours;
+                
+                // For now, let's add a simple note that planned hours are total project hours
+                // We'll display them in the total column, not distributed across weeks
+                // since we don't have weekly breakdown data from RegularResourceLink
+                
+                // Don't add to totalHours - that's for actual hours only
               }
             }
     });
