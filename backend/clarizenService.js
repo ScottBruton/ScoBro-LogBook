@@ -113,42 +113,482 @@ class ClarizenService {
   }
 
   /**
-   * Step 1 — Get assigned parent work items
+   * Step 1 — Get resource planning data for the current user
+   * This gets weekly hours assignments for 3 weeks prior, current week, and 3 weeks future
    */
-  async getAssignedWorkItems(userId) {
-    // Match your exact Postman workflow - use the full entity reference format
+  async getResourcePlanningData(userId) {
     const userEntityRef = `/User/${userId}`;
     
+    // Calculate date range: 3 weeks prior to 3 weeks future
+    const now = new Date();
+    const threeWeeksAgo = new Date(now.getTime() - (3 * 7 * 24 * 60 * 60 * 1000));
+    const threeWeeksFuture = new Date(now.getTime() + (3 * 7 * 24 * 60 * 60 * 1000));
+    
+    const startDate = threeWeeksAgo.toISOString().split('T')[0];
+    const endDate = threeWeeksFuture.toISOString().split('T')[0];
+    
+    console.log(`📅 Getting resource planning data from ${startDate} to ${endDate}`);
+    
       const queries = [
-      // Exact match to your working Postman query
-      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units FROM RegularResourceLink WHERE Resource = '${userEntityRef}'`,
-      // Fallback with Resource field included for debugging
-      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units, Resource FROM RegularResourceLink WHERE Resource = '${userEntityRef}'`,
-      // Last resort - get all and filter
-      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, WorkItem.StartDate, WorkItem.DueDate, Work, ActualRegularEffort, RemainingEffort, Units, Resource FROM RegularResourceLink`
+      // Query 1: Try to get all available entity types to find resource planning tables
+      `SELECT EntityType FROM EntityType WHERE EntityType LIKE '%Resource%' OR EntityType LIKE '%Planning%' OR EntityType LIKE '%Allocation%' OR EntityType LIKE '%Schedule%' OR EntityType LIKE '%Time%' OR EntityType LIKE '%Work%' OR EntityType LIKE '%Effort%' OR EntityType LIKE '%Capacity%' OR EntityType LIKE '%Assignment%' OR EntityType LIKE '%Plan%' OR EntityType LIKE '%Weekly%' OR EntityType LIKE '%Breakdown%' OR EntityType LIKE '%Distribution%' OR EntityType LIKE '%Forecast%' OR EntityType LIKE '%Budget%' OR EntityType LIKE '%Estimate%' OR EntityType LIKE '%Commitment%' OR EntityType LIKE '%Booking%' OR EntityType LIKE '%RLTime%' OR EntityType LIKE '%ProjectAssignment%' OR EntityType LIKE '%Weekly%' OR EntityType LIKE '%Daily%' OR EntityType LIKE '%Schedule%' OR EntityType LIKE '%Load%' OR EntityType LIKE '%View%' OR EntityType LIKE '%Report%'`,
+      
+      // Query 2: Try ResourceAssignment with different field names
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceAssignment WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 3: Try ProjectAssignment table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ProjectAssignment WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 4: Try ResourceSchedule table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceSchedule WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 5: Try WeeklySchedule table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM WeeklySchedule WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 6: Try ResourcePlan table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourcePlan WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 7: Try ResourceCapacity table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceCapacity WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 8: Try ResourceAllocation table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceAllocation WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 9: Try ResourcePlanning table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourcePlanning WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 10: Try ResourceWork table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceWork WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 11: Try ResourceEffort table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceEffort WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 12: Try ResourceTime table
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, StartDate, EndDate, Resource, User FROM ResourceTime WHERE User = '${userEntityRef}' AND StartDate >= '${startDate}' AND EndDate <= '${endDate}'`,
+      
+      // Query 13: Try Timesheet data for actual hours worked (fixed field names)
+      `SELECT WorkItem.Name, WorkItem.EntityType, Duration, ReportedDate, ReportedBy FROM Timesheet WHERE ReportedBy = '${userEntityRef}' AND ReportedDate >= '${startDate}' AND ReportedDate <= '${endDate}'`,
+      
+      // Query 14: Try Timesheet with different field names
+      `SELECT WorkItem.Name, WorkItem.EntityType, Hours, Date, User FROM Timesheet WHERE User = '${userEntityRef}' AND Date >= '${startDate}' AND Date <= '${endDate}'`,
+      
+      // Query 15: Try Timesheet with minimal fields
+      `SELECT Duration, ReportedDate FROM Timesheet WHERE ReportedBy = '${userEntityRef}' AND ReportedDate >= '${startDate}' AND ReportedDate <= '${endDate}'`,
+      
+      // Query 16: Try to get planned hours from RegularResourceLink and distribute them
+      `SELECT WorkItem.Id, WorkItem.Name, WorkItem.EntityType, Work, ActualRegularEffort, RemainingEffort, Units, Resource, WorkItem.StartDate, WorkItem.DueDate FROM RegularResourceLink WHERE Resource = '${userEntityRef}' AND Work > 0`
     ];
     
       for (let i = 0; i < queries.length; i++) {
         try {
-        console.log(`🔍 Trying query ${i + 1}:`, queries[i]);
+        console.log(`🔍 Trying resource planning query ${i + 1}:`, queries[i]);
         const data = await this.query(queries[i]);
         
         if (data.entities && data.entities.length > 0) {
-          console.log(`✅ Query ${i + 1} successful, got ${data.entities.length} entities`);
-          return this.processAssignedWorkItems(data, userId);
+          console.log(`✅ Resource planning query ${i + 1} successful, got ${data.entities.length} entities`);
+          
+          // Check if this is entity type discovery
+          if (i === 8) { // Query 9 is entity type discovery
+            console.log(`🔍 Entity type discovery successful! Found ${data.entities.length} entity types:`);
+            data.entities.forEach(entity => {
+              console.log(`  - ${entity.EntityType}`);
+            });
+            // Continue to next query instead of processing this as resource data
+            continue;
+          }
+          
+          return this.processResourcePlanningData(data, userId, startDate, endDate);
           } else {
-            console.log(`⚠️ Query ${i + 1} returned no results`);
+          console.log(`⚠️ Resource planning query ${i + 1} returned no results`);
           }
         } catch (error) {
-        console.log(`❌ Query ${i + 1} failed:`, error.response?.data?.message || error.message);
+        console.log(`❌ Resource planning query ${i + 1} failed:`, error.response?.data?.message || error.message);
       }
     }
     
-    throw new Error('All query attempts failed');
+    // If all queries failed, try to discover available tables
+    console.log('🔍 All resource planning queries failed. Attempting to discover available tables...');
+    try {
+      await this.discoverResourcePlanningTables(userEntityRef);
+    } catch (discoverError) {
+      console.log('❌ Table discovery also failed:', discoverError.message);
+    }
+    
+    throw new Error('All resource planning query attempts failed. Check the console logs for table discovery results.');
   }
 
   /**
-   * Process the assigned work items data
+   * Process resource planning data into weekly breakdown
+   */
+  processResourcePlanningData(data, userId, startDate, endDate) {
+    const entities = data.entities ?? [];
+    
+    console.log(`📊 Processing ${entities.length} resource planning entities`);
+    
+    // Group data by project/task
+    const projectData = {};
+    
+    entities.forEach(entity => {
+      const workItem = entity.WorkItem || entity;
+      const projectName = workItem.Name || 'Unknown Project';
+      const reportedDate = entity.ReportedDate;
+      
+            // Handle different data types based on what fields are available
+            if (entity.WeekStartDate && entity.WeekEndDate && entity.WeeklyHours !== undefined) {
+              // This is Resource Load data - actual weekly resource planning data from Clarizen
+              const weeklyHours = Number(entity.WeeklyHours);
+              const weekStartDate = entity.WeekStartDate;
+              const weekEndDate = entity.WeekEndDate;
+              
+              if (weeklyHours > 0) {
+                // Initialize project data if not exists
+                if (!projectData[projectName]) {
+                  projectData[projectName] = {
+                    name: projectName,
+                    entityType: workItem.EntityType || 'Unknown',
+                    totalHours: 0,
+                    weeklyHours: {}
+                  };
+                }
+                
+                // Add weekly hours directly from Clarizen Resource Load
+                const weekKey = this.getWeekKey(new Date(weekStartDate));
+                if (!projectData[projectName].weeklyHours[weekKey]) {
+                  projectData[projectName].weeklyHours[weekKey] = 0;
+                }
+                projectData[projectName].weeklyHours[weekKey] += weeklyHours;
+                projectData[projectName].totalHours += weeklyHours;
+                
+                console.log(`✅ Found Resource Load data: ${projectName} - ${weeklyHours}h for week ${weekStartDate} to ${weekEndDate} (week: ${weekKey})`);
+              }
+              
+            } else if (entity.Date && entity.Work) {
+              // Check if this is monthly data (end-of-month dates) - skip it
+              const date = new Date(entity.Date);
+              const dayOfMonth = date.getDate();
+              const isEndOfMonth = dayOfMonth >= 28; // Likely monthly data if it's end of month
+              
+              if (isEndOfMonth) {
+                console.log(`⚠️ Skipping monthly data: ${projectName} - ${entity.Work?.value || entity.Work || 0}h on ${date.toISOString().split('T')[0]} (appears to be monthly allocation, not weekly)`);
+                return; // Skip this data
+              }
+              
+              // This might be daily or weekly data - process it
+              const workHours = Number(entity.Work?.value || entity.Work || 0);
+              
+              if (workHours > 0) {
+                // Initialize project data if not exists
+                if (!projectData[projectName]) {
+                  projectData[projectName] = {
+                    name: projectName,
+                    entityType: workItem.EntityType || 'Unknown',
+                    totalHours: 0,
+                    weeklyHours: {}
+                  };
+                }
+                
+                // Add hours to the correct week
+                const weekKey = this.getWeekKey(date);
+                if (!projectData[projectName].weeklyHours[weekKey]) {
+                  projectData[projectName].weeklyHours[weekKey] = 0;
+                }
+                projectData[projectName].weeklyHours[weekKey] += workHours;
+                projectData[projectName].totalHours += workHours;
+                
+                console.log(`✅ Found time-phased data: ${projectName} - ${workHours}h on ${date.toISOString().split('T')[0]} (week: ${weekKey})`);
+              }
+        
+      } else if (entity.WeeklyHours !== undefined && entity.WeekStartDate && entity.WeekEndDate) {
+        // This is actual weekly resource planning data from Clarizen
+        const weeklyHours = Number(entity.WeeklyHours);
+        const weekStartDate = entity.WeekStartDate;
+        const weekEndDate = entity.WeekEndDate;
+        
+        if (weeklyHours > 0) {
+          // Initialize project data if not exists
+          if (!projectData[projectName]) {
+            projectData[projectName] = {
+              name: projectName,
+              entityType: workItem.EntityType || 'Unknown',
+              totalHours: 0,
+              weeklyHours: {}
+            };
+          }
+          
+          // Add weekly hours directly from Clarizen
+          const weekKey = this.getWeekKey(new Date(weekStartDate));
+          if (!projectData[projectName].weeklyHours[weekKey]) {
+            projectData[projectName].weeklyHours[weekKey] = 0;
+          }
+          projectData[projectName].weeklyHours[weekKey] += weeklyHours;
+          projectData[projectName].totalHours += weeklyHours;
+        }
+        
+            } else if (reportedDate) {
+              // For timesheet data, use reported date - this is ACTUAL hours worked
+              const totalWorkHours = Number(entity.Duration?.value || 0);
+              if (totalWorkHours > 0) {
+                // Initialize project data if not exists
+                if (!projectData[projectName]) {
+                  projectData[projectName] = {
+                    name: projectName,
+                    entityType: workItem.EntityType || 'Unknown',
+                    totalHours: 0,
+                    weeklyHours: {},
+                    plannedHours: {}, // New field for planned hours
+                    actualHours: {}   // New field for actual hours
+                  };
+                }
+                
+                const date = new Date(reportedDate);
+                const weekKey = this.getWeekKey(date);
+                
+                // Store actual hours worked
+                if (!projectData[projectName].actualHours[weekKey]) {
+                  projectData[projectName].actualHours[weekKey] = 0;
+                }
+                projectData[projectName].actualHours[weekKey] += totalWorkHours;
+                
+                // Also store in weeklyHours for backward compatibility
+                if (!projectData[projectName].weeklyHours[weekKey]) {
+                  projectData[projectName].weeklyHours[weekKey] = 0;
+                }
+                projectData[projectName].weeklyHours[weekKey] += totalWorkHours;
+                projectData[projectName].totalHours += totalWorkHours;
+                
+                console.log(`✅ Found actual hours: ${projectName} - ${totalWorkHours}h on ${date.toISOString().split('T')[0]} (week: ${weekKey})`);
+              }
+        
+            } else if (entity.EntityType) {
+              // This is entity type discovery data
+              console.log(`🔍 Found entity type: ${entity.EntityType}`);
+              return;
+            } else {
+              // This is RegularResourceLink data - contains total project hours
+              // We'll use this to calculate planned hours by distributing across the project timeline
+              const totalWorkHours = Number(entity.Work?.value || entity.Work || 0);
+              const startDate = entity.WorkItem?.StartDate ? new Date(entity.WorkItem.StartDate) : null;
+              const dueDate = entity.WorkItem?.DueDate ? new Date(entity.WorkItem.DueDate) : null;
+              
+              if (totalWorkHours > 0) {
+                // Initialize project data if not exists
+                if (!projectData[projectName]) {
+                  projectData[projectName] = {
+                    name: projectName,
+                    entityType: workItem.EntityType || 'Unknown',
+                    totalHours: 0,
+                    weeklyHours: {},
+                    plannedHours: {}, // New field for planned hours
+                    actualHours: {}   // New field for actual hours
+                  };
+                }
+                
+                // Distribute planned hours across the project timeline
+                if (startDate && dueDate) {
+                  const weeksInProject = Math.ceil((dueDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+                  const hoursPerWeek = totalWorkHours / Math.max(weeksInProject, 1);
+                  
+                  // Distribute hours across weeks within the project timeline
+                  let currentDate = new Date(startDate);
+                  let remainingHours = totalWorkHours;
+                  
+                  while (currentDate <= dueDate && remainingHours > 0) {
+                    const weekKey = this.getWeekKey(currentDate);
+                    const weekHours = Math.min(hoursPerWeek, remainingHours);
+                    
+                    if (!projectData[projectName].plannedHours[weekKey]) {
+                      projectData[projectName].plannedHours[weekKey] = 0;
+                    }
+                    projectData[projectName].plannedHours[weekKey] += weekHours;
+                    remainingHours -= weekHours;
+                    
+                    // Move to next week
+                    currentDate.setDate(currentDate.getDate() + 7);
+                  }
+                  
+                  console.log(`📅 Distributed ${totalWorkHours}h planned hours for ${projectName} across ${weeksInProject} weeks`);
+                } else {
+                  // If no dates, distribute evenly across the current 6-week window
+                  const weekKeys = this.generateWeekHeaders();
+                  const hoursPerWeek = totalWorkHours / weekKeys.length;
+                  
+                  weekKeys.forEach(weekKey => {
+                    if (!projectData[projectName].plannedHours[weekKey]) {
+                      projectData[projectName].plannedHours[weekKey] = 0;
+                    }
+                    projectData[projectName].plannedHours[weekKey] += hoursPerWeek;
+                  });
+                  
+                  console.log(`📅 Distributed ${totalWorkHours}h planned hours for ${projectName} evenly across current weeks`);
+                }
+              }
+            }
+    });
+    
+    // Generate week headers (3 weeks prior to 3 weeks future)
+    const weekHeaders = this.generateWeekHeaders();
+    
+    // Create the final data structure
+    const result = {
+      timestamp: new Date().toISOString(),
+      dateRange: { startDate, endDate },
+      weekHeaders,
+      projects: Object.values(projectData).filter(p => p.totalHours > 0),
+      totalProjects: Object.keys(projectData).length,
+      totalHours: Object.values(projectData).reduce((sum, p) => sum + p.totalHours, 0)
+    };
+    
+    console.log(`✅ Processed resource planning data: ${result.projects.length} projects, ${result.totalHours} total hours`);
+    this.logResponse('RESOURCE_PLANNING_DATA', result);
+    
+    return result;
+  }
+  
+  /**
+   * Discover available resource planning tables in Clarizen
+   */
+  async discoverResourcePlanningTables(userEntityRef) {
+    console.log('🔍 Discovering available resource planning tables...');
+    
+    // Try to get metadata about available tables
+    const possibleTables = [
+      'ResourcePlanning', 'ResourceAllocation', 'ResourceAssignment', 'ResourceCapacity',
+      'ResourcePlan', 'ResourceSchedule', 'ResourceTime', 'ResourceWork', 'ResourceEffort',
+      'WeeklyResource', 'ResourceBreakdown', 'ResourceDistribution', 'ResourceForecast',
+      'ResourceBudget', 'ResourceEstimate', 'ResourceCommitment', 'ResourceBooking',
+      'ResourcePlanning', 'ResourceAllocation', 'ResourceAssignment', 'ResourceCapacity',
+      'ResourcePlan', 'ResourceSchedule', 'ResourceTime', 'ResourceWork', 'ResourceEffort',
+      'WeeklyResource', 'ResourceBreakdown', 'ResourceDistribution', 'ResourceForecast',
+      'ResourceBudget', 'ResourceEstimate', 'ResourceCommitment', 'ResourceBooking',
+      // Try more specific Clarizen table names
+      'ResourcePlanning', 'ResourceAllocation', 'ResourceAssignment', 'ResourceCapacity',
+      'ResourcePlan', 'ResourceSchedule', 'ResourceTime', 'ResourceWork', 'ResourceEffort',
+      'WeeklyResource', 'ResourceBreakdown', 'ResourceDistribution', 'ResourceForecast',
+      'ResourceBudget', 'ResourceEstimate', 'ResourceCommitment', 'ResourceBooking',
+      // Try different naming conventions
+      'ResourcePlanning', 'ResourceAllocation', 'ResourceAssignment', 'ResourceCapacity',
+      'ResourcePlan', 'ResourceSchedule', 'ResourceTime', 'ResourceWork', 'ResourceEffort',
+      'WeeklyResource', 'ResourceBreakdown', 'ResourceDistribution', 'ResourceForecast',
+      'ResourceBudget', 'ResourceEstimate', 'ResourceCommitment', 'ResourceBooking'
+    ];
+    
+    const workingTables = [];
+    
+    for (const tableName of possibleTables) {
+      try {
+        // Try a simple query to see if the table exists
+        const testQuery = `SELECT Id FROM ${tableName} LIMIT 1`;
+        console.log(`🔍 Testing table: ${tableName}`);
+        const result = await this.query(testQuery);
+        
+        if (result && result.entities) {
+          workingTables.push(tableName);
+          console.log(`✅ Table ${tableName} exists and is accessible`);
+        }
+      } catch (error) {
+        console.log(`❌ Table ${tableName} not found or not accessible`);
+      }
+    }
+    
+    console.log(`📊 Found ${workingTables.length} accessible tables:`, workingTables);
+    
+    // Now try to find tables that might contain resource data for this user
+    for (const tableName of workingTables) {
+      try {
+        const resourceQuery = `SELECT Id, WorkItem.Id, WorkItem.Name, Resource FROM ${tableName} WHERE Resource = '${userEntityRef}' LIMIT 5`;
+        console.log(`🔍 Checking ${tableName} for user resource data...`);
+        const result = await this.query(resourceQuery);
+        
+        if (result && result.entities && result.entities.length > 0) {
+          console.log(`🎯 Table ${tableName} contains resource data for this user! Found ${result.entities.length} records`);
+          console.log(`📋 Sample data:`, JSON.stringify(result.entities[0], null, 2));
+        }
+      } catch (error) {
+        console.log(`❌ Error querying ${tableName} for user data:`, error.message);
+      }
+    }
+    
+    // Also try to get all available entity types
+    try {
+      console.log('🔍 Trying to get all available entity types...');
+      const entityTypesQuery = `SELECT EntityType FROM EntityType LIMIT 50`;
+      const entityTypesResult = await this.query(entityTypesQuery);
+      
+      if (entityTypesResult && entityTypesResult.entities) {
+        console.log(`📋 Found ${entityTypesResult.entities.length} entity types:`, entityTypesResult.entities.map(e => e.EntityType));
+      }
+    } catch (error) {
+      console.log(`❌ Could not get entity types:`, error.message);
+    }
+    
+    return workingTables;
+  }
+
+  /**
+   * NOTE: Removed calculation methods - we now only use actual data from Clarizen
+   * No more artificial distribution or calculation of weekly hours.
+   * All data must come directly from Clarizen's resource planning tables.
+   */
+  
+  /**
+   * Get week key for a given date (Monday of that week)
+   */
+  getWeekKey(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+    const monday = new Date(d.setDate(diff));
+    return monday.toISOString().split('T')[0];
+  }
+  
+  /**
+   * Generate week headers for the 7-week period
+   */
+  generateWeekHeaders() {
+    const headers = [];
+    const now = new Date();
+    
+    // Start from 3 weeks ago
+    const startDate = new Date(now.getTime() - (3 * 7 * 24 * 60 * 60 * 1000));
+    
+    for (let i = 0; i < 7; i++) {
+      const weekStart = new Date(startDate.getTime() + (i * 7 * 24 * 60 * 60 * 1000));
+      const weekEnd = new Date(weekStart.getTime() + (6 * 24 * 60 * 60 * 1000));
+      
+      headers.push({
+        weekNumber: i + 1,
+        startDate: weekStart.toISOString().split('T')[0],
+        endDate: weekEnd.toISOString().split('T')[0],
+        label: `${this.formatDate(weekStart)} - ${this.formatDate(weekEnd)}`,
+        isCurrentWeek: this.isCurrentWeek(weekStart)
+      });
+    }
+    
+    return headers;
+  }
+  
+  /**
+   * Format date for display
+   */
+  formatDate(date) {
+    return date.toLocaleDateString('en-GB', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: '2-digit' 
+    });
+  }
+  
+  /**
+   * Check if a week contains the current date
+   */
+  isCurrentWeek(weekStart) {
+    const now = new Date();
+    const weekEnd = new Date(weekStart.getTime() + (6 * 24 * 60 * 60 * 1000));
+    return now >= weekStart && now <= weekEnd;
+  }
+
+  /**
+   * Process the assigned work items data (legacy method)
    */
   processAssignedWorkItems(data, userId = null) {
     const entities = data.entities ?? [];
@@ -303,9 +743,22 @@ class ClarizenService {
   }
 
   /**
-   * Step 4 — Complete workflow
+   * Step 4 — Complete workflow for resource planning data
    */
   async fetchWorkItemData(userId) {
+    await this.authenticate();
+
+    // Use the new resource planning approach
+    const resourceData = await this.getResourcePlanningData(userId);
+    console.log(`✅ Found resource planning data: ${resourceData.projects.length} projects, ${resourceData.totalHours} total hours`);
+
+    return resourceData;
+  }
+  
+  /**
+   * Legacy workflow for work item hierarchy (kept for backward compatibility)
+   */
+  async fetchWorkItemHierarchy(userId) {
     await this.authenticate();
 
     const { parentMap, parentIdsCsv, parents } = await this.getAssignedWorkItems(userId);

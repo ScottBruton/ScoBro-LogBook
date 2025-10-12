@@ -125,10 +125,10 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
       if (onResourcingSynced) {
         await onResourcingSynced(dataToSync);
         const itemCount = workItemData ? 
-          (workItemData.parentCount + workItemData.childCount) : 0;
+          (workItemData.projects?.length || workItemData.parentCount + workItemData.childCount || 0) : 0;
         setTestResult({
           success: true,
-          message: `Successfully synced ${itemCount} work items to logbook`
+          message: `Successfully synced ${itemCount} projects to logbook`
         });
       } else {
         setTestResult({
@@ -387,11 +387,11 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
           </div>
         )}
 
-        {/* Work Item Data */}
+        {/* Resource Planning Data */}
         {workItemData && (
           <div style={{ marginBottom: '24px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ margin: 0 }}>📋 Work Items ({workItemData.parentCount + workItemData.childCount} total)</h3>
+              <h3 style={{ margin: 0 }}>📊 Resource Planning ({workItemData.projects?.length || 0} projects)</h3>
               <button
                 onClick={() => handleSyncResourcing()}
                 disabled={isLoading}
@@ -410,7 +410,7 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
               </button>
             </div>
             
-            {/* Work Item Summary */}
+            {/* Resource Planning Summary */}
             <div style={{
               border: '1px solid #ccc',
               borderRadius: '4px',
@@ -423,82 +423,230 @@ export default function ClarizenApiModal({ isOpen, onClose, onResourcingSynced }
                   <strong>📅 Timestamp:</strong> {new Date(workItemData.timestamp).toLocaleString()}
                 </div>
                 <div>
-                  <strong>📋 Parent Items:</strong> {workItemData.parentCount}
+                  <strong>📊 Total Projects:</strong> {workItemData.totalProjects || 0}
                 </div>
                 <div>
-                  <strong>👶 Child Items:</strong> {workItemData.childCount}
+                  <strong>🕒 Total Hours:</strong> {workItemData.totalHours || 0}
                 </div>
                 <div>
-                  <strong>📊 Total Items:</strong> {workItemData.parentCount + workItemData.childCount}
+                  <strong>📅 Date Range:</strong> {workItemData.dateRange?.startDate} to {workItemData.dateRange?.endDate}
                 </div>
               </div>
             </div>
 
-            {/* Hierarchy Display */}
-            {workItemData.hierarchy && workItemData.hierarchy.length > 0 && (
+            {/* Weekly Resource Planning Table */}
+            {workItemData.weekHeaders && workItemData.projects && workItemData.projects.length > 0 ? (
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>🏗️ Work Item Hierarchy ({workItemData.hierarchy.length} parents)</h4>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px' }}>📅 Weekly Resource Planning ({workItemData.projects.length} projects)</h4>
                 <div style={{
                   border: '1px solid #ccc',
                   borderRadius: '4px',
                   backgroundColor: '#fff',
-                  maxHeight: '400px',
+                  overflowX: 'auto',
+                  maxHeight: '500px',
                   overflowY: 'auto'
                 }}>
-                  {workItemData.hierarchy.map((item, index) => (
-                    <div key={index} style={{
-                      padding: '12px',
-                      borderBottom: index < workItemData.hierarchy.length - 1 ? '1px solid #eee' : 'none',
-                      fontSize: '12px'
-                    }}>
-                      {/* Parent Item */}
-                      <div style={{ 
-                        fontWeight: 'bold', 
-                        marginBottom: '8px',
-                        padding: '8px',
-                        backgroundColor: '#e3f2fd',
-                        borderRadius: '4px',
-                        border: '1px solid #bbdefb'
-                      }}>
-                        <div style={{ fontSize: '14px', marginBottom: '4px' }}>
-                          📋 {item.parentName}
-                        </div>
-                        <div style={{ color: '#666', fontSize: '11px' }}>
-                          <div>🕒 Hours: {item.workHours}</div>
-                          <div>📅 Start: {item.startDate || 'Not set'}</div>
-                          <div>📅 End: {item.endDate || 'Not set'}</div>
-                        </div>
-                      </div>
-                      
-                      {/* Child Items */}
-                      {item.children && item.children.length > 0 && (
-                        <div style={{ marginLeft: '16px' }}>
-                          <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>
-                            👶 Children ({item.children.length}):
-                          </div>
-                          {item.children.map((child, childIndex) => (
-                            <div key={childIndex} style={{
-                              padding: '6px',
-                              marginBottom: '4px',
-                              backgroundColor: '#f8f9fa',
-                              borderRadius: '3px',
-                              border: '1px solid #dee2e6'
-                            }}>
-                              <div style={{ fontWeight: 'bold', fontSize: '11px' }}>
-                                {child.name}
-                              </div>
-                              <div style={{ color: '#666', fontSize: '10px' }}>
-                                <div>🕒 Hours: {child.workHours}</div>
-                                <div>📅 Start: {child.startDate || 'Not set'}</div>
-                                <div>📅 End: {child.endDate || 'Not set'}</div>
-                              </div>
+                  <table style={{ 
+                    width: '100%', 
+                    borderCollapse: 'collapse',
+                    fontSize: '12px',
+                    minWidth: '800px'
+                  }}>
+                    <thead style={{ backgroundColor: '#f8f9fa', position: 'sticky', top: 0, zIndex: 1 }}>
+                      <tr>
+                        <th style={{ 
+                          padding: '8px', 
+                          border: '1px solid #dee2e6', 
+                          textAlign: 'left',
+                          minWidth: '200px',
+                          position: 'sticky',
+                          left: 0,
+                          backgroundColor: '#f8f9fa',
+                          zIndex: 2
+                        }}>
+                          Project/Task
+                        </th>
+                        {workItemData.weekHeaders.map((week, index) => (
+                          <th key={index} style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'center',
+                            minWidth: '80px',
+                            backgroundColor: week.isCurrentWeek ? '#e3f2fd' : '#f8f9fa'
+                          }}>
+                            <div style={{ fontSize: '10px', fontWeight: 'bold' }}>
+                              Week {week.weekNumber}
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                            <div style={{ fontSize: '9px', color: '#666' }}>
+                              {week.label}
+                            </div>
+                            {week.isCurrentWeek && (
+                              <div style={{ fontSize: '8px', color: '#1976d2', fontWeight: 'bold' }}>
+                                CURRENT
+                              </div>
+                            )}
+                          </th>
+                        ))}
+                        <th style={{ 
+                          padding: '8px', 
+                          border: '1px solid #dee2e6', 
+                          textAlign: 'center',
+                          backgroundColor: '#e8f5e8',
+                          fontWeight: 'bold'
+                        }}>
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {workItemData.projects.map((project, projectIndex) => (
+                        <tr key={projectIndex} style={{ 
+                          backgroundColor: projectIndex % 2 === 0 ? '#fff' : '#f8f9fa'
+                        }}>
+                          <td style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6',
+                            position: 'sticky',
+                            left: 0,
+                            backgroundColor: projectIndex % 2 === 0 ? '#fff' : '#f8f9fa',
+                            zIndex: 1
+                          }}>
+                            <div style={{ fontWeight: 'bold', marginBottom: '2px' }}>
+                              {project.name}
+                            </div>
+                            <div style={{ fontSize: '10px', color: '#666' }}>
+                              {project.entityType}
+                            </div>
+                          </td>
+                          {workItemData.weekHeaders.map((week, weekIndex) => {
+                            const weekKey = week.startDate;
+                            const plannedHours = project.plannedHours?.[weekKey] || 0;
+                            const actualHours = project.actualHours?.[weekKey] || 0;
+                            const hasData = plannedHours > 0 || actualHours > 0;
+                            
+                            return (
+                              <td key={weekIndex} style={{ 
+                                padding: '8px', 
+                                border: '1px solid #dee2e6', 
+                                textAlign: 'center',
+                                backgroundColor: week.isCurrentWeek ? '#e3f2fd' : 'transparent'
+                              }}>
+                                {hasData ? (
+                                  <div style={{ fontSize: '12px' }}>
+                                    {plannedHours > 0 && (
+                                      <div style={{ 
+                                        fontWeight: 'bold',
+                                        color: '#2563eb',
+                                        marginBottom: '2px'
+                                      }}>
+                                        {plannedHours.toFixed(1)}h
+                                      </div>
+                                    )}
+                                    {actualHours > 0 && (
+                                      <div style={{ 
+                                        color: '#16a34a',
+                                        fontSize: '11px',
+                                        fontStyle: 'italic'
+                                      }}>
+                                        ({actualHours.toFixed(1)}h)
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span style={{ color: '#999' }}>-</span>
+                                )}
+                              </td>
+                            );
+                          })}
+                          <td style={{ 
+                            padding: '8px', 
+                            border: '1px solid #dee2e6', 
+                            textAlign: 'center',
+                            backgroundColor: '#e8f5e8',
+                            fontWeight: 'bold'
+                          }}>
+                            {project.totalHours}h
+                          </td>
+                        </tr>
+                      ))}
+                      {/* Total Row */}
+                      <tr style={{ backgroundColor: '#e8f5e8', fontWeight: 'bold' }}>
+                        <td style={{ 
+                          padding: '8px', 
+                          border: '1px solid #dee2e6',
+                          position: 'sticky',
+                          left: 0,
+                          backgroundColor: '#e8f5e8',
+                          zIndex: 1
+                        }}>
+                          📊 TOTAL
+                        </td>
+                        {workItemData.weekHeaders.map((week, weekIndex) => {
+                          const weekKey = week.startDate;
+                          const weekTotal = workItemData.projects.reduce((sum, project) => {
+                            return sum + (project.weeklyHours?.[weekKey] || 0);
+                          }, 0);
+                          return (
+                            <td key={weekIndex} style={{ 
+                              padding: '8px', 
+                              border: '1px solid #dee2e6', 
+                              textAlign: 'center',
+                              backgroundColor: week.isCurrentWeek ? '#bbdefb' : '#e8f5e8'
+                            }}>
+                              {weekTotal > 0 ? `${weekTotal}h` : '-'}
+                            </td>
+                          );
+                        })}
+                        <td style={{ 
+                          padding: '8px', 
+                          border: '1px solid #dee2e6', 
+                          textAlign: 'center',
+                          backgroundColor: '#c8e6c9'
+                        }}>
+                          {workItemData.totalHours}h
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+              </div>
+            ) : (
+              <div style={{
+                border: '1px solid #ffc107',
+                borderRadius: '4px',
+                backgroundColor: '#fff3cd',
+                padding: '16px',
+                textAlign: 'center'
+              }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '14px', color: '#856404' }}>
+                  ⚠️ Weekly Resource Planning Tables Not Found
+                </h4>
+                <p style={{ margin: '0', fontSize: '12px', color: '#856404' }}>
+                  The system found your project data but couldn't locate the weekly resource planning tables. 
+                  Since you have resource planning data (as shown in your spreadsheet), the table names in your 
+                  Clarizen instance are likely different from what we're searching for.
+                </p>
+             <div style={{ margin: '8px 0', fontSize: '12px', color: '#856404', textAlign: 'left' }}>
+               <strong>What we tried:</strong>
+               <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
+                 <li>Entity type discovery (to find all available tables)</li>
+                 <li>ResourceAssignment, ProjectAssignment, ResourceSchedule</li>
+                 <li>WeeklySchedule, ResourcePlan, ResourceCapacity</li>
+                 <li>ResourceAllocation, ResourcePlanning, ResourceWork</li>
+                 <li>ResourceEffort, ResourceTime</li>
+                 <li>Timesheet (multiple field variations)</li>
+                 <li>RegularResourceLink (total project hours only)</li>
+               </ul>
+               <p style={{ margin: '4px 0', fontSize: '11px', fontStyle: 'italic' }}>
+                 Note: Clarizen's Resource Load view appears to be a calculated interface, not a single table. 
+                 We're now trying Timesheet data as a proxy for weekly resource planning.
+               </p>
+             </div>
+                <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: '#856404' }}>
+                  <strong>Next Steps:</strong> Check your Clarizen documentation or contact your Clarizen administrator 
+                  to find the correct table names for weekly resource planning data. The system needs to know which 
+                  tables contain your weekly hour allocations.
+                </p>
               </div>
             )}
 

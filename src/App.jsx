@@ -405,8 +405,41 @@ export default function App() {
     try {
       let entries = [];
       
-      // Handle new hierarchy data format from the simplified service
-      if (data && data.hierarchy && Array.isArray(data.hierarchy)) {
+      // Handle new resource planning data format
+      if (data && data.projects && Array.isArray(data.projects)) {
+        console.log('📊 Processing resource planning data:', data);
+        
+        // Create entries from resource planning projects
+        data.projects.forEach(project => {
+          // Create entry for each project with weekly breakdown
+          const weeklyBreakdown = data.weekHeaders?.map(week => {
+            const weekKey = week.startDate;
+            const hours = project.weeklyHours?.[weekKey] || 0;
+            return hours > 0 ? `${week.label}: ${hours}h` : null;
+          }).filter(Boolean).join(', ');
+          
+          const projectEntry = {
+            item_type: 'Note',
+            content: `📊 Clarizen Project: ${project.name} - ${project.totalHours} hours total${weeklyBreakdown ? ` (${weeklyBreakdown})` : ''}`,
+            project: project.name,
+            tags: ['clarizen', 'resource-planning', project.entityType?.toLowerCase() || 'project'],
+            people: ['Clarizen User'],
+            metadata: {
+              clarizenProject: {
+                name: project.name,
+                entityType: project.entityType,
+                totalHours: project.totalHours,
+                weeklyHours: project.weeklyHours,
+                weekHeaders: data.weekHeaders
+              },
+              workItemType: 'resource-planning',
+              syncedAt: new Date().toISOString()
+            }
+          };
+          entries.push(projectEntry);
+        });
+        
+      } else if (data && data.hierarchy && Array.isArray(data.hierarchy)) {
         console.log('📋 Processing hierarchy work item data:', data);
         
         // Create entries from hierarchy (parent + children)
