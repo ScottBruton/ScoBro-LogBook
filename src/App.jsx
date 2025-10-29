@@ -12,7 +12,7 @@ import TimeTrackingModal from './components/TimeTrackingModal.jsx';
 import CalendarSyncModal from './components/CalendarSyncModal.jsx';
 import JiraApiModal from './components/JiraApiModal.jsx';
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
-import StatusPills from './components/StatusPills.jsx';
+import AppHeader from './components/AppHeader.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 import { SmartPromptsService } from './services/smartPromptsService.js';
@@ -460,249 +460,39 @@ export default function App() {
           🔧 Debug
         </button>
       </div>
-      <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.5rem' }}>📒 ScoBro Logbook</h1>
-          <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
-            <div style={{ marginBottom: '4px' }}>
-              Status: {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
-              {isAuthenticated && user && (
-                <span style={{ marginLeft: '8px' }}>
-                  • 👤 {user.email}
-                </span>
-              )}
-            </div>
-            <StatusPills onStatusClick={handleStatusClick} refreshTrigger={statusRefreshTrigger} />
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => setShowProjectsManager(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#17a2b8',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            📂 Projects
-          </button>
-          <button
-            onClick={() => setShowTagsManager(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#6f42c1',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            🏷️ Tags
-          </button>
-          <button
-            onClick={() => setShowMeetingsManager(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#fd7e14',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            📅 Meetings
-          </button>
-          <button
-            onClick={() => setShowEmailConfig(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#e83e8c',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            📧 Email
-          </button>
-          <button
-            onClick={() => setShowSmartPrompts(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#6f42c1',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            🧠 Smart Prompts
-          </button>
-          <button
-            onClick={() => setShowTimeTracking(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#fd7e14',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            ⏱️ Time Tracking
-          </button>
-          <button
-            onClick={() => setShowCalendarSync(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#17a2b8',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            🗓️ Calendar
-          </button>
-          <button
-            onClick={() => setShowJiraApi(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#0052cc',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            🔗 Jira API
-          </button>
-          <button
-            onClick={() => setShowAnalytics(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#fd7e14',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            📊 Analytics
-          </button>
-          <button
-            onClick={() => DataService.exportAndDownloadCSV()}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#28a745',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            📊 CSV
-          </button>
-          <button
-            onClick={() => DataService.exportAndDownloadMarkdown()}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#6c757d',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '12px',
-            }}
-          >
-            📝 MD
-          </button>
-          {!isAuthenticated && (
-            <button
-              onClick={() => setShowAuthModal(true)}
-              style={{
-                padding: '6px 12px',
-                backgroundColor: '#17a2b8',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '12px',
-              }}
-            >
-              🔐 Sign In
-            </button>
-          )}
-          {isAuthenticated && (
-            <>
-              <button
-                onClick={async () => {
-                  try {
-                    setSyncStatus('pending');
-                    await SupabaseService.syncEntriesBidirectional(entries);
-                    setSyncStatus('synced');
-                  } catch (error) {
-                    console.error('Sync failed:', error);
-                    setSyncStatus('offline');
-                  }
-                }}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#17a2b8',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                }}
-              >
-                🔄 Sync
-              </button>
-              <button
-                onClick={handleSignOut}
-                style={{
-                  padding: '6px 12px',
-                  backgroundColor: '#6c757d',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                }}
-              >
-                🚪 Sign Out
-              </button>
-            </>
-          )}
-          <button
-            onClick={() => setShowPopup(true)}
-            style={{
-              padding: '6px 12px',
-              backgroundColor: '#0275d8',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
-          >
-            ➕ New Entry
-          </button>
-        </div>
+      {/* App Header with Burger Menu and Status Pills */}
+      <AppHeader
+        onProjectsClick={() => setShowProjectsManager(true)}
+        onTagsClick={() => setShowTagsManager(true)}
+        onMeetingsClick={() => setShowMeetingsManager(true)}
+        onSmartPromptsClick={() => setShowSmartPrompts(true)}
+        onTimeTrackingClick={() => setShowTimeTracking(true)}
+        onCsvClick={() => DataService.exportAndDownloadCSV()}
+        onMarkdownClick={() => DataService.exportAndDownloadMarkdown()}
+        onSyncClick={async () => {
+          try {
+            setSyncStatus('pending');
+            await SupabaseService.syncEntriesBidirectional(entries);
+            setSyncStatus('synced');
+          } catch (error) {
+            console.error('Sync failed:', error);
+            setSyncStatus('offline');
+          }
+        }}
+        onSignOutClick={handleSignOut}
+        onNewEntryClick={() => setShowPopup(true)}
+        onStatusClick={handleStatusClick}
+        isAuthenticated={isAuthenticated}
+        refreshTrigger={statusRefreshTrigger}
+        syncStatus={syncStatus}
+        user={user}
+        onSignInClick={() => setShowAuthModal(true)}
+      />
+
+      {/* Main Content - Add top padding to account for fixed header */}
+      <div style={{ paddingTop: '70px' }}>
+        <Dashboard entries={entries} onDeleteItem={handleDeleteItem} />
       </div>
-      <Dashboard entries={entries} onDeleteItem={handleDeleteItem} />
       <EntryPopup
         isOpen={showPopup}
         onSave={handleSaveItems}

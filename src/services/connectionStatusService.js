@@ -19,7 +19,16 @@ export class ConnectionStatusService {
   static getConnectionStatuses() {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
-      return stored ? JSON.parse(stored) : { ...this.DEFAULT_STATUSES };
+      const statuses = stored ? JSON.parse(stored) : { ...this.DEFAULT_STATUSES };
+      
+      // Remove any clarizen service if it exists (cleanup)
+      if (statuses.clarizen) {
+        delete statuses.clarizen;
+        this.saveConnectionStatuses(statuses);
+        console.log('🧹 Removed clarizen service from statuses');
+      }
+      
+      return statuses;
     } catch (error) {
       console.error('Failed to get connection statuses:', error);
       return { ...this.DEFAULT_STATUSES };
