@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { JiraApiService } from '../services/jiraApiService.js';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * JiraApiModal - Jira API configuration and management interface
  * Provides functionality to configure Jira API settings and manage issue synchronization
  */
 export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
+  const theme = useTheme();
   const [config, setConfig] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [testResult, setTestResult] = useState(null);
@@ -260,7 +262,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: theme.colors.overlay,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -269,13 +271,15 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: theme.colors.cardBackground,
+          color: theme.colors.text,
           padding: '24px',
           borderRadius: '8px',
           width: '90%',
           maxWidth: '1000px',
           maxHeight: '90vh',
           overflowY: 'auto',
+          border: `1px solid ${theme.colors.border}`
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -289,7 +293,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               border: 'none',
               fontSize: '20px',
               cursor: 'pointer',
-              color: '#666'
+              color: theme.colors.textSecondary
             }}
           >
             ✕
@@ -302,7 +306,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             <h3 style={{ marginBottom: '8px' }}>Connection Status</h3>
             <div style={{
               padding: '12px',
-              backgroundColor: '#f8f9fa',
+              backgroundColor: theme.colors.surface,
               border: `2px solid ${getStatusColor(syncStatus.status)}`,
               borderRadius: '6px',
               display: 'flex',
@@ -314,11 +318,11 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{ fontWeight: 'bold', color: getStatusColor(syncStatus.status) }}>
                   {syncStatus.status.charAt(0).toUpperCase() + syncStatus.status.slice(1).replace('_', ' ')}
                 </div>
-                <div style={{ fontSize: '14px', color: '#6c757d' }}>
+                <div style={{ fontSize: '14px', color: theme.colors.textSecondary }}>
                   {syncStatus.message}
                 </div>
                 {syncStatus.lastSync && (
-                  <div style={{ fontSize: '12px', color: '#6c757d' }}>
+                  <div style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
                     Last sync: {new Date(syncStatus.lastSync).toLocaleString()}
                   </div>
                 )}
@@ -336,7 +340,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 onClick={handleDisable}
                 style={{
                   padding: '6px 12px',
-                  backgroundColor: '#dc3545',
+                  backgroundColor: theme.colors.error,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -362,7 +366,9 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 style={{
                   width: '100%',
                   padding: '8px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${theme.colors.inputBorder}`,
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.text,
                   borderRadius: '4px'
                 }}
               />
@@ -380,7 +386,9 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 style={{
                   width: '100%',
                   padding: '8px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${theme.colors.inputBorder}`,
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.text,
                   borderRadius: '4px'
                 }}
               />
@@ -398,11 +406,13 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 style={{
                   width: '100%',
                   padding: '8px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${theme.colors.inputBorder}`,
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.text,
                   borderRadius: '4px'
                 }}
               />
-              <div style={{ fontSize: '12px', color: '#6c757d', marginTop: '4px' }}>
+              <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginTop: '4px' }}>
                 Generate at: <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer">Atlassian Account Settings</a>
               </div>
             </div>
@@ -415,10 +425,10 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{
                   maxHeight: '200px',
                   overflowY: 'auto',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${theme.colors.border}`,
                   borderRadius: '4px',
                   padding: '8px',
-                  backgroundColor: '#f8f9fa'
+                  backgroundColor: theme.colors.surface
                 }}>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
                     {projects.map(project => (
@@ -458,10 +468,10 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{
                   padding: '16px',
                   textAlign: 'center',
-                  color: '#666',
-                  border: '1px dashed #ccc',
+                  color: theme.colors.textSecondary,
+                  border: `1px dashed ${theme.colors.border}`,
                   borderRadius: '4px',
-                  backgroundColor: '#f8f9fa'
+                  backgroundColor: theme.colors.surface
                 }}>
                   {config?.enabled ? 'No projects found. Click "Test Connection" to load projects.' : 'Connect to Jira to see available projects.'}
                 </div>
@@ -504,17 +514,17 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{
                   maxHeight: '300px',
                   overflowY: 'auto',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${theme.colors.border}`,
                   borderRadius: '4px',
-                  backgroundColor: '#f8f9fa'
+                  backgroundColor: theme.colors.surface
                 }}>
                   {getFilteredTasks().map(task => (
                     <div
                       key={task.key}
                       style={{
                         padding: '12px',
-                        borderBottom: '1px solid #dee2e6',
-                        backgroundColor: 'white',
+                        borderBottom: `1px solid ${theme.colors.border}`,
+                        backgroundColor: theme.colors.cardBackground,
                         margin: '4px',
                   borderRadius: '4px'
                 }}
@@ -547,7 +557,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                           <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                             {task.summary}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>
+                          <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>
                             {task.project} • Sprint: {task.sprint}
                           </div>
                         </div>
@@ -570,21 +580,21 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                       
                       {/* Time tracking details */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', fontSize: '11px' }}>
-                        <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
-                          <div style={{ fontWeight: 'bold', color: '#495057' }}>Original Estimate</div>
+                        <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
+                          <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Original Estimate</div>
                           <div>{formatTime(task.originalEstimate)}</div>
                         </div>
-                        <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
-                          <div style={{ fontWeight: 'bold', color: '#495057' }}>Time Spent</div>
+                        <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
+                          <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Time Spent</div>
                           <div>{formatTime(task.timeSpent)}</div>
                         </div>
-                        <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
-                          <div style={{ fontWeight: 'bold', color: '#495057' }}>Remaining</div>
+                        <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
+                          <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Remaining</div>
                           <div>{formatTime(task.remainingEstimate)}</div>
                         </div>
                         {task.storyPoints && (
-                          <div style={{ padding: '4px', backgroundColor: '#e9ecef', borderRadius: '3px' }}>
-                            <div style={{ fontWeight: 'bold', color: '#495057' }}>Story Points</div>
+                          <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
+                            <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Story Points</div>
                             <div>{task.storyPoints}</div>
                           </div>
                         )}
@@ -596,10 +606,10 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{
                   padding: '16px',
                   textAlign: 'center',
-                  color: '#666',
-                  border: '1px dashed #ccc',
+                  color: theme.colors.textSecondary,
+                  border: `1px dashed ${theme.colors.border}`,
                   borderRadius: '4px',
-                  backgroundColor: '#f8f9fa'
+                  backgroundColor: theme.colors.surface
                 }}>
                   {config?.enabled ? 'No assigned tasks found. Click "Load Assigned Tasks" to refresh.' : 'Connect to Jira to see assigned tasks.'}
                 </div>
@@ -616,7 +626,9 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 style={{
                   width: '100%',
                   padding: '8px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${theme.colors.inputBorder}`,
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.text,
                   borderRadius: '4px'
                 }}
               >
@@ -668,7 +680,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               disabled={isLoading}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#6c757d',
+                backgroundColor: theme.colors.secondary,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -685,7 +697,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               disabled={isLoading}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#17a2b8',
+                backgroundColor: theme.colors.info,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -703,7 +715,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 disabled={isLoading}
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: '#6f42c1',
+                  backgroundColor: theme.colors.primary,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -722,7 +734,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 disabled={isLoading}
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: '#fd7e14',
+                  backgroundColor: theme.colors.warning,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -741,7 +753,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 disabled={isLoading}
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: '#28a745',
+                  backgroundColor: theme.colors.success,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -761,10 +773,10 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
           <div style={{ marginBottom: '24px' }}>
             <div style={{
               padding: '12px',
-              backgroundColor: testResult.success ? '#d4edda' : '#f8d7da',
-              border: `1px solid ${testResult.success ? '#c3e6cb' : '#f5c6cb'}`,
+              backgroundColor: testResult.success ? theme.colors.pillConnectedBg : theme.colors.pillErrorBg,
+              border: `1px solid ${theme.colors.border}`,
               borderRadius: '6px',
-              color: testResult.success ? '#155724' : '#721c24'
+              color: '#fff'
             }}>
               <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                 {testResult.success ? '✅ Success' : '❌ Error'}
@@ -779,20 +791,20 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
           <div style={{ marginBottom: '24px' }}>
             <h3 style={{ marginBottom: '12px' }}>📊 Statistics</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
-              <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Assigned Tasks</div>
+              <div style={{ padding: '12px', backgroundColor: theme.colors.surface, borderRadius: '6px', textAlign: 'center', border: `1px solid ${theme.colors.border}` }}>
+                <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>Assigned Tasks</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{assignedTasks.length}</div>
               </div>
-              <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Recent Issues</div>
+              <div style={{ padding: '12px', backgroundColor: theme.colors.surface, borderRadius: '6px', textAlign: 'center', border: `1px solid ${theme.colors.border}` }}>
+                <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>Recent Issues</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{jiraStats.recentCount}</div>
               </div>
-              <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Selected Projects</div>
+              <div style={{ padding: '12px', backgroundColor: theme.colors.surface, borderRadius: '6px', textAlign: 'center', border: `1px solid ${theme.colors.border}` }}>
+                <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>Selected Projects</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{selectedProjects.length}</div>
               </div>
-              <div style={{ padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '6px', textAlign: 'center' }}>
-                <div style={{ fontSize: '12px', color: '#6c757d', marginBottom: '4px' }}>Available Projects</div>
+              <div style={{ padding: '12px', backgroundColor: theme.colors.surface, borderRadius: '6px', textAlign: 'center', border: `1px solid ${theme.colors.border}` }}>
+                <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>Available Projects</div>
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{projects.length}</div>
               </div>
             </div>

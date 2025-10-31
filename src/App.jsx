@@ -13,6 +13,7 @@ import CalendarSyncModal from './components/CalendarSyncModal.jsx';
 import JiraApiModal from './components/JiraApiModal.jsx';
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
 import AppHeader from './components/AppHeader.jsx';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext.jsx';
 import { DataService } from './services/dataService.js';
 import { SupabaseService } from './services/supabaseService.js';
 import { SmartPromptsService } from './services/smartPromptsService.js';
@@ -434,7 +435,170 @@ export default function App() {
   console.log('🎨 ScoBro Logbook: Rendering main app interface');
   try {
     return (
-    <div style={{ padding: '16px', fontFamily: 'sans-serif', maxWidth: '800px', margin: '0 auto' }}>
+    <ThemeProvider>
+      <AppContent 
+        entries={entries}
+        onDeleteItem={handleDeleteItem}
+        showPopup={showPopup}
+        setShowPopup={setShowPopup}
+        handleSaveItems={handleSaveItems}
+        showProjectsManager={showProjectsManager}
+        setShowProjectsManager={setShowProjectsManager}
+        showTagsManager={showTagsManager}
+        setShowTagsManager={setShowTagsManager}
+        showMeetingsManager={showMeetingsManager}
+        setShowMeetingsManager={setShowMeetingsManager}
+        showAuthModal={showAuthModal}
+        setShowAuthModal={setShowAuthModal}
+        showEmailConfig={showEmailConfig}
+        setShowEmailConfig={setShowEmailConfig}
+        showSmartPrompts={showSmartPrompts}
+        setShowSmartPrompts={setShowSmartPrompts}
+        showTimeTracking={showTimeTracking}
+        setShowTimeTracking={setShowTimeTracking}
+        showCalendarSync={showCalendarSync}
+        setShowCalendarSync={setShowCalendarSync}
+        showJiraApi={showJiraApi}
+        setShowJiraApi={setShowJiraApi}
+        showAnalytics={showAnalytics}
+        setShowAnalytics={setShowAnalytics}
+        syncStatus={syncStatus}
+        setSyncStatus={setSyncStatus}
+        isAuthenticated={isAuthenticated}
+        user={user}
+        handleStatusClick={handleStatusClick}
+        statusRefreshTrigger={statusRefreshTrigger}
+        setStatusRefreshTrigger={setStatusRefreshTrigger}
+        handleSignOut={handleSignOut}
+        handleAuthSuccess={handleAuthSuccess}
+        handleSmartPromptSelect={handleSmartPromptSelect}
+        handleTimerComplete={handleTimerComplete}
+        handleCalendarEventsSynced={handleCalendarEventsSynced}
+        handleJiraIssuesSynced={handleJiraIssuesSynced}
+        smartPromptNudge={smartPromptNudge}
+        setSmartPromptNudge={setSmartPromptNudge}
+        SupabaseService={SupabaseService}
+        DataService={DataService}
+      />
+    </ThemeProvider>
+  );
+  } catch (error) {
+    console.error('💥 ScoBro Logbook: Error rendering App component:', error);
+    console.error('Stack trace:', error.stack);
+    
+    return (
+      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: 'red', maxWidth: '800px', margin: '0 auto' }}>
+        <h2>🚨 ScoBro Logbook Render Error</h2>
+        <p><strong>Error:</strong> {error.message}</p>
+        <p><strong>Stack:</strong></p>
+        <pre style={{ background: '#f5f5f5', padding: '10px', overflow: 'auto', fontSize: '12px' }}>{error.stack}</pre>
+        <p>Check the console for more details.</p>
+        <div style={{ marginTop: '20px' }}>
+          <button 
+            onClick={() => window.showConsoleInDOM && window.showConsoleInDOM()} 
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#007bff', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Show Debug Console
+          </button>
+          <button 
+            onClick={() => window.checkAppState && window.checkAppState()} 
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#28a745', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer',
+              marginRight: '10px'
+            }}
+          >
+            Check App State
+          </button>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{ 
+              padding: '10px 20px', 
+              backgroundColor: '#dc3545', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer'
+            }}
+          >
+            Reload App
+          </button>
+        </div>
+        <script src="debug-console.js"></script>
+      </div>
+    );
+  }
+}
+
+// Separate component for the main app content
+function AppContent({
+  entries,
+  onDeleteItem,
+  showPopup,
+  setShowPopup,
+  handleSaveItems,
+  showProjectsManager,
+  setShowProjectsManager,
+  showTagsManager,
+  setShowTagsManager,
+  showMeetingsManager,
+  setShowMeetingsManager,
+  showAuthModal,
+  setShowAuthModal,
+  showEmailConfig,
+  setShowEmailConfig,
+  showSmartPrompts,
+  setShowSmartPrompts,
+  showTimeTracking,
+  setShowTimeTracking,
+  showCalendarSync,
+  setShowCalendarSync,
+  showJiraApi,
+  setShowJiraApi,
+  showAnalytics,
+  setShowAnalytics,
+  syncStatus,
+  setSyncStatus,
+  isAuthenticated,
+  user,
+  handleStatusClick,
+  statusRefreshTrigger,
+  setStatusRefreshTrigger,
+  handleSignOut,
+  handleAuthSuccess,
+  handleSmartPromptSelect,
+  handleTimerComplete,
+  handleCalendarEventsSynced,
+  handleJiraIssuesSynced,
+  smartPromptNudge,
+  setSmartPromptNudge,
+  SupabaseService,
+  DataService
+}) {
+  const theme = useTheme();
+  
+  return (
+    <div style={{ 
+      padding: '16px', 
+      fontFamily: 'sans-serif', 
+      maxWidth: '800px', 
+      margin: '0 auto',
+      backgroundColor: theme.colors.background,
+      color: theme.colors.text,
+      minHeight: '100vh'
+    }}>
       <UpdateBanner />
       
       {/* Hidden Debug Button - Press Ctrl+Shift+D to show */}
@@ -491,7 +655,7 @@ export default function App() {
 
       {/* Main Content - Add top padding to account for fixed header */}
       <div style={{ paddingTop: '70px' }}>
-        <Dashboard entries={entries} onDeleteItem={handleDeleteItem} />
+        <Dashboard entries={entries} onDeleteItem={onDeleteItem} />
       </div>
       <EntryPopup
         isOpen={showPopup}
@@ -620,62 +784,4 @@ export default function App() {
       )}
     </div>
     );
-  } catch (error) {
-    console.error('💥 ScoBro Logbook: Error rendering App component:', error);
-    console.error('Stack trace:', error.stack);
-    
-    return (
-      <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: 'red', maxWidth: '800px', margin: '0 auto' }}>
-        <h2>🚨 ScoBro Logbook Render Error</h2>
-        <p><strong>Error:</strong> {error.message}</p>
-        <p><strong>Stack:</strong></p>
-        <pre style={{ background: '#f5f5f5', padding: '10px', overflow: 'auto', fontSize: '12px' }}>{error.stack}</pre>
-        <p>Check the console for more details.</p>
-        <div style={{ marginTop: '20px' }}>
-          <button 
-            onClick={() => window.showConsoleInDOM && window.showConsoleInDOM()} 
-            style={{ 
-              padding: '10px 20px', 
-              backgroundColor: '#007bff', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer',
-              marginRight: '10px'
-            }}
-          >
-            Show Debug Console
-          </button>
-          <button 
-            onClick={() => window.checkAppState && window.checkAppState()} 
-            style={{ 
-              padding: '10px 20px', 
-              backgroundColor: '#28a745', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer',
-              marginRight: '10px'
-            }}
-          >
-            Check App State
-          </button>
-          <button 
-            onClick={() => window.location.reload()} 
-            style={{ 
-              padding: '10px 20px', 
-              backgroundColor: '#dc3545', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '4px', 
-              cursor: 'pointer'
-            }}
-          >
-            Reload App
-          </button>
-        </div>
-        <script src="debug-console.js"></script>
-      </div>
-    );
   }
-}

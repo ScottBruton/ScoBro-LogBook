@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { SupabaseService } from '../services/supabaseService.js';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * Authentication modal for Supabase login/signup.
  * This component will be used in Phase 2 for cloud sync functionality.
  */
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
+  const theme = useTheme();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,7 +45,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: theme.colors.overlay,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -52,11 +54,13 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: theme.colors.cardBackground,
+          color: theme.colors.text,
           padding: '24px',
           borderRadius: '8px',
           width: '90%',
           maxWidth: '400px',
+          border: `1px solid ${theme.colors.border}`
         }}
       >
         <h2 style={{ marginBottom: '16px', textAlign: 'center' }}>
@@ -71,7 +75,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                border: `1px solid ${theme.colors.inputBorder}`, 
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
+                borderRadius: '4px' 
+              }}
             />
           </div>
           
@@ -82,7 +93,14 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+              style={{ 
+                width: '100%', 
+                padding: '8px', 
+                border: `1px solid ${theme.colors.inputBorder}`, 
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
+                borderRadius: '4px' 
+              }}
             />
           </div>
 
@@ -90,8 +108,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             <div style={{ 
               marginBottom: '16px', 
               padding: '8px', 
-              backgroundColor: '#f8d7da', 
-              color: '#721c24', 
+              backgroundColor: theme.colors.pillErrorBg, 
+              color: '#fff', 
               borderRadius: '4px',
               fontSize: '14px'
             }}>
@@ -106,7 +124,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               style={{
                 flex: 1,
                 padding: '8px 16px',
-                backgroundColor: '#0275d8',
+                backgroundColor: theme.colors.primary,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -122,7 +140,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               onClick={() => setIsSignUp(!isSignUp)}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#6c757d',
+                backgroundColor: theme.colors.secondary,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -140,8 +158,8 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             style={{
               padding: '8px 16px',
               backgroundColor: 'transparent',
-              color: '#6c757d',
-              border: '1px solid #6c757d',
+              color: theme.colors.textSecondary,
+              border: `1px solid ${theme.colors.border}`,
               borderRadius: '4px',
               cursor: 'pointer',
             }}

@@ -14,7 +14,7 @@ $processes = netstat -ano | Select-String ":5173" | ForEach-Object {
 # taskkill /F /IM node.exe 2>$null
 
 Write-Host "Port 5173 is now free!" -ForegroundColor Green
-Write-Host "Starting Vite dev server..." -ForegroundColor Cyan
+Write-Host "Starting Tauri dev server..." -ForegroundColor Cyan
 
 # Start Vite
-npm run vite
+npm run tauri

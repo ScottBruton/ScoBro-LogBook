@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarService } from '../services/calendarService.js';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * CalendarSyncModal - Clean calendar synchronization interface
  * Shows synced calendars, OAuth status, and export functionality
  */
 export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
+  const theme = useTheme();
   const [config, setConfig] = useState({
     enabled: false,
     calendars: [],
@@ -267,7 +269,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: theme.colors.overlay,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -276,13 +278,15 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: theme.colors.cardBackground,
+          color: theme.colors.text,
           padding: '24px',
           borderRadius: '8px',
           width: '90%',
           maxWidth: '800px',
           maxHeight: '90vh',
           overflowY: 'auto',
+          border: `1px solid ${theme.colors.border}`
         }}
       >
         {/* Header */}
@@ -296,7 +300,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
               disabled={isLoading}
               style={{
                 padding: '6px 12px',
-                backgroundColor: '#17a2b8',
+                backgroundColor: theme.colors.info,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -315,7 +319,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
               border: 'none',
               fontSize: '20px',
               cursor: 'pointer',
-              color: '#666'
+                color: theme.colors.textSecondary
             }}
           >
             ✕
@@ -373,8 +377,8 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     padding: '16px',
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
+                    backgroundColor: theme.colors.surface,
+                    border: `1px solid ${theme.colors.border}`,
                     borderRadius: '8px'
                   }}
                 >
@@ -400,7 +404,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                 disabled={isLoading}
                 style={{
                         padding: '4px 8px',
-                        backgroundColor: '#28a745',
+                        backgroundColor: theme.colors.success,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -415,7 +419,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                       onClick={() => handleRemoveCalendar(calendar)}
                 style={{
                         padding: '4px 8px',
-                        backgroundColor: '#dc3545',
+                        backgroundColor: theme.colors.error,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '4px',
@@ -433,10 +437,10 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
             <div style={{
               padding: '32px',
               textAlign: 'center',
-              backgroundColor: '#f8f9fa',
-              border: '2px dashed #dee2e6',
+              backgroundColor: theme.colors.surface,
+              border: `2px dashed ${theme.colors.border}`,
               borderRadius: '8px',
-              color: '#6c757d'
+              color: theme.colors.textSecondary
             }}>
               <div style={{ fontSize: '24px', marginBottom: '8px' }}>📅</div>
               <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>No calendars connected</div>
@@ -450,10 +454,10 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
           <div style={{ marginBottom: '24px' }}>
             <div style={{
               padding: '12px',
-              backgroundColor: testResult.success ? '#d4edda' : '#f8d7da',
-              border: `1px solid ${testResult.success ? '#c3e6cb' : '#f5c6cb'}`,
+              backgroundColor: testResult.success ? theme.colors.pillConnectedBg : theme.colors.pillErrorBg,
+              border: `1px solid ${theme.colors.border}`,
               borderRadius: '6px',
-              color: testResult.success ? '#155724' : '#721c24'
+              color: '#fff'
             }}>
               <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
                 {testResult.success ? '✅ Success' : '❌ Error'}
@@ -473,8 +477,8 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
                   key={event.id}
                   style={{
                     padding: '12px',
-                    backgroundColor: '#f8f9fa',
-                    border: '1px solid #dee2e6',
+                    backgroundColor: theme.colors.surface,
+                    border: `1px solid ${theme.colors.border}`,
                     borderRadius: '6px',
                     marginBottom: '8px'
                   }}
@@ -502,7 +506,7 @@ export default function CalendarSyncModal({ isOpen, onClose, onEventsSynced }) {
             onClick={onClose}
             style={{
               padding: '8px 16px',
-              backgroundColor: '#6c757d',
+              backgroundColor: theme.colors.secondary,
               color: '#fff',
               border: 'none',
               borderRadius: '4px',

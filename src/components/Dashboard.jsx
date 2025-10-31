@@ -13,6 +13,7 @@ import {
   Restore as RestoreIcon
 } from '@mui/icons-material';
 import { DataService } from '../services/dataService.js';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * Dashboard displays the logbook entries and allows toggling between
@@ -25,6 +26,8 @@ import { DataService } from '../services/dataService.js';
  * - onDeleteItem: function to delete a specific item (entryId, itemIndex)
  */
 export default function Dashboard({ entries, onDeleteItem }) {
+  const theme = useTheme();
+  
   // viewMode: 'daily' (sessions) or 'items' (flat list)
   const [viewMode, setViewMode] = useState('daily');
   const [expandedIds, setExpandedIds] = useState([]);
@@ -420,7 +423,10 @@ export default function Dashboard({ entries, onDeleteItem }) {
     });
 
   return (
-    <div>
+    <div style={{
+      backgroundColor: theme.colors.background,
+      color: theme.colors.text
+    }}>
       {/* Top bar */}
       <div style={{ marginBottom: '12px' }}>
         {/* Search and View Controls */}
@@ -438,16 +444,24 @@ export default function Dashboard({ entries, onDeleteItem }) {
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ flexGrow: 1, padding: '4px' }}
+              style={{ 
+                flexGrow: 1, 
+                padding: '8px 12px',
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
+                border: `1px solid ${theme.colors.inputBorder}`,
+                borderRadius: '6px',
+                fontSize: '14px'
+              }}
             />
             <button
               onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
               style={{
-                padding: '4px 8px',
-                backgroundColor: showAdvancedFilters ? '#0275d8' : '#f7f7f7',
-                color: showAdvancedFilters ? '#fff' : '#333',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
+                padding: '8px 12px',
+                backgroundColor: showAdvancedFilters ? theme.colors.primary : theme.colors.surface,
+                color: showAdvancedFilters ? '#fff' : theme.colors.text,
+                border: `1px solid ${theme.colors.border}`,
+                borderRadius: '6px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',

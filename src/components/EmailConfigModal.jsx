@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { EmailService } from '../services/emailService.js';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * EmailConfigModal component for configuring email settings.
  * Allows users to set up SMTP credentials for meeting notifications.
  */
 export default function EmailConfigModal({ isOpen, onClose, onSave }) {
+  const theme = useTheme();
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -107,7 +109,7 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
         left: 0,
         width: '100%',
         height: '100%',
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: theme.colors.overlay,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -116,11 +118,13 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
     >
       <div
         style={{
-          backgroundColor: 'white',
+          backgroundColor: theme.colors.cardBackground,
+          color: theme.colors.text,
           padding: '24px',
           borderRadius: '8px',
           width: '90%',
           maxWidth: '500px',
+          border: `1px solid ${theme.colors.border}`
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
@@ -132,7 +136,7 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               border: 'none',
               fontSize: '20px',
               cursor: 'pointer',
-              color: '#666'
+              color: theme.colors.textSecondary
             }}
           >
             ✕
@@ -152,7 +156,9 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               style={{ 
                 width: '100%', 
                 padding: '8px', 
-                border: '1px solid #ccc', 
+                border: `1px solid ${theme.colors.inputBorder}`, 
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
                 borderRadius: '4px' 
               }}
             />
@@ -170,7 +176,9 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               style={{ 
                 width: '100%', 
                 padding: '8px', 
-                border: '1px solid #ccc', 
+                border: `1px solid ${theme.colors.inputBorder}`, 
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
                 borderRadius: '4px' 
               }}
             />
@@ -190,7 +198,9 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               style={{ 
                 width: '100%', 
                 padding: '8px', 
-                border: '1px solid #ccc', 
+                border: `1px solid ${theme.colors.inputBorder}`, 
+                backgroundColor: theme.colors.inputBackground,
+                color: theme.colors.text,
                 borderRadius: '4px' 
               }}
             />
@@ -208,7 +218,9 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
                 style={{ 
                   width: '100%', 
                   padding: '8px', 
-                  border: '1px solid #ccc', 
+                  border: `1px solid ${theme.colors.inputBorder}`, 
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.text,
                   borderRadius: '4px' 
                 }}
               />
@@ -223,7 +235,9 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
                 style={{ 
                   width: '100%', 
                   padding: '8px', 
-                  border: '1px solid #ccc', 
+                  border: `1px solid ${theme.colors.inputBorder}`, 
+                  backgroundColor: theme.colors.inputBackground,
+                  color: theme.colors.text,
                   borderRadius: '4px' 
                 }}
               >
@@ -238,8 +252,8 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
             <div style={{ 
               marginBottom: '16px', 
               padding: '8px', 
-              backgroundColor: testResult.success ? '#d4edda' : '#f8d7da', 
-              color: testResult.success ? '#155724' : '#721c24', 
+              backgroundColor: testResult.success ? theme.colors.pillConnectedBg : theme.colors.pillErrorBg, 
+              color: '#fff', 
               borderRadius: '4px',
               fontSize: '14px'
             }}>
@@ -254,7 +268,7 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               disabled={isLoading}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#17a2b8',
+                backgroundColor: theme.colors.info,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -269,7 +283,7 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               disabled={isLoading}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#28a745',
+                backgroundColor: theme.colors.success,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -284,7 +298,7 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
               onClick={onClose}
               style={{
                 padding: '8px 16px',
-                backgroundColor: '#6c757d',
+                backgroundColor: theme.colors.secondary,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '4px',
@@ -296,7 +310,7 @@ export default function EmailConfigModal({ isOpen, onClose, onSave }) {
           </div>
         </form>
 
-        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8f9fa', borderRadius: '4px', fontSize: '12px' }}>
+        <div style={{ marginTop: '16px', padding: '12px', backgroundColor: theme.colors.surface, borderRadius: '4px', fontSize: '12px', border: `1px solid ${theme.colors.border}` }}>
           <strong>📋 Setup Instructions:</strong>
           <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
             <li>For Gmail: Enable 2FA and create an App Password</li>

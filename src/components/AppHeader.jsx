@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ConnectionStatusService } from '../services/connectionStatusService';
+import { useTheme } from '../contexts/ThemeContext';
 
 /**
  * AppHeader Component - Top header bar with burger menu and status pills
@@ -23,6 +24,7 @@ export default function AppHeader({
   user,
   onSignInClick
 }) {
+  const theme = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [statuses, setStatuses] = useState({});
   const [loading, setLoading] = useState(true);
@@ -67,6 +69,27 @@ export default function AppHeader({
     const config = ConnectionStatusService.getStatusPillConfig(service, statusData.status);
     const displayName = ConnectionStatusService.getServiceDisplayName(service);
     
+    // Get theme-appropriate colors
+    let pillColor, pillBgColor;
+    switch (statusData.status) {
+      case 'connected':
+      case 'active':
+        pillColor = theme.colors.pillConnected;
+        pillBgColor = theme.colors.pillConnectedBg;
+        break;
+      case 'error':
+        pillColor = theme.colors.pillError;
+        pillBgColor = theme.colors.pillErrorBg;
+        break;
+      case 'not-authenticated':
+        pillColor = theme.colors.pillWarning;
+        pillBgColor = theme.colors.pillWarningBg;
+        break;
+      default:
+        pillColor = theme.colors.pillNotConfigured;
+        pillBgColor = theme.colors.pillNotConfiguredBg;
+    }
+    
     return (
       <div
         key={service}
@@ -79,9 +102,9 @@ export default function AppHeader({
           borderRadius: '12px',
           fontSize: '11px',
           fontWeight: '500',
-          color: config.color,
-          backgroundColor: config.bgColor,
-          border: `1px solid ${config.color}20`,
+          color: pillColor,
+          backgroundColor: pillBgColor,
+          border: `1px solid ${pillColor}40`,
           cursor: 'pointer',
           transition: 'all 0.2s ease',
           marginRight: '6px',
@@ -89,7 +112,7 @@ export default function AppHeader({
         }}
         onMouseEnter={(e) => {
           e.target.style.transform = 'scale(1.05)';
-          e.target.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+          e.target.style.boxShadow = theme.isDarkMode ? '0 2px 6px rgba(0,0,0,0.4)' : '0 2px 6px rgba(0,0,0,0.1)';
         }}
         onMouseLeave={(e) => {
           e.target.style.transform = 'scale(1)';
@@ -189,13 +212,13 @@ export default function AppHeader({
         left: 0,
         right: 0,
         height: '50px',
-        backgroundColor: '#f8f9fa',
-        borderBottom: '1px solid #dee2e6',
+        backgroundColor: theme.colors.headerBackground,
+        borderBottom: `1px solid ${theme.colors.headerBorder}`,
         display: 'flex',
         alignItems: 'center',
         padding: '0 16px',
         zIndex: 1000,
-        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        boxShadow: theme.colors.cardShadow
       }}>
         {/* Burger Menu Button */}
         <button
@@ -203,7 +226,7 @@ export default function AppHeader({
           style={{
             width: '36px',
             height: '36px',
-            backgroundColor: '#007bff',
+            backgroundColor: theme.colors.primary,
             color: '#fff',
             border: 'none',
             borderRadius: '6px',
@@ -216,16 +239,47 @@ export default function AppHeader({
             transition: 'all 0.2s ease'
           }}
           onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#0056b3';
+            e.target.style.backgroundColor = theme.colors.primaryHover;
             e.target.style.transform = 'scale(1.05)';
           }}
           onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#007bff';
+            e.target.style.backgroundColor = theme.colors.primary;
             e.target.style.transform = 'scale(1)';
           }}
           title={isMenuOpen ? 'Close Menu' : 'Open Menu'}
         >
           {isMenuOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Theme Toggle Button */}
+        <button
+          onClick={theme.toggleTheme}
+          style={{
+            width: '36px',
+            height: '36px',
+            backgroundColor: theme.colors.secondary,
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '16px',
+            marginRight: '16px',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = theme.colors.secondaryHover;
+            e.target.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = theme.colors.secondary;
+            e.target.style.transform = 'scale(1)';
+          }}
+          title={theme.isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme.isDarkMode ? '☀️' : '🌙'}
         </button>
 
         {/* Status Pills */}
@@ -242,7 +296,7 @@ export default function AppHeader({
               alignItems: 'center', 
               gap: '8px',
               fontSize: '11px',
-              color: '#666'
+              color: theme.colors.textSecondary
             }}>
               <span>🔄</span>
               <span>Loading...</span>
@@ -251,7 +305,7 @@ export default function AppHeader({
             <>
               <span style={{ 
                 fontSize: '11px', 
-                color: '#666', 
+                color: theme.colors.textSecondary, 
                 marginRight: '8px',
                 fontWeight: '500',
                 whiteSpace: 'nowrap'
@@ -271,20 +325,20 @@ export default function AppHeader({
                   borderRadius: '12px',
                   fontSize: '11px',
                   fontWeight: '500',
-                  color: '#6c757d',
-                  backgroundColor: '#e9ecef',
-                  border: '1px solid #dee2e6',
+                  color: theme.colors.textSecondary,
+                  backgroundColor: theme.colors.surface,
+                  border: `1px solid ${theme.colors.border}`,
                   cursor: 'pointer',
                   transition: 'all 0.2s ease',
                   marginLeft: '8px',
                   whiteSpace: 'nowrap'
                 }}
                 onMouseEnter={(e) => {
-                  e.target.style.backgroundColor = '#dee2e6';
+                  e.target.style.backgroundColor = theme.colors.menuItemHover;
                   e.target.style.transform = 'scale(1.05)';
                 }}
                 onMouseLeave={(e) => {
-                  e.target.style.backgroundColor = '#e9ecef';
+                  e.target.style.backgroundColor = theme.colors.surface;
                   e.target.style.transform = 'scale(1)';
                 }}
                 title="Refresh connection statuses"
@@ -315,7 +369,7 @@ export default function AppHeader({
             <span style={{
               fontSize: '16px',
               fontWeight: 'bold',
-              color: '#333'
+              color: theme.colors.text
             }}>
               ScoBro Logbook
             </span>
@@ -327,7 +381,7 @@ export default function AppHeader({
             alignItems: 'center',
             gap: '8px',
             fontSize: '11px',
-            color: '#666'
+            color: theme.colors.textSecondary
           }}>
             <span>
               {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
@@ -343,7 +397,7 @@ export default function AppHeader({
                 onClick={onSignInClick}
                 style={{
                   padding: '2px 6px',
-                  backgroundColor: '#17a2b8',
+                  backgroundColor: theme.colors.info,
                   color: '#fff',
                   border: 'none',
                   borderRadius: '3px',
@@ -369,7 +423,7 @@ export default function AppHeader({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.3)',
+            backgroundColor: theme.colors.overlay,
             zIndex: 998,
             transition: 'opacity 0.3s ease'
           }}
@@ -384,8 +438,8 @@ export default function AppHeader({
           left: isMenuOpen ? '0' : '-300px',
           width: '280px',
           height: 'calc(100vh - 50px)',
-          backgroundColor: '#fff',
-          boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+          backgroundColor: theme.colors.menuBackground,
+          boxShadow: theme.colors.cardShadow,
           zIndex: 999,
           transition: 'left 0.3s ease',
           padding: '20px 0',
@@ -396,9 +450,9 @@ export default function AppHeader({
           <h3 style={{ 
             margin: '0 0 20px 0', 
             fontSize: '16px', 
-            color: '#333',
+            color: theme.colors.text,
             textAlign: 'center',
-            borderBottom: '1px solid #eee',
+            borderBottom: `1px solid ${theme.colors.borderLight}`,
             paddingBottom: '10px'
           }}>
             📒 ScoBro Menu
@@ -433,7 +487,7 @@ export default function AppHeader({
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'translateX(4px)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                    e.target.style.boxShadow = theme.isDarkMode ? '0 4px 12px rgba(0,0,0,0.4)' : '0 4px 12px rgba(0,0,0,0.15)';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.transform = 'translateX(0)';
