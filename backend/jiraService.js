@@ -52,22 +52,53 @@ class JiraService {
   }
 
   /**
-   * Get all projects
+   * Get all projects (with pagination support)
    */
   async getProjects(config = null) {
     try {
-      const response = await this.makeApiRequest('/project', config);
-      
       const baseUrl = config?.baseUrl || this.baseUrl;
+      const allProjects = [];
+      let startAt = 0;
+      const maxResults = 100; // Increased from default 50 to get more at once
+      let hasMore = true;
+
+      // Fetch all projects with pagination
+      while (hasMore) {
+        const endpoint = `/project?startAt=${startAt}&maxResults=${maxResults}&expand=description`;
+        const response = await this.makeApiRequest(endpoint, config);
+        
+        // Handle both array response and paginated object response
+        const projectsArray = Array.isArray(response) ? response : (response.values || response || []);
+        
+        const projects = projectsArray.map(project => ({
+          key: project.key,
+          name: project.name,
+          projectTypeKey: project.projectTypeKey,
+          description: project.description,
+          lead: project.lead?.displayName,
+          url: `${baseUrl.replace(/\/$/, '')}/browse/${project.key}`
+        }));
+        
+        allProjects.push(...projects);
+        
+        // Check if there are more projects
+        // If response is an object with values, check pagination info
+        if (!Array.isArray(response) && response.isLast !== undefined) {
+          hasMore = !response.isLast;
+        } else {
+          hasMore = projectsArray.length === maxResults;
+        }
+        startAt += maxResults;
+        
+        // Safety limit to prevent infinite loops (up to 1000 projects)
+        if (startAt > 1000) {
+          console.warn('Reached safety limit while fetching projects');
+          break;
+        }
+      }
       
-      return response.map(project => ({
-        key: project.key,
-        name: project.name,
-        projectTypeKey: project.projectTypeKey,
-        description: project.description,
-        lead: project.lead?.displayName,
-        url: `${baseUrl.replace(/\/$/, '')}/browse/${project.key}`
-      }));
+      console.log(`📁 Fetched ${allProjects.length} total projects from Jira`);
+      return allProjects;
     } catch (error) {
       console.error('Failed to fetch projects:', error);
       throw error;

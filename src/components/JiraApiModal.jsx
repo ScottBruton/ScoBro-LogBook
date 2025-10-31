@@ -19,6 +19,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [assignedTasks, setAssignedTasks] = useState([]);
   const [taskStatusFilter, setTaskStatusFilter] = useState('all');
+  const [projectSearchQuery, setProjectSearchQuery] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -56,6 +57,17 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setAssignedIssues(assigned);
       setAssignedTasks(assigned); // Set assigned tasks for the new panel
       setProjects(projectsData);
+      
+      // Update lastSync when data is successfully loaded
+      if (stats || recent || assigned || projectsData) {
+        const newConfig = { 
+          ...config, 
+          lastSync: new Date().toISOString()
+        };
+        setConfig(newConfig);
+        JiraApiService.saveJiraConfig(newConfig);
+        setSyncStatus(JiraApiService.getSyncStatus());
+      }
     } catch (error) {
       console.error('Failed to load Jira data:', error);
     } finally {
@@ -68,6 +80,17 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setIsLoading(true);
       const projectsData = await JiraApiService.getProjects();
       setProjects(projectsData);
+      
+      // Update lastSync when projects are successfully loaded
+      if (projectsData && projectsData.length > 0) {
+        const newConfig = { 
+          ...config, 
+          lastSync: new Date().toISOString()
+        };
+        setConfig(newConfig);
+        JiraApiService.saveJiraConfig(newConfig);
+        setSyncStatus(JiraApiService.getSyncStatus());
+      }
     } catch (error) {
       console.error('Failed to load projects:', error);
       setTestResult({
@@ -84,6 +107,17 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setIsLoading(true);
       const tasks = await JiraApiService.getAssignedIssues();
       setAssignedTasks(tasks);
+      
+      // Update lastSync when assigned tasks are successfully loaded
+      if (tasks && tasks.length >= 0) {
+        const newConfig = { 
+          ...config, 
+          lastSync: new Date().toISOString()
+        };
+        setConfig(newConfig);
+        JiraApiService.saveJiraConfig(newConfig);
+        setSyncStatus(JiraApiService.getSyncStatus());
+      }
     } catch (error) {
       console.error('Failed to load assigned tasks:', error);
       setTestResult({
@@ -102,8 +136,12 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setTestResult(result);
       
       if (result.success) {
-        // Update config with successful connection
-        const newConfig = { ...config, enabled: true };
+        // Update config with successful connection and set lastSync
+        const newConfig = { 
+          ...config, 
+          enabled: true,
+          lastSync: new Date().toISOString() // Set lastSync when connection succeeds
+        };
         setConfig(newConfig);
         JiraApiService.saveJiraConfig(newConfig);
         setSyncStatus(JiraApiService.getSyncStatus());
@@ -199,6 +237,30 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     }
     setSelectedProjects(newSelectedProjects);
     handleConfigChange('projectKeys', newSelectedProjects);
+  };
+
+  const handleRemoveProject = (projectKey) => {
+    const newSelectedProjects = selectedProjects.filter(key => key !== projectKey);
+    setSelectedProjects(newSelectedProjects);
+    handleConfigChange('projectKeys', newSelectedProjects);
+  };
+
+  const getProjectName = (projectKey) => {
+    const project = projects.find(p => p.key === projectKey);
+    return project ? project.name : projectKey;
+  };
+
+  // Filter projects based on search query
+  const getFilteredProjects = () => {
+    if (!projectSearchQuery.trim()) {
+      return projects;
+    }
+    const query = projectSearchQuery.toLowerCase().trim();
+    return projects.filter(project => 
+      project.key.toLowerCase().includes(query) ||
+      project.name.toLowerCase().includes(query) ||
+      (project.description && project.description.toLowerCase().includes(query))
+    );
   };
 
   const handleProjectKeyChange = (value) => {
@@ -418,20 +480,42 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             </div>
             
             <div style={{ gridColumn: '1 / -1' }}>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
-                Available Projects
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <label style={{ fontWeight: 'bold' }}>
+                  Available Projects {projects.length > 0 && `(${projects.length} total)`}
+                </label>
+              </div>
+              {projects.length > 0 && (
+                <div style={{ marginBottom: '8px' }}>
+                  <input
+                    type="text"
+                    value={projectSearchQuery}
+                    onChange={(e) => setProjectSearchQuery(e.target.value)}
+                    placeholder="Search projects by key or name..."
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      border: `1px solid ${theme.colors.inputBorder}`,
+                      backgroundColor: theme.colors.inputBackground,
+                      color: theme.colors.text,
+                      borderRadius: '4px',
+                      fontSize: '14px'
+                    }}
+                  />
+                </div>
+              )}
               {projects.length > 0 ? (
                 <div style={{
-                  maxHeight: '200px',
+                  maxHeight: '400px',
                   overflowY: 'auto',
                   border: `1px solid ${theme.colors.border}`,
                   borderRadius: '4px',
                   padding: '8px',
                   backgroundColor: theme.colors.surface
                 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
-                    {projects.map(project => (
+                  {getFilteredProjects().length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+                      {getFilteredProjects().map(project => (
                       <label
                         key={project.key}
                         style={{
@@ -439,8 +523,8 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                           alignItems: 'center',
                           gap: '8px',
                           padding: '8px',
-                          backgroundColor: selectedProjects.includes(project.key) ? '#e3f2fd' : 'white',
-                          border: `1px solid ${selectedProjects.includes(project.key) ? '#2196f3' : '#ddd'}`,
+                          backgroundColor: selectedProjects.includes(project.key) ? theme.colors.menuItemHover : theme.colors.cardBackground,
+                          border: `1px solid ${selectedProjects.includes(project.key) ? theme.colors.primary : theme.colors.border}`,
                           borderRadius: '4px',
                           cursor: 'pointer',
                           fontSize: '14px'
@@ -453,16 +537,26 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                           style={{ margin: 0 }}
                         />
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 'bold', color: '#2196f3' }}>
+                          <div style={{ fontWeight: 'bold', color: theme.colors.primary }}>
                             {project.key}
                           </div>
-                          <div style={{ fontSize: '12px', color: '#666' }}>
+                          <div style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
                             {project.name}
                           </div>
                         </div>
-                      </label>
-                    ))}
-                  </div>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '16px',
+                      textAlign: 'center',
+                      color: theme.colors.textSecondary,
+                      fontStyle: 'italic'
+                    }}>
+                      No projects match "{projectSearchQuery}"
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div style={{
@@ -477,8 +571,81 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 </div>
               )}
               {selectedProjects.length > 0 && (
-                <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-                  Selected: {selectedProjects.join(', ')}
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ 
+                    fontSize: '12px', 
+                    color: theme.colors.textSecondary, 
+                    marginBottom: '8px',
+                    fontWeight: 'bold'
+                  }}>
+                    Selected Projects:
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: '6px',
+                    padding: '8px',
+                    backgroundColor: theme.colors.surface,
+                    border: `1px solid ${theme.colors.border}`,
+                    borderRadius: '4px',
+                    minHeight: '36px'
+                  }}>
+                    {selectedProjects.map(projectKey => {
+                      const project = projects.find(p => p.key === projectKey);
+                      const isInList = !!project;
+                      return (
+                        <div
+                          key={projectKey}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '4px 8px',
+                            backgroundColor: isInList ? theme.colors.primary : theme.colors.warning,
+                            color: '#fff',
+                            borderRadius: '16px',
+                            fontSize: '12px',
+                            fontWeight: '500'
+                          }}
+                        >
+                          <span>{projectKey}</span>
+                          {project && (
+                            <span style={{ fontSize: '10px', opacity: 0.8 }}>
+                              ({project.name})
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleRemoveProject(projectKey)}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#fff',
+                              cursor: 'pointer',
+                              padding: '0 2px',
+                              fontSize: '14px',
+                              lineHeight: '1',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.target.style.backgroundColor = 'transparent';
+                            }}
+                            title={`Remove ${projectKey} from selected projects`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
