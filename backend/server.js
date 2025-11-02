@@ -332,12 +332,18 @@ app.get('/api/jira/issues/assigned', async (req, res) => {
     }
 
     const issues = await jiraService.getAssignedIssues(jiraConfig);
+    console.log(`✅ Successfully fetched ${issues.length} assigned issues`);
     res.json({ issues });
   } catch (error) {
     console.error('❌ Failed to fetch assigned Jira issues:', error);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    
+    // Return error response so frontend can handle it
     res.status(500).json({ 
       error: 'Failed to fetch assigned Jira issues',
-      details: error.message 
+      details: error.message,
+      issues: [] // Return empty array so frontend doesn't break
     });
   }
 });

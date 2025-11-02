@@ -71,13 +71,13 @@ class JiraService {
         const projectsArray = Array.isArray(response) ? response : (response.values || response || []);
         
         const projects = projectsArray.map(project => ({
-          key: project.key,
-          name: project.name,
-          projectTypeKey: project.projectTypeKey,
-          description: project.description,
-          lead: project.lead?.displayName,
-          url: `${baseUrl.replace(/\/$/, '')}/browse/${project.key}`
-        }));
+        key: project.key,
+        name: project.name,
+        projectTypeKey: project.projectTypeKey,
+        description: project.description,
+        lead: project.lead?.displayName,
+        url: `${baseUrl.replace(/\/$/, '')}/browse/${project.key}`
+      }));
         
         allProjects.push(...projects);
         
@@ -133,16 +133,83 @@ class JiraService {
   }
 
   /**
-   * Search issues by JQL
+   * Search issues by JQL (with pagination support)
    */
-  async searchIssues(jql, config = null, maxResults = 50) {
+  async searchIssues(jql, config = null, maxResults = 50, startAt = 0, nextPageToken = null) {
     try {
-      const response = await this.makeApiRequest(`/search?jql=${encodeURIComponent(jql)}&maxResults=${maxResults}`, config);
+      // Use the new /search/jql endpoint (POST) instead of deprecated /search?jql=... (GET)
+      // Endpoint changed per Jira API migration: https://developer.atlassian.com/changelog/#CHANGE-2046
+      // New API uses token-based pagination with nextPageToken instead of startAt
+      const endpoint = `/search/jql`;
+      const requestBody = {
+        jql: jql,
+        maxResults: maxResults,
+        fields: [
+          'summary',
+          'status',
+          'priority',
+          'issuetype',
+          'assignee',
+          'reporter',
+          'created',
+          'updated',
+          'duedate',
+          'labels',
+          'components',
+          'fixVersions',
+          'project',
+          'resolution',
+          'timetracking',
+          'environment',
+          'customfield_10020', // Sprint
+          'customfield_10014', // Epic
+          'customfield_10016'  // Story Points
+        ]
+      };
+
+      // Add nextPageToken if provided (for pagination with new API)
+      if (nextPageToken) {
+        requestBody.nextPageToken = nextPageToken;
+      }
+      
+      const response = await this.makeApiRequest(endpoint, config, 'POST', requestBody);
+      
+      console.log(`🔍 Fetched ${response.issues.length} issues from Jira (total: ${response.total})`);
+      
+      // Log first few issues to debug project key extraction BEFORE formatting
+      if (response.issues.length > 0) {
+        console.log('🔍 Raw Jira API response - Sample issue project data:', 
+          response.issues.slice(0, 5).map(issue => ({
+            key: issue.key,
+            projectKey: issue.fields?.project?.key,
+            projectName: issue.fields?.project?.name,
+            projectId: issue.fields?.project?.id,
+            hasProject: !!issue.fields?.project
+          }))
+        );
+      }
+      
+      // Format all issues with config
+      const formattedIssues = response.issues.map(issue => this.formatIssueData(issue, config));
+      
+      // Log summary of formatted issues
+      const projectSummary = formattedIssues.slice(0, 10).reduce((acc, issue) => {
+        const key = issue.projectKey || 'UNKNOWN';
+        if (!acc[key]) acc[key] = { count: 0, examples: [] };
+        acc[key].count++;
+        if (acc[key].examples.length < 2) {
+          acc[key].examples.push(issue.key);
+        }
+        return acc;
+      }, {});
+      console.log('🔍 Formatted issues summary (first 10):', projectSummary);
       
       return {
-        issues: response.issues.map(issue => this.formatIssueData(issue)),
-        total: response.total,
-        maxResults: response.maxResults
+        issues: formattedIssues,
+        total: response.total || formattedIssues.length,
+        maxResults: response.maxResults || maxResults,
+        startAt: response.startAt || startAt,
+        nextPageToken: response.nextPageToken || null // New API pagination token
       };
     } catch (error) {
       console.error('Failed to search issues:', error);
@@ -151,16 +218,57 @@ class JiraService {
   }
 
   /**
-   * Get issues assigned to user
+   * Get issues assigned to user (with pagination support)
    */
   async getAssignedIssues(config = null) {
     try {
-      const jql = `assignee = currentUser() AND status != Done ORDER BY priority DESC, updated DESC`;
-      const result = await this.searchIssues(jql, config, 20);
-      return result.issues;
+      // Use quotes around "Done" in case status names are case-sensitive or need quotes
+      const jql = `assignee = currentUser() AND status != "Done" ORDER BY priority DESC, updated DESC`;
+      const allIssues = [];
+      const maxResults = 50;
+      let nextPageToken = null;
+      let hasMore = true;
+      let requestCount = 0;
+
+      // Fetch all assigned issues with pagination (new API uses nextPageToken)
+      while (hasMore) {
+        const result = await this.searchIssues(jql, config, maxResults, 0, nextPageToken);
+        allIssues.push(...result.issues);
+        
+        // Check if there are more issues (new API uses nextPageToken for pagination)
+        nextPageToken = result.nextPageToken || null;
+        hasMore = !!nextPageToken && result.issues.length > 0;
+        requestCount++;
+        
+        // Safety limit to prevent infinite loops (up to 500 issues or 10 requests)
+        if (allIssues.length >= 500 || requestCount >= 10) {
+          console.warn(`Reached safety limit while fetching assigned issues (${allIssues.length} issues, ${requestCount} requests)`);
+          break;
+        }
+      }
+      
+      console.log(`📋 Fetched ${allIssues.length} total assigned issues from Jira`);
+      
+      // Log breakdown by project
+      const projectBreakdown = allIssues.reduce((acc, issue) => {
+        const key = issue.projectKey || 'UNKNOWN';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+      console.log('📋 Assigned issues breakdown by project:', projectBreakdown);
+      console.log('📋 Unique project keys in assigned issues:', Object.keys(projectBreakdown));
+      
+      return allIssues;
     } catch (error) {
-      console.error('Failed to get assigned issues:', error);
-      return [];
+      console.error('❌ Failed to get assigned issues:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      // Re-throw so the caller knows there was an error
+      throw error;
     }
   }
 
@@ -208,9 +316,10 @@ class JiraService {
 
       for (const chunk of chunks) {
         const jql = `key in (${chunk.join(', ')})`;
-        const response = await this.makeApiRequest(`/search?jql=${encodeURIComponent(jql)}&maxResults=50`);
+        // Use new /search/jql endpoint
+        const response = await this.searchIssues(jql, null, 50, 0);
         
-        const formattedIssues = response.issues.map(issue => this.formatIssueData(issue));
+        const formattedIssues = response.issues.map(issue => this.formatIssueData(issue, null));
         allIssues.push(...formattedIssues);
       }
 
@@ -223,8 +332,12 @@ class JiraService {
 
   /**
    * Make authenticated API request to Jira
+   * @param {string} endpoint - API endpoint path
+   * @param {object} config - Configuration object with baseUrl, username, apiToken
+   * @param {string} method - HTTP method ('GET', 'POST', etc.)
+   * @param {object} data - Request body for POST requests
    */
-  async makeApiRequest(endpoint, config = null) {
+  async makeApiRequest(endpoint, config = null, method = 'GET', data = null) {
     const baseUrl = config?.baseUrl || this.baseUrl;
     const username = config?.username || this.username;
     const apiToken = config?.apiToken || this.apiToken;
@@ -233,28 +346,85 @@ class JiraService {
       throw new Error('Jira configuration is incomplete');
     }
 
-    const url = `${baseUrl.replace(/\/$/, '')}/rest/api/3${endpoint}`;
+    // Try API v3 first, fall back to v2 if needed
+    let url = `${baseUrl.replace(/\/$/, '')}/rest/api/3${endpoint}`;
     const auth = Buffer.from(`${username}:${apiToken}`).toString('base64');
 
-    console.log('🌐 Making Jira API request to:', url);
+    console.log(`🌐 Making Jira API ${method} request to:`, url);
+    if (data && method === 'POST') {
+      console.log('📤 Request body:', JSON.stringify(data, null, 2));
+    }
 
-    const response = await axios.get(url, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+    try {
+      const axiosConfig = {
+        method: method.toLowerCase(),
+        url: url,
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      };
+
+      if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
+        axiosConfig.data = data;
       }
-    });
 
-    return response.data;
+      const response = await axios(axiosConfig);
+
+      return response.data;
+    } catch (error) {
+      // Better error handling - log the actual Jira error message
+      if (error.response) {
+        const status = error.response.status;
+        const errorData = error.response.data;
+        const errorMessages = errorData?.errorMessages || [];
+        const errors = errorData?.errors || {};
+        
+        console.error(`❌ Jira API Error ${status}:`, {
+          url,
+          errorMessages,
+          errors,
+          fullError: errorData,
+          responseHeaders: error.response.headers
+        });
+        
+        const errorMsg = errorMessages.length > 0 
+          ? errorMessages.join('; ') 
+          : `HTTP ${status}: ${error.response.statusText}`;
+        
+        throw new Error(`Jira API error: ${errorMsg}`);
+      } else if (error.request) {
+        console.error('❌ No response from Jira API:', error.request);
+        throw new Error('No response from Jira API - check network connection');
+      } else {
+        console.error('❌ Error setting up Jira API request:', error.message);
+        throw error;
+      }
+    }
   }
 
   /**
-   * Format issue data for frontend
+   * Format issue data for frontend (matches old working implementation)
    */
-  formatIssueData(issue) {
+  formatIssueData(issue, config = null) {
     const fields = issue.fields;
-    const baseUrl = this.baseUrl || '';
+    // Use config baseUrl if provided, otherwise fall back to instance baseUrl
+    const baseUrl = config?.baseUrl || this.baseUrl || '';
+    
+    // Extract project key and name - this is critical for filtering
+    const projectKey = fields.project?.key || 'UNKNOWN';
+    const projectName = fields.project?.name || 'Unknown';
+    
+    // Debug logging to verify project key extraction - only warn on missing keys
+    if (projectKey === 'UNKNOWN' || !fields.project?.key) {
+      console.warn(`⚠️ Issue ${issue.key} has no project key. fields.project:`, {
+        key: fields.project?.key,
+        id: fields.project?.id,
+        name: fields.project?.name,
+        fullProject: fields.project
+      });
+    }
     
     return {
       key: issue.key,
@@ -271,8 +441,8 @@ class JiraService {
       labels: fields.labels || [],
       components: fields.components?.map(c => c.name) || [],
       fixVersions: fields.fixVersions?.map(v => v.name) || [],
-      project: fields.project?.name || 'Unknown',
-      projectKey: fields.project?.key || 'UNKNOWN',
+      project: projectName,
+      projectKey: projectKey, // This is what we use for filtering!
       url: `${baseUrl.replace(/\/$/, '')}/browse/${issue.key}`,
       resolution: fields.resolution?.name,
       timeTracking: fields.timetracking,

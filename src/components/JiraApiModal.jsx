@@ -20,13 +20,38 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
   const [assignedTasks, setAssignedTasks] = useState([]);
   const [taskStatusFilter, setTaskStatusFilter] = useState('all');
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
+  const [collapsedSections, setCollapsedSections] = useState({
+    connectionStatus: false,
+    configuration: false,
+    availableProjects: false,
+    actions: false,
+    statistics: false
+  });
 
   useEffect(() => {
     if (isOpen) {
       loadJiraConfig();
-      loadJiraData();
     }
   }, [isOpen]);
+
+  // Load data after config is loaded
+  useEffect(() => {
+    if (isOpen && config?.enabled) {
+      console.log('📋 Config loaded, now loading Jira data...');
+      loadJiraData();
+    }
+  }, [isOpen, config?.enabled]);
+
+  // Reload assigned tasks when selected projects change (but only once, not on every render)
+  useEffect(() => {
+    if (isOpen && config?.enabled && selectedProjects.length > 0) {
+      // Only reload if we have tasks loaded, otherwise it will load on initial mount anyway
+      if (assignedTasks.length > 0) {
+        loadAssignedTasks();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProjects.join(',')]);
 
   const loadJiraConfig = () => {
     try {
@@ -57,6 +82,20 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
       setAssignedIssues(assigned);
       setAssignedTasks(assigned); // Set assigned tasks for the new panel
       setProjects(projectsData);
+      
+      // Log if assigned tasks loaded successfully
+      console.log('📋 Jira data loaded:', {
+        stats: !!stats,
+        recentIssues: recent?.length || 0,
+        assignedIssues: assigned?.length || 0,
+        projects: projectsData?.length || 0
+      });
+      
+      if (assigned && assigned.length > 0) {
+        console.log('📋 Sample assigned task project keys:', assigned.slice(0, 5).map(t => t.projectKey));
+      } else if (assigned && assigned.length === 0) {
+        console.warn('⚠️ Assigned tasks loaded but array is empty - check backend logs for errors');
+      }
       
       // Update lastSync when data is successfully loaded
       if (stats || recent || assigned || projectsData) {
@@ -105,7 +144,24 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
   const loadAssignedTasks = async () => {
     try {
       setIsLoading(true);
+      console.log('📋 Starting to load assigned tasks...');
       const tasks = await JiraApiService.getAssignedIssues();
+      
+      console.log('📋 Loaded assigned tasks:', {
+        count: tasks.length,
+        tasks: tasks.slice(0, 10).map(t => ({
+          key: t.key,
+          projectKey: t.projectKey,
+          project: t.project,
+          summary: t.summary?.substring(0, 50) || 'No summary'
+        })),
+        allProjectKeys: [...new Set(tasks.map(t => t.projectKey).filter(Boolean))]
+      });
+      
+      if (tasks.length === 0) {
+        console.warn('⚠️ No assigned tasks returned from API. Check backend logs for errors.');
+      }
+      
       setAssignedTasks(tasks);
       
       // Update lastSync when assigned tasks are successfully loaded
@@ -119,11 +175,17 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
         setSyncStatus(JiraApiService.getSyncStatus());
       }
     } catch (error) {
-      console.error('Failed to load assigned tasks:', error);
+      console.error('❌ Failed to load assigned tasks:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
       setTestResult({
         success: false,
         message: `Failed to load assigned tasks: ${error.message}`
       });
+      // Still set empty array so UI doesn't break
+      setAssignedTasks([]);
     } finally {
       setIsLoading(false);
     }
@@ -269,19 +331,149 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
     handleConfigChange('projectKeys', projectKeys);
   };
 
-  // Filter assigned tasks by status
-  const getFilteredTasks = () => {
-    if (taskStatusFilter === 'all') {
-      return assignedTasks;
-    }
-    return assignedTasks.filter(task => task.status === taskStatusFilter);
+  // Get all unique project keys from loaded tasks
+  const getAllTaskProjectKeys = () => {
+    const allKeys = assignedTasks.map(t => t.projectKey).filter(Boolean);
+    const uniqueKeys = [...new Set(allKeys)];
+    console.log('🔍 All unique project keys in loaded tasks:', uniqueKeys);
+    return uniqueKeys;
   };
 
-  // Get unique statuses for filter dropdown
+  // Get tasks grouped by selected projects
+  const getTasksBySelectedProjects = () => {
+    const allTaskProjectKeys = getAllTaskProjectKeys();
+    
+    console.log('🔍 Filtering tasks by selected projects:', {
+      selectedProjects,
+      totalTasks: assignedTasks.length,
+      uniqueTaskProjectKeys: allTaskProjectKeys,
+      taskProjectKeysSample: assignedTasks.slice(0, 5).map(t => ({
+        key: t.key,
+        projectKey: t.projectKey,
+        project: t.project
+      }))
+    });
+    
+    // Filter tasks to only those from selected projects (case-insensitive)
+    const filteredTasks = assignedTasks.filter(task => {
+      const taskProjectKey = (task.projectKey || '').toUpperCase();
+      const matches = selectedProjects.some(selectedKey => 
+        selectedKey.toUpperCase() === taskProjectKey
+      );
+      
+      if (!matches && task.projectKey) {
+        console.log(`⚠️ Task ${task.key} has projectKey "${task.projectKey}" but it's not in selected projects:`, selectedProjects);
+      }
+      
+      return matches;
+    });
+    
+    console.log('🔍 Filtered tasks count:', filteredTasks.length);
+    console.log('🔍 Filtered tasks breakdown by project:', 
+      filteredTasks.reduce((acc, task) => {
+        const key = task.projectKey || 'UNKNOWN';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {})
+    );
+    
+    // Group by project (case-insensitive matching)
+    const grouped = {};
+    selectedProjects.forEach(projectKey => {
+      const projectTasks = filteredTasks.filter(task => 
+        (task.projectKey || '').toUpperCase() === projectKey.toUpperCase()
+      );
+      console.log(`🔍 Project ${projectKey}: ${projectTasks.length} tasks`);
+      
+      // Always include selected projects in the grouped structure, even if no tasks
+      grouped[projectKey] = projectTasks;
+    });
+    
+    return grouped;
+  };
+
+  // Filter assigned tasks by status
+  const getFilteredTasks = (tasks) => {
+    if (!tasks) return [];
+    if (taskStatusFilter === 'all') {
+      return tasks;
+    }
+    return tasks.filter(task => task.status === taskStatusFilter);
+  };
+
+  // Get unique statuses for filter dropdown (from selected projects only)
   const getUniqueStatuses = () => {
-    const statuses = [...new Set(assignedTasks.map(task => task.status))];
+    const filteredTasks = assignedTasks.filter(task => {
+      const taskProjectKey = (task.projectKey || '').toUpperCase();
+      return selectedProjects.some(selectedKey => 
+        selectedKey.toUpperCase() === taskProjectKey
+      );
+    });
+    const statuses = [...new Set(filteredTasks.map(task => task.status))];
     return statuses.sort();
   };
+
+  // Get total count of tasks in selected projects
+  const getTotalSelectedProjectTasks = () => {
+    return assignedTasks.filter(task => {
+      const taskProjectKey = (task.projectKey || '').toUpperCase();
+      return selectedProjects.some(selectedKey => 
+        selectedKey.toUpperCase() === taskProjectKey
+      );
+    }).length;
+  };
+
+  // Toggle section collapse state
+  const toggleSection = (sectionName) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionName]: !prev[sectionName]
+    }));
+  };
+
+  // Collapsible section component
+  const CollapsibleSection = ({ title, isCollapsed, onToggle, children, icon = null }) => (
+    <div style={{ marginBottom: '20px', border: `1px solid ${theme.colors.border}`, borderRadius: '6px', overflow: 'hidden' }}>
+      <div
+        onClick={onToggle}
+        style={{
+          padding: '12px 16px',
+          backgroundColor: theme.colors.menuItemHover,
+          borderBottom: isCollapsed ? 'none' : `1px solid ${theme.colors.border}`,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          userSelect: 'none',
+          transition: 'background-color 0.2s'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.surface;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.backgroundColor = theme.colors.menuItemHover;
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontSize: '14px', transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+            ▶
+          </span>
+          {icon && <span style={{ fontSize: '16px' }}>{icon}</span>}
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold', color: theme.colors.text }}>
+            {title}
+          </h3>
+        </div>
+        <span style={{ fontSize: '12px', color: theme.colors.textSecondary }}>
+          {isCollapsed ? '▼' : '▲'}
+        </span>
+      </div>
+      {!isCollapsed && (
+        <div style={{ padding: '16px', backgroundColor: theme.colors.cardBackground }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
 
   // Format time duration
   const formatTime = (timeString) => {
@@ -364,8 +556,12 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
 
         {/* Connection Status */}
         {syncStatus && (
-          <div style={{ marginBottom: '20px' }}>
-            <h3 style={{ marginBottom: '8px' }}>Connection Status</h3>
+          <CollapsibleSection
+            title="Connection Status"
+            isCollapsed={collapsedSections.connectionStatus}
+            onToggle={() => toggleSection('connectionStatus')}
+            icon="🔌"
+          >
             <div style={{
               padding: '12px',
               backgroundColor: theme.colors.surface,
@@ -390,13 +586,17 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 )}
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Configuration */}
-        <div style={{ marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ margin: 0 }}>Configuration</h3>
+        <CollapsibleSection
+          title="Configuration"
+          isCollapsed={collapsedSections.configuration}
+          onToggle={() => toggleSection('configuration')}
+          icon="⚙️"
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px' }}>
             {config?.enabled && (
               <button
                 onClick={handleDisable}
@@ -480,11 +680,12 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             </div>
             
             <div style={{ gridColumn: '1 / -1' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <label style={{ fontWeight: 'bold' }}>
-                  Available Projects {projects.length > 0 && `(${projects.length} total)`}
-                </label>
-              </div>
+              <CollapsibleSection
+                title={`Available Projects ${projects.length > 0 ? `(${projects.length} total)` : ''}`}
+                isCollapsed={collapsedSections.availableProjects}
+                onToggle={() => toggleSection('availableProjects')}
+                icon="📁"
+              >
               {projects.length > 0 && (
                 <div style={{ marginBottom: '8px' }}>
                   <input
@@ -648,128 +849,63 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                   </div>
                 </div>
               )}
+              </CollapsibleSection>
             </div>
             
-            {/* Assigned Tasks Panel */}
+            {/* Assigned Tasks Panel - Grouped by Selected Projects */}
             <div style={{ gridColumn: '1 / -1' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                 <label style={{ fontWeight: 'bold' }}>
-                  Assigned Tasks
+                  Assigned Tasks {selectedProjects.length > 0 && `(${getTotalSelectedProjectTasks()} task${getTotalSelectedProjectTasks() !== 1 ? 's' : ''} in ${selectedProjects.length} project${selectedProjects.length !== 1 ? 's' : ''})`}
                 </label>
+                
+                {/* Debug info - show all project keys in loaded tasks */}
                 {assignedTasks.length > 0 && (
+                  <div style={{ 
+                    fontSize: '10px', 
+                    color: theme.colors.textSecondary,
+                    padding: '4px 8px',
+                    backgroundColor: theme.colors.surface,
+                    borderRadius: '4px',
+                    border: `1px solid ${theme.colors.border}`
+                  }}>
+                    Loaded: {assignedTasks.length} tasks from {getAllTaskProjectKeys().length} projects
+                    {getAllTaskProjectKeys().length > 0 && (
+                      <span style={{ marginLeft: '4px', opacity: 0.7 }}>
+                        ({getAllTaskProjectKeys().join(', ')})
+                      </span>
+                    )}
+                  </div>
+                )}
+                {getTotalSelectedProjectTasks() > 0 && (
                   <select
                     value={taskStatusFilter}
                     onChange={(e) => setTaskStatusFilter(e.target.value)}
                     style={{
                       padding: '4px 8px',
-                      border: '1px solid #ccc',
+                      border: `1px solid ${theme.colors.inputBorder}`,
+                      backgroundColor: theme.colors.inputBackground,
+                      color: theme.colors.text,
                       borderRadius: '4px',
                       fontSize: '12px'
                     }}
                   >
-                    <option value="all">All Statuses ({assignedTasks.length})</option>
-                    {getUniqueStatuses().map(status => (
-                      <option key={status} value={status}>
-                        {status} ({assignedTasks.filter(task => task.status === status).length})
-                      </option>
-                    ))}
+                    <option value="all">All Statuses ({getTotalSelectedProjectTasks()})</option>
+                    {getUniqueStatuses().map(status => {
+                      const count = assignedTasks.filter(task => 
+                        selectedProjects.includes(task.projectKey) && task.status === status
+                      ).length;
+                      return (
+                        <option key={status} value={status}>
+                          {status} ({count})
+                        </option>
+                      );
+                    })}
                   </select>
                 )}
               </div>
               
-              {assignedTasks.length > 0 ? (
-                <div style={{
-                  maxHeight: '300px',
-                  overflowY: 'auto',
-                  border: `1px solid ${theme.colors.border}`,
-                  borderRadius: '4px',
-                  backgroundColor: theme.colors.surface
-                }}>
-                  {getFilteredTasks().map(task => (
-                    <div
-                      key={task.key}
-                      style={{
-                        padding: '12px',
-                        borderBottom: `1px solid ${theme.colors.border}`,
-                        backgroundColor: theme.colors.cardBackground,
-                        margin: '4px',
-                  borderRadius: '4px'
-                }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 'bold', color: '#2196f3' }}>
-                              {task.key}
-                            </span>
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: JiraApiService.getStatusColor(task.status),
-                              color: '#fff',
-                              borderRadius: '3px',
-                              fontSize: '10px'
-                            }}>
-                              {task.status}
-                            </span>
-                            <span style={{
-                              padding: '2px 6px',
-                              backgroundColor: JiraApiService.getPriorityColor(task.priority),
-                              color: '#fff',
-                              borderRadius: '3px',
-                              fontSize: '10px'
-                            }}>
-                              {task.priority}
-                            </span>
-                          </div>
-                          <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-                            {task.summary}
-                          </div>
-                          <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>
-                            {task.project} • Sprint: {task.sprint}
-                          </div>
-                        </div>
-                        <a
-                          href={task.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            padding: '4px 8px',
-                            backgroundColor: '#007bff',
-                            color: '#fff',
-                            textDecoration: 'none',
-                            borderRadius: '4px',
-                            fontSize: '12px'
-                          }}
-                        >
-                          Open
-                        </a>
-                      </div>
-                      
-                      {/* Time tracking details */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', fontSize: '11px' }}>
-                        <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
-                          <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Original Estimate</div>
-                          <div>{formatTime(task.originalEstimate)}</div>
-                        </div>
-                        <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
-                          <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Time Spent</div>
-                          <div>{formatTime(task.timeSpent)}</div>
-                        </div>
-                        <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
-                          <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Remaining</div>
-                          <div>{formatTime(task.remainingEstimate)}</div>
-                        </div>
-                        {task.storyPoints && (
-                          <div style={{ padding: '4px', backgroundColor: theme.colors.surface, borderRadius: '3px', border: `1px solid ${theme.colors.border}` }}>
-                            <div style={{ fontWeight: 'bold', color: theme.colors.text }}>Story Points</div>
-                            <div>{task.storyPoints}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
+              {selectedProjects.length === 0 ? (
                 <div style={{
                   padding: '16px',
                   textAlign: 'center',
@@ -778,7 +914,205 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                   borderRadius: '4px',
                   backgroundColor: theme.colors.surface
                 }}>
-                  {config?.enabled ? 'No assigned tasks found. Click "Load Assigned Tasks" to refresh.' : 'Connect to Jira to see assigned tasks.'}
+                  Select projects above to see assigned tasks
+                </div>
+              ) : (
+                <div style={{
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  border: `1px solid ${theme.colors.border}`,
+                  borderRadius: '4px',
+                  backgroundColor: theme.colors.surface,
+                  padding: '8px'
+                }}>
+                  {Object.entries(getTasksBySelectedProjects()).map(([projectKey, projectTasks]) => {
+                    const project = projects.find(p => p.key === projectKey);
+                    const filteredTasks = getFilteredTasks(projectTasks);
+                    const projectName = project ? project.name : projectKey;
+                    
+                    return (
+                      <div
+                        key={projectKey}
+                        style={{
+                          marginBottom: '12px',
+                          border: `1px solid ${theme.colors.border}`,
+                          borderRadius: '4px',
+                          backgroundColor: theme.colors.cardBackground,
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Project Header (Folder-like) */}
+                        <div style={{
+                          padding: '10px 12px',
+                          backgroundColor: theme.colors.menuItemHover,
+                          borderBottom: `1px solid ${theme.colors.border}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          cursor: 'pointer'
+                        }}>
+                          <span style={{ fontSize: '14px' }}>📁</span>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 'bold', color: theme.colors.primary, fontSize: '14px' }}>
+                              {projectKey}
+                            </div>
+                            <div style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                              {projectName}
+                            </div>
+                          </div>
+                          <span style={{
+                            fontSize: '11px',
+                            color: theme.colors.textSecondary,
+                            padding: '2px 6px',
+                            backgroundColor: theme.colors.surface,
+                            borderRadius: '12px'
+                          }}>
+                            {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        
+                        {/* Tasks List (Nested under project) */}
+                        <div style={{ padding: '0' }}>
+                          {filteredTasks.length > 0 ? (
+                            filteredTasks.map(task => (
+                              <div
+                                key={task.key}
+                                style={{
+                                  padding: '10px 12px 10px 32px',
+                                  borderBottom: `1px solid ${theme.colors.border}`,
+                                  backgroundColor: theme.colors.cardBackground,
+                                  transition: 'background-color 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = theme.colors.surface;
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = theme.colors.cardBackground;
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '6px' }}>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                      <span style={{ fontWeight: 'bold', color: theme.colors.primary, fontSize: '13px' }}>
+                                        {task.key}
+                                      </span>
+                                      <span style={{
+                                        padding: '2px 6px',
+                                        backgroundColor: JiraApiService.getStatusColor(task.status),
+                                        color: '#fff',
+                                        borderRadius: '3px',
+                                        fontSize: '10px'
+                                      }}>
+                                        {task.status}
+                                      </span>
+                                      <span style={{
+                                        padding: '2px 6px',
+                                        backgroundColor: JiraApiService.getPriorityColor(task.priority),
+                                        color: '#fff',
+                                        borderRadius: '3px',
+                                        fontSize: '10px'
+                                      }}>
+                                        {task.priority}
+                                      </span>
+                                    </div>
+                                    <div style={{ fontWeight: '500', marginBottom: '2px', fontSize: '13px' }}>
+                                      {task.summary}
+                                    </div>
+                                    {task.sprint && task.sprint !== 'No Sprint' && (
+                                      <div style={{ fontSize: '11px', color: theme.colors.textSecondary }}>
+                                        Sprint: {task.sprint}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <a
+                                    href={task.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{
+                                      padding: '4px 8px',
+                                      backgroundColor: theme.colors.primary,
+                                      color: '#fff',
+                                      textDecoration: 'none',
+                                      borderRadius: '4px',
+                                      fontSize: '11px',
+                                      whiteSpace: 'nowrap',
+                                      marginLeft: '8px'
+                                    }}
+                                  >
+                                    Open
+                                  </a>
+                                </div>
+                                
+                                {/* Compact time tracking */}
+                                {(task.originalEstimate || task.timeSpent || task.remainingEstimate || task.storyPoints) && (
+                                  <div style={{ display: 'flex', gap: '8px', fontSize: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
+                                    {task.originalEstimate && (
+                                      <span style={{ color: theme.colors.textSecondary }}>
+                                        Est: {formatTime(task.originalEstimate)}
+                                      </span>
+                                    )}
+                                    {task.timeSpent && (
+                                      <span style={{ color: theme.colors.textSecondary }}>
+                                        Spent: {formatTime(task.timeSpent)}
+                                      </span>
+                                    )}
+                                    {task.remainingEstimate && (
+                                      <span style={{ color: theme.colors.textSecondary }}>
+                                        Remaining: {formatTime(task.remainingEstimate)}
+                                      </span>
+                                    )}
+                                    {task.storyPoints && (
+                                      <span style={{ color: theme.colors.textSecondary }}>
+                                        SP: {task.storyPoints}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{
+                              padding: '12px 12px 12px 32px',
+                              color: theme.colors.textSecondary,
+                              fontSize: '12px',
+                              fontStyle: 'italic'
+                            }}>
+                              No assigned tasks for this project
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  
+                  {Object.keys(getTasksBySelectedProjects()).length === 0 && (
+                    <div style={{
+                      padding: '16px',
+                      textAlign: 'center',
+                      color: theme.colors.textSecondary,
+                      fontSize: '12px'
+                    }}>
+                      {assignedTasks.length === 0 ? (
+                        <div>
+                          <div style={{ marginBottom: '8px' }}>No assigned tasks loaded yet.</div>
+                          <div style={{ fontSize: '11px', opacity: 0.7 }}>Click "Load Assigned Tasks" to fetch tasks from Jira.</div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div style={{ marginBottom: '8px' }}>No tasks found for selected projects.</div>
+                          <div style={{ fontSize: '11px', opacity: 0.7, marginTop: '8px', padding: '8px', backgroundColor: theme.colors.surface, borderRadius: '4px' }}>
+                            <div><strong>Selected Projects:</strong> {selectedProjects.join(', ') || 'None'}</div>
+                            <div style={{ marginTop: '4px' }}><strong>Available in loaded tasks:</strong> {getAllTaskProjectKeys().join(', ') || 'None'}</div>
+                            {getAllTaskProjectKeys().length > 0 && selectedProjects.length > 0 && (
+                              <div style={{ marginTop: '4px', color: theme.colors.warning }}>
+                                ⚠️ Project keys don't match. Make sure selected project keys match the keys in loaded tasks.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -836,11 +1170,15 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               Include comments
             </label>
           </div>
-        </div>
+          </CollapsibleSection>
 
         {/* Actions */}
-        <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ marginBottom: '12px' }}>Actions</h3>
+        <CollapsibleSection
+          title="Actions"
+          isCollapsed={collapsedSections.actions}
+          onToggle={() => toggleSection('actions')}
+          icon="🎯"
+        >
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={handleSaveConfig}
@@ -933,7 +1271,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
               </button>
             )}
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Test Result */}
         {testResult && (
@@ -955,8 +1293,12 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
 
         {/* Statistics */}
         {jiraStats && (
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ marginBottom: '12px' }}>📊 Statistics</h3>
+          <CollapsibleSection
+            title="Statistics"
+            isCollapsed={collapsedSections.statistics}
+            onToggle={() => toggleSection('statistics')}
+            icon="📊"
+          >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
               <div style={{ padding: '12px', backgroundColor: theme.colors.surface, borderRadius: '6px', textAlign: 'center', border: `1px solid ${theme.colors.border}` }}>
                 <div style={{ fontSize: '12px', color: theme.colors.textSecondary, marginBottom: '4px' }}>Assigned Tasks</div>
@@ -975,7 +1317,7 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
                 <div style={{ fontSize: '18px', fontWeight: 'bold' }}>{projects.length}</div>
               </div>
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Assigned Issues */}

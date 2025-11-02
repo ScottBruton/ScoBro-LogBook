@@ -267,12 +267,21 @@ export class JiraApiService {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to fetch assigned issues');
+        const errorMsg = data.error || data.details || 'Failed to fetch assigned issues';
+        console.error(`❌ Failed to fetch assigned issues (${response.status}):`, errorMsg);
+        console.error('Full error response:', data);
+        throw new Error(errorMsg);
       }
       
-      return data.issues;
+      console.log(`✅ Frontend received ${data.issues?.length || 0} assigned issues from backend`);
+      return data.issues || [];
     } catch (error) {
-      console.error('Failed to get assigned issues:', error);
+      console.error('❌ Failed to get assigned issues:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack
+      });
+      // Return empty array so UI doesn't break, but log the error
       return [];
     }
   }
