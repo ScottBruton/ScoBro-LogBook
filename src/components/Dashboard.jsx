@@ -14,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import { DataService } from '../services/dataService.js';
 import { useTheme } from '../contexts/ThemeContext';
+import JiraDashboardPanel from './JiraDashboardPanel.jsx';
 
 /**
  * Dashboard displays the logbook entries and allows toggling between
@@ -25,7 +26,7 @@ import { useTheme } from '../contexts/ThemeContext';
  * - entries: array of { id, timestamp, items: [] }
  * - onDeleteItem: function to delete a specific item (entryId, itemIndex)
  */
-export default function Dashboard({ entries, onDeleteItem }) {
+export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshTrigger = 0 }) {
   const theme = useTheme();
   
   // viewMode: 'daily' (sessions) or 'items' (flat list)
@@ -427,6 +428,8 @@ export default function Dashboard({ entries, onDeleteItem }) {
       backgroundColor: theme.colors.background,
       color: theme.colors.text
     }}>
+      {/* Main Content */}
+      <div>
       {/* Top bar */}
       <div style={{ marginBottom: '12px' }}>
         {/* Search and View Controls */}
@@ -1225,6 +1228,7 @@ export default function Dashboard({ entries, onDeleteItem }) {
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

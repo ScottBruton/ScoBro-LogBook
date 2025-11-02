@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { JiraApiService } from '../services/jiraApiService.js';
+import { JiraDashboardService } from '../services/jiraDashboardService.js';
 import { useTheme } from '../contexts/ThemeContext';
 
 /**
@@ -233,6 +234,59 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
         success: false,
         message: `Failed to save configuration: ${error.message}`
       });
+    }
+  };
+
+  const handleAddToDashboard = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Get selected projects and their issues
+      const selectedProjectObjects = projects.filter(p => 
+        selectedProjects.includes(p.key)
+      );
+      
+      const tasksToAdd = getTasksBySelectedProjects();
+      const allIssues = [];
+      Object.values(tasksToAdd).forEach(projectIssues => {
+        allIssues.push(...projectIssues);
+      });
+
+      console.log('📊 Adding to dashboard:', {
+        projects: selectedProjectObjects.length,
+        issues: allIssues.length
+      });
+
+      // Sync to Supabase
+      const result = await JiraDashboardService.syncToDashboard(
+        selectedProjectObjects,
+        allIssues
+      );
+
+      if (result.success) {
+        setTestResult({
+          success: true,
+          message: `Successfully added ${result.projectsSynced} projects and ${result.issuesSynced} issues to dashboard!`
+        });
+        
+        // Trigger callback to refresh dashboard if provided
+        if (onIssuesSynced) {
+          onIssuesSynced();
+        }
+      } else {
+        setTestResult({
+          success: false,
+          message: `Failed to add to dashboard: ${result.error || 'Unknown error'}`
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to add to dashboard:', error);
+      setTestResult({
+        success: false,
+        message: `Failed to add to dashboard: ${error.message}`
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1272,6 +1326,38 @@ export default function JiraApiModal({ isOpen, onClose, onIssuesSynced }) {
             )}
           </div>
         </CollapsibleSection>
+
+        {/* Add to Dashboard Button */}
+        {config?.enabled && selectedProjects.length > 0 && assignedTasks.length > 0 && (
+          <div style={{ marginTop: '24px', padding: '16px', backgroundColor: theme.colors.surface, borderRadius: '6px', border: `1px solid ${theme.colors.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h3 style={{ margin: 0, marginBottom: '8px' }}>Add to Dashboard</h3>
+                <p style={{ margin: 0, fontSize: '12px', color: theme.colors.textSecondary }}>
+                  Add {selectedProjects.length} project{selectedProjects.length !== 1 ? 's' : ''} and {getTotalSelectedProjectTasks()} task{getTotalSelectedProjectTasks() !== 1 ? 's' : ''} to the main dashboard view.
+                </p>
+              </div>
+              <button
+                onClick={handleAddToDashboard}
+                disabled={isLoading}
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: theme.colors.primary,
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: isLoading ? 'not-allowed' : 'pointer',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  opacity: isLoading ? 0.6 : 1,
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                }}
+              >
+                {isLoading ? '⏳' : '📊'} Add to Dashboard
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Test Result */}
         {testResult && (

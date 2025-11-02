@@ -22,7 +22,8 @@ export default function AppHeader({
   refreshTrigger,
   syncStatus,
   user,
-  onSignInClick
+  onSignInClick,
+  onJiraMenuToggle
 }) {
   const theme = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -250,7 +251,7 @@ export default function AppHeader({
         >
           {isMenuOpen ? '✕' : '☰'}
         </button>
-
+        
         {/* Theme Toggle Button */}
         <button
           onClick={theme.toggleTheme}
@@ -350,65 +351,106 @@ export default function AppHeader({
           )}
         </div>
 
-        {/* App Title and Status - Right Side */}
+        {/* Right Side - Jira Menu Button and App Info */}
         <div style={{
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-          marginLeft: '16px',
-          minWidth: '200px'
+          alignItems: 'center',
+          gap: '12px',
+          marginLeft: 'auto'
         }}>
-          {/* App Title */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '2px'
-          }}>
-            <span style={{ fontSize: '16px' }}>📒</span>
-            <span style={{
+          {/* Right-side Jira Menu Toggle Button */}
+          <button
+            onClick={() => {
+              if (onJiraMenuToggle) {
+                onJiraMenuToggle();
+              }
+            }}
+            style={{
+              width: '36px',
+              height: '36px',
+              backgroundColor: theme.colors.warning || '#ffc107',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
               fontSize: '16px',
-              fontWeight: 'bold',
-              color: theme.colors.text
-            }}>
-              ScoBro Logbook
-            </span>
-          </div>
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = theme.colors.warningHover || '#e0a800';
+              e.target.style.transform = 'scale(1.05)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = theme.colors.warning || '#ffc107';
+              e.target.style.transform = 'scale(1)';
+            }}
+            title="Toggle Jira Tasks Menu"
+          >
+            📋
+          </button>
           
-          {/* Status and User Info */}
+          {/* App Title and Status */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '11px',
-            color: theme.colors.textSecondary
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+            minWidth: '200px'
           }}>
-            <span>
-              {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
-            </span>
-            {isAuthenticated && user && (
-              <>
-                <span>•</span>
-                <span>👤 {user.email}</span>
-              </>
-            )}
-            {!isAuthenticated && (
-              <button
-                onClick={onSignInClick}
-                style={{
-                  padding: '2px 6px',
-                  backgroundColor: theme.colors.info,
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '3px',
-                  cursor: 'pointer',
-                  fontSize: '10px',
-                  marginLeft: '4px'
-                }}
-              >
-                🔐 Sign In
-              </button>
-            )}
+            {/* App Title */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '2px'
+            }}>
+              <span style={{ fontSize: '16px' }}>📒</span>
+              <span style={{
+                fontSize: '16px',
+                fontWeight: 'bold',
+                color: theme.colors.text
+              }}>
+                ScoBro Logbook
+              </span>
+            </div>
+            
+            {/* Status and User Info */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '11px',
+              color: theme.colors.textSecondary
+            }}>
+              <span>
+                {syncStatus === 'synced' ? '🟢 Synced' : syncStatus === 'pending' ? '🟡 Pending' : '🔴 Offline'}
+              </span>
+              {isAuthenticated && user && (
+                <>
+                  <span>•</span>
+                  <span>👤 {user.email}</span>
+                </>
+              )}
+              {!isAuthenticated && (
+                <button
+                  onClick={onSignInClick}
+                  style={{
+                    padding: '2px 6px',
+                    backgroundColor: theme.colors.info,
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '3px',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    marginLeft: '4px'
+                  }}
+                >
+                  🔐 Sign In
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -12,6 +12,7 @@ import TimeTrackingModal from './components/TimeTrackingModal.jsx';
 import CalendarSyncModal from './components/CalendarSyncModal.jsx';
 import JiraApiModal from './components/JiraApiModal.jsx';
 import AnalyticsDashboard from './components/AnalyticsDashboard.jsx';
+import JiraDashboardPanel from './components/JiraDashboardPanel.jsx';
 import AppHeader from './components/AppHeader.jsx';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext.jsx';
 import { DataService } from './services/dataService.js';
@@ -54,6 +55,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [smartPromptNudge, setSmartPromptNudge] = useState(null);
   const [statusRefreshTrigger, setStatusRefreshTrigger] = useState(0);
+  const [jiraDashboardRefreshTrigger, setJiraDashboardRefreshTrigger] = useState(0);
+  const [isJiraMenuOpen, setIsJiraMenuOpen] = useState(false);
 
   // Load entries from SQLite database on mount and check authentication
   useEffect(() => {
@@ -378,8 +381,12 @@ export default function App() {
 
   const handleJiraIssuesSynced = async (issues) => {
     try {
-      // Create entries from synced Jira issues
-      const entries = issues.map(issue => ({
+      // Refresh the Jira dashboard panel when data is synced
+      setJiraDashboardRefreshTrigger(prev => prev + 1);
+      
+      // Create entries from synced Jira issues (if issues array is provided)
+      if (issues && Array.isArray(issues)) {
+        const newEntries = issues.map(issue => ({
         item_type: 'Note',
         content: `${JiraApiService.getIssueTypeIcon(issue.issueType)} ${issue.key}: ${issue.summary}`,
         project: issue.project,
@@ -392,8 +399,9 @@ export default function App() {
         }
       }));
       
-      if (entries.length > 0) {
-        await handleSaveItems(entries);
+      if (newEntries.length > 0) {
+        await handleSaveItems(newEntries);
+      }
       }
     } catch (error) {
       console.error('Failed to create entries from Jira issues:', error);
@@ -475,10 +483,13 @@ export default function App() {
         handleTimerComplete={handleTimerComplete}
         handleCalendarEventsSynced={handleCalendarEventsSynced}
         handleJiraIssuesSynced={handleJiraIssuesSynced}
+        jiraDashboardRefreshTrigger={jiraDashboardRefreshTrigger}
         smartPromptNudge={smartPromptNudge}
         setSmartPromptNudge={setSmartPromptNudge}
         SupabaseService={SupabaseService}
         DataService={DataService}
+        isJiraMenuOpen={isJiraMenuOpen}
+        setIsJiraMenuOpen={setIsJiraMenuOpen}
       />
     </ThemeProvider>
   );
@@ -582,10 +593,13 @@ function AppContent({
   handleTimerComplete,
   handleCalendarEventsSynced,
   handleJiraIssuesSynced,
+  jiraDashboardRefreshTrigger,
   smartPromptNudge,
   setSmartPromptNudge,
   SupabaseService,
-  DataService
+  DataService,
+  isJiraMenuOpen,
+  setIsJiraMenuOpen
 }) {
   const theme = useTheme();
   
@@ -634,15 +648,15 @@ function AppContent({
         onCsvClick={() => DataService.exportAndDownloadCSV()}
         onMarkdownClick={() => DataService.exportAndDownloadMarkdown()}
         onSyncClick={async () => {
-          try {
-            setSyncStatus('pending');
-            await SupabaseService.syncEntriesBidirectional(entries);
-            setSyncStatus('synced');
-          } catch (error) {
-            console.error('Sync failed:', error);
-            setSyncStatus('offline');
-          }
-        }}
+                  try {
+                    setSyncStatus('pending');
+                    await SupabaseService.syncEntriesBidirectional(entries);
+                    setSyncStatus('synced');
+                  } catch (error) {
+                    console.error('Sync failed:', error);
+                    setSyncStatus('offline');
+                  }
+                }}
         onSignOutClick={handleSignOut}
         onNewEntryClick={() => setShowPopup(true)}
         onStatusClick={handleStatusClick}
@@ -651,11 +665,12 @@ function AppContent({
         syncStatus={syncStatus}
         user={user}
         onSignInClick={() => setShowAuthModal(true)}
+        onJiraMenuToggle={() => setIsJiraMenuOpen(prev => !prev)}
       />
 
       {/* Main Content - Add top padding to account for fixed header */}
       <div style={{ paddingTop: '70px' }}>
-        <Dashboard entries={entries} onDeleteItem={onDeleteItem} />
+        <Dashboard entries={entries} onDeleteItem={onDeleteItem} jiraDashboardRefreshTrigger={jiraDashboardRefreshTrigger} />
       </div>
       <EntryPopup
         isOpen={showPopup}
@@ -713,6 +728,13 @@ function AppContent({
         isOpen={showAnalytics}
         onClose={() => setShowAnalytics(false)}
         entries={entries}
+      />
+      
+      {/* Right-side Jira Tasks Menu */}
+      <JiraDashboardPanel
+        isOpen={isJiraMenuOpen}
+        onClose={() => setIsJiraMenuOpen(false)}
+        refreshTrigger={jiraDashboardRefreshTrigger}
       />
       
       {/* Smart Prompt Nudge */}
@@ -784,4 +806,4 @@ function AppContent({
       )}
     </div>
     );
-  }
+}
