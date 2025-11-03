@@ -605,13 +605,14 @@ function AppContent({
   
   return (
     <div style={{ 
-      padding: '16px', 
       fontFamily: 'sans-serif', 
-      maxWidth: '800px', 
-      margin: '0 auto',
+      width: '100%',
+      margin: 0,
+      padding: 0,
       backgroundColor: theme.colors.background,
       color: theme.colors.text,
-      minHeight: '100vh'
+      minHeight: '100vh',
+      overflow: 'hidden'
     }}>
       <UpdateBanner />
       
@@ -669,8 +670,34 @@ function AppContent({
       />
 
       {/* Main Content - Add top padding to account for fixed header */}
-      <div style={{ paddingTop: '70px' }}>
-        <Dashboard entries={entries} onDeleteItem={onDeleteItem} jiraDashboardRefreshTrigger={jiraDashboardRefreshTrigger} />
+      <div style={{ 
+        paddingTop: '70px',
+        display: 'flex',
+        width: '100%',
+        height: 'calc(100vh - 70px)',
+        overflow: 'hidden',
+        margin: 0,
+        paddingLeft: 0,
+        paddingRight: 0
+      }}>
+        {/* Dashboard - Takes remaining space */}
+        <div style={{ 
+          flex: 1, 
+          overflowY: 'auto',
+          minWidth: 0, // Allows flex item to shrink below content size
+          paddingLeft: '16px',
+          paddingRight: '16px',
+          boxSizing: 'border-box'
+        }}>
+          <Dashboard entries={entries} onDeleteItem={onDeleteItem} jiraDashboardRefreshTrigger={jiraDashboardRefreshTrigger} />
+        </div>
+        
+        {/* Right-side Jira Tasks Panel */}
+        <JiraDashboardPanel
+          isOpen={isJiraMenuOpen}
+          onClose={() => setIsJiraMenuOpen(false)}
+          refreshTrigger={jiraDashboardRefreshTrigger}
+        />
       </div>
       <EntryPopup
         isOpen={showPopup}
@@ -729,14 +756,6 @@ function AppContent({
         onClose={() => setShowAnalytics(false)}
         entries={entries}
       />
-      
-      {/* Right-side Jira Tasks Menu */}
-      <JiraDashboardPanel
-        isOpen={isJiraMenuOpen}
-        onClose={() => setIsJiraMenuOpen(false)}
-        refreshTrigger={jiraDashboardRefreshTrigger}
-      />
-      
       {/* Smart Prompt Nudge */}
       {smartPromptNudge && (
         <div

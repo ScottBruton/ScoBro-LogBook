@@ -219,42 +219,22 @@ export default function JiraDashboardPanel({ refreshTrigger = 0, isOpen = false,
     }
   };
 
-  if (!isOpen) return null;
+  // If closed, render empty div to maintain layout space
+  if (!isOpen) {
+    return <div style={{ width: 0, flexShrink: 0 }} />;
+  }
 
   return (
-    <>
-      {/* Overlay */}
-      {isOpen && onClose && (
-        <div
-          onClick={onClose}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: theme.colors.overlay,
-            zIndex: 998,
-            transition: 'opacity 0.3s ease'
-          }}
-        />
-      )}
-
-      {/* Right Sidebar */}
-      <div style={{
-        position: 'fixed',
-        top: '50px', // Below the header
-        right: isOpen ? '0' : '-350px',
-        width: '350px',
-        height: 'calc(100vh - 50px)',
-        backgroundColor: theme.colors.menuBackground || theme.colors.cardBackground,
-        boxShadow: theme.colors.cardShadow || '0 0 20px rgba(0,0,0,0.3)',
-        zIndex: 999,
-        transition: 'right 0.3s ease',
-        padding: '20px 0',
-        overflowY: 'auto',
-        borderLeft: `1px solid ${theme.colors.border}`
-      }}>
+    <div style={{
+      width: '350px',
+      flexShrink: 0,
+      backgroundColor: theme.colors.menuBackground || theme.colors.cardBackground,
+      borderLeft: `1px solid ${theme.colors.border}`,
+      padding: '20px 0',
+      overflowY: 'auto',
+      height: '100%',
+      transition: 'width 0.3s ease'
+    }}>
         <div style={{ padding: '0 20px' }}>
           {/* Header */}
           <div style={{ 
@@ -548,8 +528,7 @@ export default function JiraDashboardPanel({ refreshTrigger = 0, isOpen = false,
             </div>
           )}
         </div>
-      </div>
-    </>
+    </div>
   );
 }
 
