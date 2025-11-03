@@ -42,30 +42,100 @@
         originalWarn.apply(console, args);
       };
       
-      // Save logs to localStorage every 2 seconds
-      setInterval(() => {
-        if (earlyLogs.length > 0) {
-          const existingLogs = localStorage.getItem('scobro_early_logs') || '';
-          const newLogs = existingLogs + earlyLogs.join('\n') + '\n';
-          localStorage.setItem('scobro_early_logs', newLogs);
-          earlyLogs.length = 0; // Clear the array
+      // Flag to prevent infinite loops when localStorage quota is exceeded
+      let localStorageQuotaExceeded = false;
+      const MAX_LOG_SIZE = 50000; // ~50KB max for early logs
+      const MAX_LOG_LINES = 1000; // Max number of log lines to keep
+      
+      // Helper function to save logs with size limit and error handling
+      function saveLogsToStorage() {
+        if (localStorageQuotaExceeded || earlyLogs.length === 0) {
+          return;
         }
-      }, 2000);
+        
+        try {
+          const existingLogs = localStorage.getItem('scobro_early_logs') || '';
+          const newLogs = earlyLogs.join('\n') + '\n';
+          let combinedLogs = existingLogs + newLogs;
+          
+          // Limit by size
+          if (combinedLogs.length > MAX_LOG_SIZE) {
+            // Keep only the most recent portion
+            combinedLogs = combinedLogs.slice(-MAX_LOG_SIZE);
+          }
+          
+          // Limit by number of lines
+          const lines = combinedLogs.split('\n');
+          if (lines.length > MAX_LOG_LINES) {
+            combinedLogs = lines.slice(-MAX_LOG_LINES).join('\n');
+          }
+          
+          localStorage.setItem('scobro_early_logs', combinedLogs);
+          earlyLogs.length = 0; // Clear the array
+        } catch (error) {
+          // Handle quota exceeded error
+          if (error.name === 'QuotaExceededError' || error.message.includes('quota')) {
+            localStorageQuotaExceeded = true;
+            try {
+              // Try to clear and keep only recent logs
+              const lines = earlyLogs.slice(-100).join('\n'); // Keep only last 100 logs
+              localStorage.setItem('scobro_early_logs', lines);
+              earlyLogs.length = 0;
+              originalError.call(console, '⚠️ ScoBro Logbook: LocalStorage quota exceeded. Clearing old logs.');
+            } catch (clearError) {
+              // If even that fails, remove the key entirely and stop logging
+              try {
+                localStorage.removeItem('scobro_early_logs');
+              } catch (e) {
+                // Ignore errors when trying to clear
+              }
+              originalError.call(console, '⚠️ ScoBro Logbook: LocalStorage quota exceeded. Stopping localStorage logging.');
+            }
+          } else {
+            // Other errors - just log to console
+            originalError.call(console, '⚠️ ScoBro Logbook: Failed to save logs to localStorage:', error.message);
+          }
+        }
+      }
+      
+      // Save logs to localStorage every 2 seconds
+      setInterval(saveLogsToStorage, 2000);
       
       // Global error handler for uncaught errors
       window.addEventListener('error', function(event) {
+        // Don't log quota errors back to localStorage to prevent infinite loops
+        if (event.error && (event.error.name === 'QuotaExceededError' || 
+            event.error.message.includes('quota') ||
+            event.message.includes('quota'))) {
+          originalError.call(console, '💥 Fatal error caught: [STORAGE QUOTA EXCEEDED]');
+          originalError.call(console, 'Stack:', event.error?.stack);
+          return;
+        }
+        
         const errorMsg = `[EARLY FATAL ERROR] ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`;
-        earlyLogs.push(errorMsg);
-        console.error('💥 Fatal error caught:', errorMsg);
-        console.error('Stack:', event.error?.stack);
+        if (!localStorageQuotaExceeded) {
+          earlyLogs.push(errorMsg);
+        }
+        originalError.call(console, '💥 Fatal error caught:', errorMsg);
+        originalError.call(console, 'Stack:', event.error?.stack);
       });
       
       // Global handler for unhandled promise rejections
       window.addEventListener('unhandledrejection', function(event) {
+        // Don't log quota errors back to localStorage to prevent infinite loops
+        const reasonStr = String(event.reason || '');
+        if (reasonStr.includes('quota') || reasonStr.includes('QuotaExceededError')) {
+          originalError.call(console, '💥 Unhandled promise rejection: [STORAGE QUOTA EXCEEDED]');
+          originalError.call(console, 'Stack:', event.reason?.stack);
+          return;
+        }
+        
         const errorMsg = `[EARLY UNHANDLED REJECTION] ${event.reason}`;
-        earlyLogs.push(errorMsg);
-        console.error('💥 Unhandled promise rejection:', errorMsg);
-        console.error('Stack:', event.reason?.stack);
+        if (!localStorageQuotaExceeded) {
+          earlyLogs.push(errorMsg);
+        }
+        originalError.call(console, '💥 Unhandled promise rejection:', errorMsg);
+        originalError.call(console, 'Stack:', event.reason?.stack);
       });
       
       console.log('✅ ScoBro Logbook: Early logging system initialized');

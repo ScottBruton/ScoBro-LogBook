@@ -34,12 +34,53 @@ export class BasicLogger {
         this.writeToFileAsync(content);
       } else {
         // Fallback: try to write to localStorage as backup
-        const existingLogs = localStorage.getItem('scobro_debug_logs') || '';
-        const newLogs = existingLogs + content;
-        localStorage.setItem('scobro_debug_logs', newLogs);
+        try {
+          const existingLogs = localStorage.getItem('scobro_debug_logs') || '';
+          const MAX_LOG_SIZE = 100000; // ~100KB max for debug logs
+          const MAX_LOG_LINES = 2000; // Max number of log lines to keep
+          
+          let newLogs = existingLogs + content;
+          
+          // Limit by size
+          if (newLogs.length > MAX_LOG_SIZE) {
+            // Keep only the most recent portion
+            newLogs = newLogs.slice(-MAX_LOG_SIZE);
+          }
+          
+          // Limit by number of lines
+          const lines = newLogs.split('\n');
+          if (lines.length > MAX_LOG_LINES) {
+            newLogs = lines.slice(-MAX_LOG_LINES).join('\n');
+          }
+          
+          localStorage.setItem('scobro_debug_logs', newLogs);
+        } catch (storageError) {
+          // Handle quota exceeded error gracefully
+          if (storageError.name === 'QuotaExceededError' || storageError.message.includes('quota')) {
+            try {
+              // Try to clear and keep only recent logs
+              const recentLines = content.split('\n').slice(-50).join('\n'); // Keep only last 50 lines
+              localStorage.setItem('scobro_debug_logs', recentLines);
+              console.warn('⚠️ ScoBro Logbook: LocalStorage quota exceeded for debug logs. Clearing old logs.');
+            } catch (clearError) {
+              // If even that fails, remove the key entirely
+              try {
+                localStorage.removeItem('scobro_debug_logs');
+              } catch (e) {
+                // Ignore errors when trying to clear
+              }
+              console.warn('⚠️ ScoBro Logbook: LocalStorage quota exceeded for debug logs. Stopping localStorage logging.');
+            }
+          } else {
+            throw storageError; // Re-throw non-quota errors
+          }
+        }
       }
     } catch (err) {
-      console.error('Failed to write log:', err);
+      // Don't log quota errors to prevent infinite loops
+      if (!(err.name === 'QuotaExceededError' || err.message?.includes('quota'))) {
+        console.error('Failed to write log:', err);
+      }
     }
   }
 
