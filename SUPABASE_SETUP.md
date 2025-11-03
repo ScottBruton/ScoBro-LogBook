@@ -48,6 +48,8 @@
    - This creates functions and triggers
 5. **Step 4**: Copy and run `supabase-schema-part4-indexes.sql`
    - This creates performance indexes
+6. **Step 5**: Copy and run `supabase-schema-jira.sql`
+   - This creates Jira dashboard tables (`jira_projects` and `jira_issues`)
 
 **Alternative**: If you prefer to run the original schema:
 - Use the original `supabase-schema.sql` but run it as the **postgres** role (not the default role)
@@ -98,6 +100,18 @@
 - Check the SQL Editor for any error messages
 - Verify you have the correct permissions in your Supabase project
 
+### **Jira Dashboard Sync Errors (404 on jira_projects/jira_issues)**
+
+If you see errors like:
+- `Could not find the table 'public.jira_projects' in the schema cache`
+- `Could not find the table 'public.jira_issues' in the schema cache`
+
+This means the Jira dashboard tables haven't been created yet. Solution:
+1. Go to Supabase Dashboard → SQL Editor
+2. Copy and run the `supabase-schema-jira.sql` file
+3. Wait for the script to complete
+4. Try syncing your Jira issues again
+
 ### **Permission Error: "permission denied to set parameter app.jwt_secret"**
 
 This error occurs when running the full schema with insufficient permissions. Solutions:
@@ -128,6 +142,8 @@ The schema creates the following tables:
 - **meetings** - Meeting management
 - **meeting_attendees** - Meeting participants
 - **meeting_actions** - Action items from meetings
+- **jira_projects** - Jira projects synced to dashboard (from `supabase-schema-jira.sql`)
+- **jira_issues** - Jira issues synced to dashboard (from `supabase-schema-jira.sql`)
 
 ## 🔐 **Security Features**
 
