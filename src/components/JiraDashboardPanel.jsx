@@ -13,6 +13,7 @@ export default function JiraDashboardPanel({ refreshTrigger = 0, isOpen = false,
   const [isLoading, setIsLoading] = useState(true);
   const [expandedProjects, setExpandedProjects] = useState(new Set());
   const [lastSync, setLastSync] = useState(null);
+  const [statusFilters, setStatusFilters] = useState(new Set(['In Progress', 'To Do'])); // Default filter
 
   useEffect(() => {
     loadDataFromDatabase();
@@ -95,9 +96,105 @@ export default function JiraDashboardPanel({ refreshTrigger = 0, isOpen = false,
     setExpandedProjects(newExpanded);
   };
 
-  const getIssuesForProject = (projectKey) => {
-    return issues.filter(issue => issue.project_key === projectKey);
+  // Helper to check if status matches a filter (case-insensitive, flexible matching)
+  const statusMatchesFilter = (status, filter) => {
+    const statusLower = (status || '').toLowerCase().trim();
+    const filterLower = (filter || '').toLowerCase().trim();
+    
+    // Exact match
+    if (statusLower === filterLower) return true;
+    
+    // Special cases for common status variations
+    if (filterLower === 'in progress') {
+      return statusLower.includes('progress');
+    }
+    if (filterLower === 'to do' || filterLower === 'todo') {
+      return statusLower.includes('todo') || statusLower.includes('to do');
+    }
+    
+    // Partial match
+    return statusLower.includes(filterLower) || filterLower.includes(statusLower);
   };
+
+  const getIssuesForProject = (projectKey) => {
+    return issues.filter(issue => {
+      if (issue.project_key !== projectKey) return false;
+      
+      // Filter by status
+      if (statusFilters.size > 0) {
+        const matchesFilter = Array.from(statusFilters).some(filterStatus => 
+          statusMatchesFilter(issue.status, filterStatus)
+        );
+        return matchesFilter;
+      }
+      
+      return true; // If no filters selected, show all
+    });
+  };
+
+  // Get all unique statuses from issues for filter options
+  const getAllStatuses = () => {
+    const statusSet = new Set();
+    issues.forEach(issue => {
+      if (issue.status) {
+        statusSet.add(issue.status);
+      }
+    });
+    return Array.from(statusSet).sort();
+  };
+
+  const toggleStatusFilter = (status) => {
+    const newFilters = new Set(statusFilters);
+    
+    // Check if status is already in filters (using flexible matching)
+    const existingFilter = Array.from(newFilters).find(f => statusMatchesFilter(status, f));
+    
+    if (existingFilter) {
+      newFilters.delete(existingFilter);
+    } else {
+      // Add the actual status from issues (normalized)
+      newFilters.add(status);
+    }
+    setStatusFilters(newFilters);
+  };
+
+  // Initialize default filters based on available issues
+  useEffect(() => {
+    if (issues.length > 0) {
+      // Check if we're still on the initial default filters
+      const currentFilters = Array.from(statusFilters).sort();
+      const isDefaultFilters = currentFilters.length === 2 && 
+                               currentFilters.join(',') === 'In Progress,To Do';
+      
+      if (isDefaultFilters) {
+        // Get all statuses from issues
+        const statusSet = new Set();
+        issues.forEach(issue => {
+          if (issue.status) {
+            statusSet.add(issue.status);
+          }
+        });
+        const allStatuses = Array.from(statusSet);
+        
+        // Find statuses that match "In Progress" and "To Do"
+        const defaultFilters = new Set();
+        allStatuses.forEach(status => {
+          if (statusMatchesFilter(status, 'In Progress') || statusMatchesFilter(status, 'To Do')) {
+            defaultFilters.add(status);
+          }
+        });
+        
+        // Only update if we found matching statuses and they're different from current
+        if (defaultFilters.size > 0) {
+          const defaultFiltersArray = Array.from(defaultFilters).sort();
+          const currentFiltersArray = Array.from(statusFilters).sort();
+          if (defaultFiltersArray.join(',') !== currentFiltersArray.join(',')) {
+            setStatusFilters(defaultFilters);
+          }
+        }
+      }
+    }
+  }, [issues]);
 
   const getStatusColor = (status) => {
     const statusLower = (status || '').toLowerCase();
@@ -222,6 +319,73 @@ export default function JiraDashboardPanel({ refreshTrigger = 0, isOpen = false,
             )}
           </div>
 
+          {/* Status Filter */}
+          {issues.length > 0 && (
+            <div style={{ 
+              marginBottom: '16px',
+              padding: '12px',
+              backgroundColor: theme.colors.surface,
+              borderRadius: '6px',
+              border: `1px solid ${theme.colors.border}`
+            }}>
+              <div style={{ 
+                fontSize: '12px', 
+                fontWeight: 'bold', 
+                color: theme.colors.text,
+                marginBottom: '8px'
+              }}>
+                🔍 Filter by Status:
+              </div>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '4px',
+                maxHeight: '150px',
+                overflowY: 'auto'
+              }}>
+                {getAllStatuses().map(status => {
+                  const isChecked = Array.from(statusFilters).some(filterStatus => 
+                    statusMatchesFilter(status, filterStatus)
+                  );
+                  
+                  return (
+                    <label
+                      key={status}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        cursor: 'pointer',
+                        fontSize: '11px',
+                        color: theme.colors.text,
+                        userSelect: 'none'
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleStatusFilter(status)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span style={{
+                        display: 'inline-block',
+                        padding: '2px 6px',
+                        borderRadius: '12px',
+                        backgroundColor: isChecked ? getStatusColor(status) : 'transparent',
+                        color: isChecked ? '#fff' : theme.colors.text,
+                        fontSize: '10px',
+                        fontWeight: isChecked ? 'bold' : 'normal',
+                        border: isChecked ? 'none' : `1px solid ${theme.colors.border}`
+                      }}>
+                        {status}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Loading State */}
           {isLoading && projects.length === 0 && (
             <div style={{ textAlign: 'center', color: theme.colors.textSecondary, padding: '20px' }}>
@@ -247,8 +411,13 @@ export default function JiraDashboardPanel({ refreshTrigger = 0, isOpen = false,
           {/* Projects and Issues */}
           {projects.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {projects.map(project => {
-                const projectIssues = getIssuesForProject(project.project_key);
+              {projects
+                .map(project => {
+                  const projectIssues = getIssuesForProject(project.project_key);
+                  return { project, projectIssues };
+                })
+                .filter(({ projectIssues }) => projectIssues.length > 0)
+                .map(({ project, projectIssues }) => {
                 const isExpanded = expandedProjects.has(project.project_key);
 
                 return (
