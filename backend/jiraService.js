@@ -304,6 +304,77 @@ class JiraService {
   }
 
   /**
+   * Get all users visible to the account (active + inactive)
+   * Uses Jira Cloud REST API /users/search endpoint
+   */
+  async getAllUsers(config = null) {
+    try {
+      const baseUrl = config?.baseUrl || this.baseUrl;
+      const username = config?.username || this.username;
+      const apiToken = config?.apiToken || this.apiToken;
+
+      if (!baseUrl || !username || !apiToken) {
+        throw new Error('Jira configuration is incomplete');
+      }
+
+      const allUsers = [];
+      let startAt = 0;
+      const maxResults = 1000; // Jira API max
+      let hasMore = true;
+
+      // Page through all users
+      while (hasMore) {
+        const endpoint = `/users/search?startAt=${startAt}&maxResults=${maxResults}`;
+        const url = `${baseUrl.replace(/\/$/, '')}/rest/api/3${endpoint}`;
+        const auth = Buffer.from(`${username}:${apiToken}`).toString('base64');
+
+        try {
+          const response = await axios({
+            method: 'get',
+            url: url,
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Accept': 'application/json'
+            }
+          });
+
+          const users = response.data || [];
+          
+          // Extract display names from users
+          const userNames = users
+            .filter(user => user.displayName) // Only users with display names
+            .map(user => user.displayName);
+
+          allUsers.push(...userNames);
+
+          // Check if there are more users
+          hasMore = users.length === maxResults;
+          startAt += maxResults;
+
+          // Safety limit to prevent infinite loops
+          if (startAt > 10000) {
+            console.warn('Reached safety limit while fetching users');
+            break;
+          }
+        } catch (error) {
+          console.error(`Error fetching users at startAt=${startAt}:`, error.message);
+          // If we get an error, break the loop but return what we have
+          hasMore = false;
+        }
+      }
+
+      // Remove duplicates and sort
+      const uniqueUsers = [...new Set(allUsers)].sort();
+      console.log(`👥 Fetched ${uniqueUsers.length} unique users from Jira`);
+      
+      return uniqueUsers;
+    } catch (error) {
+      console.error('Failed to get all users:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Fetch multiple issues by keys
    */
   async fetchIssues(issueKeys) {

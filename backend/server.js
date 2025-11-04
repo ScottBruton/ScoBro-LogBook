@@ -410,6 +410,29 @@ app.post('/api/jira/issues/fetch', async (req, res) => {
   }
 });
 
+// Get all users
+app.get('/api/jira/users', async (req, res) => {
+  try {
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log('👥 Fetching all users with stored config');
+    const users = await jiraService.getAllUsers(jiraConfig);
+    res.json({ users });
+  } catch (error) {
+    console.error('❌ Failed to fetch Jira users:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch Jira users',
+      details: error.message,
+      users: [] // Return empty array so frontend doesn't break
+    });
+  }
+});
+
 // Get Jira statistics
 app.get('/api/jira/stats', async (req, res) => {
   try {

@@ -287,6 +287,29 @@ export class JiraApiService {
   }
 
   /**
+   * Get all users visible to the account (active + inactive)
+   */
+  static async getAllUsers(config = null) {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/users`);
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || data.details || 'Failed to fetch users';
+        console.error(`❌ Failed to fetch users (${response.status}):`, errorMsg);
+        throw new Error(errorMsg);
+      }
+      
+      console.log(`✅ Frontend received ${data.users?.length || 0} users from backend`);
+      return data.users || [];
+    } catch (error) {
+      console.error('❌ Failed to get all users:', error);
+      // Return empty array so UI doesn't break, but log the error
+      return [];
+    }
+  }
+
+  /**
    * Format issue data for ScoBro Logbook
    */
   static formatIssueData(issue, config) {
