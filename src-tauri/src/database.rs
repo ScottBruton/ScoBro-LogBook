@@ -9,6 +9,7 @@ pub struct Entry {
     pub timestamp: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub jira_synced_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -18,6 +19,7 @@ pub struct EntryItem {
     pub item_type: String,
     pub content: String,
     pub project: Option<String>,
+    pub hours: Option<f64>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -149,7 +151,8 @@ impl Database {
                 id TEXT PRIMARY KEY,
                 timestamp TEXT NOT NULL,
                 created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
+                updated_at TEXT NOT NULL,
+                jira_synced_at TEXT
             )
             "#,
         )
@@ -164,6 +167,7 @@ impl Database {
                 item_type TEXT NOT NULL,
                 content TEXT NOT NULL,
                 project TEXT,
+                hours REAL,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL,
                 FOREIGN KEY (entry_id) REFERENCES entries (id) ON DELETE CASCADE
@@ -338,6 +342,7 @@ impl Database {
             timestamp,
             created_at: now,
             updated_at: now,
+            jira_synced_at: None,
         })
     }
 
@@ -347,18 +352,20 @@ impl Database {
         item_type: &str,
         content: &str,
         project: Option<&str>,
+        hours: Option<f64>,
     ) -> Result<EntryItem, sqlx::Error> {
         let id = Uuid::new_v4().to_string();
         let now = Utc::now();
         
         sqlx::query(
-            "INSERT INTO entry_items (id, entry_id, item_type, content, project, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+            "INSERT INTO entry_items (id, entry_id, item_type, content, project, hours, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
         )
         .bind(&id)
         .bind(entry_id)
         .bind(item_type)
         .bind(content)
         .bind(project)
+        .bind(hours)
         .bind(now.to_rfc3339())
         .bind(now.to_rfc3339())
         .execute(&self.pool)
@@ -370,6 +377,7 @@ impl Database {
             item_type: item_type.to_string(),
             content: content.to_string(),
             project: project.map(|s| s.to_string()),
+            hours,
             created_at: now,
             updated_at: now,
         })
@@ -501,13 +509,14 @@ impl Database {
     }
 
     pub async fn get_all_entries_with_items(&self) -> Result<Vec<EntryWithItems>, sqlx::Error> {
-        let entries = sqlx::query("SELECT id, timestamp, created_at, updated_at FROM entries ORDER BY timestamp DESC")
+        let entries = sqlx::query("SELECT id, timestamp, created_at, updated_at, jira_synced_at FROM entries ORDER BY timestamp DESC")
             .fetch_all(&self.pool)
             .await?;
 
         let mut result = Vec::new();
         
         for row in entries {
+            let jira_synced_at: Option<String> = row.get("jira_synced_at");
             let entry = Entry {
                 id: row.get("id"),
                 timestamp: DateTime::parse_from_rfc3339(&row.get::<String, _>("timestamp"))
@@ -519,6 +528,9 @@ impl Database {
                 updated_at: DateTime::parse_from_rfc3339(&row.get::<String, _>("updated_at"))
                     .unwrap()
                     .with_timezone(&Utc),
+                jira_synced_at: jira_synced_at.map(|s| DateTime::parse_from_rfc3339(&s)
+                    .unwrap()
+                    .with_timezone(&Utc)),
             };
 
             let items = self.get_entry_items_with_metadata(&entry.id).await?;
@@ -529,7 +541,7 @@ impl Database {
     }
 
     async fn get_entry_items_with_metadata(&self, entry_id: &str) -> Result<Vec<EntryItemWithMetadata>, sqlx::Error> {
-        let items = sqlx::query("SELECT id, entry_id, item_type, content, project, created_at, updated_at FROM entry_items WHERE entry_id = ? ORDER BY created_at")
+        let items = sqlx::query("SELECT id, entry_id, item_type, content, project, hours, created_at, updated_at FROM entry_items WHERE entry_id = ? ORDER BY created_at")
             .bind(entry_id)
             .fetch_all(&self.pool)
             .await?;
@@ -543,6 +555,7 @@ impl Database {
                 item_type: row.get("item_type"),
                 content: row.get("content"),
                 project: row.get("project"),
+                hours: row.get("hours"),
                 created_at: DateTime::parse_from_rfc3339(&row.get::<String, _>("created_at"))
                     .unwrap()
                     .with_timezone(&Utc),
@@ -663,6 +676,28 @@ impl Database {
         Ok(())
     }
 
+    pub async fn update_entry_item_hours(&self, entry_item_id: &str, hours: Option<f64>) -> Result<(), sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query("UPDATE entry_items SET hours = ?, updated_at = ? WHERE id = ?")
+            .bind(hours)
+            .bind(now.to_rfc3339())
+            .bind(entry_item_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn mark_entry_as_synced_to_jira(&self, entry_id: &str) -> Result<(), sqlx::Error> {
+        let now = Utc::now();
+        sqlx::query("UPDATE entries SET jira_synced_at = ?, updated_at = ? WHERE id = ?")
+            .bind(now.to_rfc3339())
+            .bind(now.to_rfc3339())
+            .bind(entry_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
     pub async fn remove_item_tags(&self, entry_item_id: &str) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM item_tags WHERE entry_item_id = ?")
             .bind(entry_item_id)
@@ -695,7 +730,7 @@ impl Database {
             .await?;
 
         // Get the entry
-        let entry_row = sqlx::query("SELECT id, timestamp, created_at, updated_at FROM entries WHERE id = ?")
+        let entry_row = sqlx::query("SELECT id, timestamp, created_at, updated_at, jira_synced_at FROM entries WHERE id = ?")
             .bind(&entry_id)
             .fetch_one(&self.pool)
             .await?;
@@ -703,6 +738,7 @@ impl Database {
         let timestamp: String = entry_row.get("timestamp");
         let created_at: String = entry_row.get("created_at");
         let updated_at: String = entry_row.get("updated_at");
+        let jira_synced_at: Option<String> = entry_row.get("jira_synced_at");
 
         let timestamp = DateTime::parse_from_rfc3339(&timestamp)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
@@ -713,12 +749,17 @@ impl Database {
         let updated_at = DateTime::parse_from_rfc3339(&updated_at)
             .map_err(|e| sqlx::Error::Decode(Box::new(e)))?
             .with_timezone(&Utc);
+        let jira_synced_at = jira_synced_at.map(|s| DateTime::parse_from_rfc3339(&s)
+            .map_err(|e| sqlx::Error::Decode(Box::new(e)))
+            .unwrap()
+            .with_timezone(&Utc));
 
         let entry = Entry {
             id: entry_row.get("id"),
             timestamp,
             created_at,
             updated_at,
+            jira_synced_at,
         };
 
         // Get items with metadata

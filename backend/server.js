@@ -433,6 +433,89 @@ app.get('/api/jira/users', async (req, res) => {
   }
 });
 
+// Add work log to Jira issue
+app.post('/api/jira/issues/:issueKey/worklog', async (req, res) => {
+  try {
+    const { issueKey } = req.params;
+    const { timeSpentSeconds, comment } = req.body;
+    
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    if (!timeSpentSeconds) {
+      return res.status(400).json({ error: 'timeSpentSeconds is required' });
+    }
+
+    console.log(`⏱️ Adding work log to ${issueKey}: ${timeSpentSeconds}s`);
+    const result = await jiraService.addWorkLog(issueKey, timeSpentSeconds, comment || '', jiraConfig);
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error(`❌ Failed to add work log to ${req.params.issueKey}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to add work log',
+      details: error.message 
+    });
+  }
+});
+
+// Add comment to Jira issue
+app.post('/api/jira/issues/:issueKey/comment', async (req, res) => {
+  try {
+    const { issueKey } = req.params;
+    const { body } = req.body;
+    
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    if (!body) {
+      return res.status(400).json({ error: 'Comment body is required' });
+    }
+
+    console.log(`💬 Adding comment to ${issueKey}`);
+    const result = await jiraService.addComment(issueKey, body, jiraConfig);
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error(`❌ Failed to add comment to ${req.params.issueKey}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to add comment',
+      details: error.message 
+    });
+  }
+});
+
+// Update Jira issue (remaining estimate, due date)
+app.put('/api/jira/issues/:issueKey', async (req, res) => {
+  try {
+    const { issueKey } = req.params;
+    const { remainingEstimateSeconds, dueDate } = req.body;
+    
+    if (!jiraConfig) {
+      return res.status(400).json({ 
+        error: 'Jira not configured. Please test connection first.',
+        details: 'No Jira configuration found. Test the connection first.' 
+      });
+    }
+
+    console.log(`📝 Updating issue ${issueKey}`);
+    const result = await jiraService.updateIssue(issueKey, remainingEstimateSeconds || null, dueDate || null, jiraConfig);
+    res.json({ success: true, result });
+  } catch (error) {
+    console.error(`❌ Failed to update issue ${req.params.issueKey}:`, error);
+    res.status(500).json({ 
+      error: 'Failed to update issue',
+      details: error.message 
+    });
+  }
+});
+
 // Get Jira statistics
 app.get('/api/jira/stats', async (req, res) => {
   try {

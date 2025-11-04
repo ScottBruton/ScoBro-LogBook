@@ -15,6 +15,10 @@ import {
 import { DataService } from '../services/dataService.js';
 import { useTheme } from '../contexts/ThemeContext';
 import JiraDashboardPanel from './JiraDashboardPanel.jsx';
+import RequestHoursModal from './RequestHoursModal.jsx';
+import EntryPopup from './EntryPopup.jsx';
+import { JiraDashboardService } from '../services/jiraDashboardService.js';
+import { JiraApiService } from '../services/jiraApiService.js';
 
 /**
  * Dashboard displays the logbook entries and allows toggling between
@@ -26,7 +30,7 @@ import JiraDashboardPanel from './JiraDashboardPanel.jsx';
  * - entries: array of { id, timestamp, items: [] }
  * - onDeleteItem: function to delete a specific item (entryId, itemIndex)
  */
-export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshTrigger = 0 }) {
+export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshTrigger = 0, onUpdateEntry, setEntries }) {
   const theme = useTheme();
   
   // viewMode: 'daily' (sessions) or 'items' (flat list)
@@ -62,11 +66,82 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
   const [editingItem, setEditingItem] = useState(null);
   const [editingContent, setEditingContent] = useState('');
 
+  // Jira issue data state
+  const [issueData, setIssueData] = useState({}); // { issueKey: { originalEstimate, remainingEstimate, timeSpent, dueDate, summary } }
+  const [requestHoursModal, setRequestHoursModal] = useState({ isOpen: false, issueKey: null, currentRemaining: null, currentDueDate: null });
+  
+  // Edit entry state
+  const [editingEntry, setEditingEntry] = useState(null); // { entryId, items }
+
   // Load projects and tags on component mount
   useEffect(() => {
     loadProjects();
     loadTags();
+    loadIssueData();
   }, []);
+
+  // Load issue data when entries change
+  useEffect(() => {
+    loadIssueData();
+  }, [entries]);
+
+  const loadIssueData = async () => {
+    try {
+      // Get all unique issue keys from tags
+      const allIssueKeys = new Set();
+      entries.forEach(entry => {
+        entry.items.forEach(item => {
+          if (item.tags && Array.isArray(item.tags)) {
+            item.tags.forEach(tag => {
+              // Tags are Jira issue keys (e.g., "CMC-123")
+              if (tag && typeof tag === 'string' && tag.match(/^[A-Z]+-\d+$/)) {
+                allIssueKeys.add(tag);
+              }
+            });
+          }
+        });
+      });
+
+      if (allIssueKeys.size === 0) return;
+
+      // Load issues from database
+      const issues = await JiraDashboardService.loadIssuesFromDatabase();
+      const issueDataMap = {};
+      
+      issues.forEach(issue => {
+        if (allIssueKeys.has(issue.issue_key)) {
+          issueDataMap[issue.issue_key] = {
+            originalEstimate: issue.original_estimate_seconds,
+            remainingEstimate: issue.remaining_estimate_seconds,
+            timeSpent: issue.time_spent_seconds,
+            dueDate: issue.due_date,
+            summary: issue.summary || ''
+          };
+        }
+      });
+
+      setIssueData(issueDataMap);
+    } catch (error) {
+      console.error('Failed to load issue data:', error);
+    }
+  };
+
+  // Helper to format seconds to hours
+  const formatSecondsToHours = (seconds) => {
+    if (!seconds && seconds !== 0) return 'N/A';
+    return (seconds / 3600).toFixed(1) + 'h';
+  };
+
+  // Helper to format date
+  const formatDate = (dateString) => {
+    if (!dateString) return 'No due date';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    } catch {
+      return 'No due date';
+    }
+  };
 
   const loadProjects = async () => {
     try {
@@ -99,6 +174,73 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
   // Handles removal of an item within a session
   const handleRemoveItem = (parentId, itemIndex) => {
     onDeleteItem(parentId, itemIndex);
+  };
+
+  // Sync entry to Jira
+  const handleSyncEntryToJira = async (entry) => {
+    try {
+      const config = JiraApiService.getJiraConfig();
+      if (!config?.enabled) {
+        alert('Jira is not configured. Please configure Jira first.');
+        return;
+      }
+
+      // Process each item in the entry
+      for (const item of entry.items) {
+        if (item.tags && Array.isArray(item.tags) && item.tags.length > 0) {
+          for (const tag of item.tags) {
+            // Check if tag is a Jira issue key (e.g., "CMC-123")
+            if (tag && typeof tag === 'string' && tag.match(/^[A-Z]+-\d+$/)) {
+              try {
+                const timeSpentSeconds = item.hours ? (item.hours * 3600) : 0;
+                
+                // Add work log if hours > 0
+                if (timeSpentSeconds > 0) {
+                  await JiraApiService.addWorkLog(tag, timeSpentSeconds, '');
+                  console.log(`✅ Added work log to ${tag}: ${timeSpentSeconds}s`);
+                }
+
+                // Add comment with entry description, people, and hours
+                const commentParts = [];
+                if (item.content) commentParts.push(item.content);
+                if (item.people && item.people.length > 0) {
+                  const peopleArray = Array.isArray(item.people) ? item.people : (item.people.split ? item.people.split(',') : [item.people]);
+                  commentParts.push(`People: ${peopleArray.filter(p => p && p.trim()).join(', ')}`);
+                }
+                if (item.hours && item.hours > 0) commentParts.push(`Hours: ${item.hours}h`);
+                
+                if (commentParts.length > 0) {
+                  const commentBody = commentParts.join('\n\n');
+                  await JiraApiService.addComment(tag, commentBody);
+                  console.log(`✅ Added comment to ${tag}`);
+                }
+              } catch (jiraErr) {
+                console.warn(`Failed to sync to Jira issue ${tag}:`, jiraErr);
+                alert(`Failed to sync to Jira issue ${tag}: ${jiraErr.message}`);
+              }
+            }
+          }
+        }
+      }
+      
+      // Mark entry as synced to Jira
+      await DataService.markEntryAsSyncedToJira(entry.id);
+      
+      alert('Entry synced to Jira successfully!');
+      // Reload issue data to refresh hours info
+      loadIssueData();
+      // Reload entries to update sync status
+      if (setEntries) {
+        setEntries(prev => prev.map(e => 
+          e.id === entry.id 
+            ? { ...e, jira_synced_at: new Date().toISOString() }
+            : e
+        ));
+      }
+    } catch (error) {
+      console.error('Failed to sync entry to Jira:', error);
+      alert(`Failed to sync entry to Jira: ${error.message}`);
+    }
   };
 
   // Get all unique values for filter options
@@ -904,48 +1046,257 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
               const date = new Date(entry.timestamp);
               const id = entry.id;
               const isExpanded = expandedIds.includes(id);
+              const isSynced = entry.jira_synced_at !== null && entry.jira_synced_at !== undefined;
               return (
                 <div
                   key={id}
                   style={{
-                    border: '1px solid #ddd',
-                    borderRadius: '4px',
+                    border: `1px solid ${theme.colors.border || '#444'}`,
+                    borderRadius: '12px',
                     marginBottom: '8px',
+                    backgroundColor: theme.colors.cardBackground || theme.colors.surface,
                   }}
                 >
                   <div
-                    onClick={() => toggleExpanded(id)}
                     style={{
-                      padding: '8px',
-                      cursor: 'pointer',
-                      backgroundColor: '#f5f5f5',
+                      padding: '12px',
+                      backgroundColor: theme.colors.surface || theme.colors.cardBackground || '#2a2a2a',
                       display: 'flex',
                       justifyContent: 'space-between',
                       alignItems: 'center',
+                      borderRadius: '12px',
+                      gap: '12px'
                     }}
                   >
-                    <div>
-                      <strong>
-                        {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </strong>
-                      <span style={{ marginLeft: '8px', color: '#777' }}>
-                        {entry.items.length} item{entry.items.length !== 1 ? 's' : ''}
-                      </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingEntry({ entryId: id, items: entry.items });
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '12px',
+                        backgroundColor: theme.colors.secondary || '#6c757d',
+                        color: '#fff',
+                        border: 'none',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#5a6268';
+                        e.target.style.transform = 'scale(1.05)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = theme.colors.secondary || '#6c757d';
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                    >
+                      ✏️ Edit
+                    </button>
+                    <div
+                      onClick={() => toggleExpanded(id)}
+                      style={{
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        width: '100%',
+                        flex: 1
+                      }}
+                    >
+                      <div>
+                        <strong style={{ color: theme.colors.text || '#fff', fontSize: '14px' }}>
+                          {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {entry.items.length > 0 && entry.items[0].content && (
+                            <span style={{ marginLeft: '8px', fontWeight: '400', color: theme.colors.textSecondary || '#aaa' }}>
+                              - {entry.items[0].content.split('\n')[0].substring(0, 50)}{entry.items[0].content.split('\n')[0].length > 50 ? '...' : ''}
+                            </span>
+                          )}
+                        </strong>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                        {entry.items.map((item, idx) => {
+                          // Get one-line summary (first line or first 50 chars)
+                          const summary = item.content ? (item.content.split('\n')[0] || item.content).substring(0, 50) + (item.content.length > 50 ? '...' : '') : '';
+                          
+                          return (
+                            <React.Fragment key={idx}>
+                              {/* Type pill */}
+                              {item.type && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '16px',
+                                  backgroundColor: theme.colors.primary || '#007bff',
+                                  color: '#fff',
+                                  fontSize: '11px',
+                                  fontWeight: '500'
+                                }}>
+                                  {item.type}
+                                </span>
+                              )}
+                              
+                              {/* Project pill */}
+                              {item.project && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '16px',
+                                  backgroundColor: projects.find(p => p.name === item.project)?.color || '#0275d8',
+                                  color: '#fff',
+                                  fontSize: '11px',
+                                  fontWeight: '500'
+                                }}>
+                                  📂 {item.project}
+                                </span>
+                              )}
+                              
+                              {/* Task tag pills */}
+                              {item.tags && item.tags.length > 0 && item.tags.map((tagName, tagIdx) => {
+                                const issue = issueData[tagName];
+                                const tag = tags.find(t => t.name === tagName);
+                                const issueSummary = issue?.summary || '';
+                                const displayText = issueSummary ? `${tagName} - ${issueSummary}` : tagName;
+                                return (
+                                  <span key={tagIdx} style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '4px 10px',
+                                    borderRadius: '16px',
+                                    backgroundColor: tag?.color || '#6c757d',
+                                    color: '#fff',
+                                    fontSize: '11px',
+                                    fontWeight: '500',
+                                    maxWidth: '400px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }} title={issueSummary || tagName}>
+                                    {displayText}
+                                  </span>
+                                );
+                              })}
+                              
+                              {/* Hours pill */}
+                              {item.hours && item.hours > 0 && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '16px',
+                                  backgroundColor: '#28a745',
+                                  color: '#fff',
+                                  fontSize: '11px',
+                                  fontWeight: '500'
+                                }}>
+                                  ⏱️ {item.hours}h
+                                </span>
+                              )}
+                              
+                              {/* Summary pill */}
+                              {summary && (
+                                <span style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 10px',
+                                  borderRadius: '16px',
+                                  backgroundColor: theme.colors.surface || '#f8f9fa',
+                                  color: theme.colors.text || '#333',
+                                  border: `1px solid ${theme.colors.border || '#e0e0e0'}`,
+                                  fontSize: '11px',
+                                  fontWeight: '400',
+                                  maxWidth: '300px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }} title={item.content}>
+                                  {summary}
+                                </span>
+                              )}
+                            </React.Fragment>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <span>{isExpanded ? '▾' : '▸'}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!isSynced) {
+                            await handleSyncEntryToJira(entry);
+                          }
+                        }}
+                        disabled={isSynced}
+                        style={{
+                          padding: '6px 12px',
+                          borderRadius: '12px',
+                          backgroundColor: isSynced ? '#28a745' : (theme.colors.primary || '#007bff'),
+                          color: '#fff',
+                          border: 'none',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          cursor: isSynced ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          whiteSpace: 'nowrap',
+                          opacity: isSynced ? 0.8 : 1
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSynced) {
+                            e.target.style.backgroundColor = theme.colors.primaryHover || '#0056b3';
+                            e.target.style.transform = 'scale(1.05)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSynced) {
+                            e.target.style.backgroundColor = theme.colors.primary || '#007bff';
+                            e.target.style.transform = 'scale(1)';
+                          }
+                        }}
+                      >
+                        {isSynced ? '✓ Synced' : 'Sync with Jira'}
+                      </button>
+                      <span style={{ color: theme.colors.text || '#fff' }}>{isExpanded ? '▾' : '▸'}</span>
+                    </div>
                   </div>
                   {isExpanded && (
-                    <div style={{ padding: '8px' }}>
+                    <div style={{ padding: '12px', position: 'relative' }}>
                       {entry.items.map((item, idx) => (
                         <div
                           key={idx}
                           style={{
-                            borderBottom: idx === entry.items.length - 1 ? 'none' : '1px solid #eee',
-                            paddingBottom: '6px',
-                            marginBottom: '6px',
+                            borderBottom: idx === entry.items.length - 1 ? 'none' : `1px solid ${theme.colors.border || '#eee'}`,
+                            paddingBottom: '12px',
+                            marginBottom: '12px',
+                            borderRadius: '12px',
+                            padding: '12px',
+                            backgroundColor: theme.colors.surface || '#f8f9fa',
+                            border: `1px solid ${theme.colors.border || '#e0e0e0'}`,
+                            marginTop: idx > 0 ? '8px' : '0'
                           }}
                         >
-                          <div style={{ fontSize: '14px', fontWeight: 'bold' }}>
+                          <div style={{ 
+                            fontSize: '14px', 
+                            fontWeight: 'bold',
+                            marginBottom: '8px',
+                            display: 'inline-block',
+                            padding: '4px 12px',
+                            borderRadius: '16px',
+                            backgroundColor: theme.colors.primary || '#007bff',
+                            color: '#fff',
+                            fontSize: '12px',
+                            fontWeight: '600'
+                          }}>
                             {item.type}
                           </div>
                           {editingItem && editingItem.id === item.id ? (
@@ -1016,13 +1367,24 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
                           )}
                           <div style={{ fontSize: '12px', color: '#555' }}>
                             {item.project && (
-                              <span style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ 
+                                marginRight: '8px', 
+                                display: 'inline-flex', 
+                                alignItems: 'center', 
+                                gap: '6px',
+                                padding: '4px 12px',
+                                borderRadius: '16px',
+                                backgroundColor: projects.find(p => p.name === item.project)?.color || '#0275d8',
+                                color: '#fff',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                              }}>
                                 <span
                                   style={{
-                                    width: '8px',
-                                    height: '8px',
+                                    width: '6px',
+                                    height: '6px',
                                     borderRadius: '50%',
-                                    backgroundColor: projects.find(p => p.name === item.project)?.color || '#0275d8',
+                                    backgroundColor: '#fff',
                                     display: 'inline-block'
                                   }}
                                 />
@@ -1030,28 +1392,126 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
                               </span>
                             )}
                             {item.tags.length > 0 && (
-                              <span style={{ marginRight: '8px', display: 'inline-flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                                🏷 {item.tags.map((tagName, idx) => {
+                              <div style={{ marginBottom: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                {item.tags.map((tagName, idx) => {
                                   const tag = tags.find(t => t.name === tagName);
+                                  const issue = issueData[tagName];
+                                  const entryHours = item.hours ? (item.hours * 3600) : 0; // Convert hours to seconds
+                                  const remaining = issue?.remainingEstimate !== null && issue?.remainingEstimate !== undefined 
+                                    ? (issue.remainingEstimate - entryHours) 
+                                    : null;
+                                  
                                   return (
-                                    <span key={idx} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                                      <span
-                                        style={{
-                                          width: '6px',
-                                          height: '6px',
-                                          borderRadius: '50%',
+                                    <div key={idx} style={{
+                                      padding: '10px 12px',
+                                      borderRadius: '12px',
+                                      backgroundColor: theme.colors.surface || '#f8f9fa',
+                                      border: `1px solid ${theme.colors.border || '#e0e0e0'}`,
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      gap: '6px'
+                                    }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                        <span style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '6px',
+                                          padding: '4px 10px',
+                                          borderRadius: '16px',
                                           backgroundColor: tag?.color || '#6c757d',
-                                          display: 'inline-block'
-                                        }}
-                                      />
-                                      {tagName}
-                                    </span>
+                                          color: '#fff',
+                                          fontSize: '12px',
+                                          fontWeight: '500'
+                                        }}>
+                                          <span
+                                            style={{
+                                              width: '6px',
+                                              height: '6px',
+                                              borderRadius: '50%',
+                                              backgroundColor: '#fff',
+                                              display: 'inline-block'
+                                            }}
+                                          />
+                                          {issue?.summary ? `${tagName} - ${issue.summary}` : tagName}
+                                        </span>
+                                        {issue && (
+                                          <button
+                                            onClick={() => setRequestHoursModal({
+                                              isOpen: true,
+                                              issueKey: tagName,
+                                              currentRemaining: issue.remainingEstimate,
+                                              currentDueDate: issue.dueDate
+                                            })}
+                                            style={{
+                                              padding: '4px 10px',
+                                              borderRadius: '12px',
+                                              backgroundColor: theme.colors.primary || '#007bff',
+                                              color: '#fff',
+                                              border: 'none',
+                                              fontSize: '11px',
+                                              fontWeight: '500',
+                                              cursor: 'pointer',
+                                              transition: 'all 0.2s'
+                                            }}
+                                            onMouseEnter={(e) => {
+                                              e.target.style.backgroundColor = theme.colors.primaryHover || '#0056b3';
+                                            }}
+                                            onMouseLeave={(e) => {
+                                              e.target.style.backgroundColor = theme.colors.primary || '#007bff';
+                                            }}
+                                          >
+                                            Request More Hours
+                                          </button>
+                                        )}
+                                      </div>
+                                      {issue && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11px', color: theme.colors.textSecondary || '#666' }}>
+                                          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                            <span>📊 Original: <strong>{formatSecondsToHours(issue.originalEstimate)}</strong></span>
+                                            {entryHours > 0 && <span>⏱️ Entry: <strong>{formatSecondsToHours(entryHours)}</strong></span>}
+                                            <span style={{ color: remaining !== null && remaining < 0 ? '#d9534f' : remaining !== null && remaining === 0 ? '#f0ad4e' : '#5cb85c' }}>
+                                              ⏳ Remaining: <strong>{formatSecondsToHours(remaining)}</strong>
+                                            </span>
+                                          </div>
+                                          <div>📅 Due Date: <strong>{formatDate(issue.dueDate)}</strong></div>
+                                        </div>
+                                      )}
+                                    </div>
                                   );
-                                }).reduce((prev, curr, idx) => [prev, idx > 0 ? ', ' : '', curr])}
+                                })}
+                              </div>
+                            )}
+                            {item.jira.length > 0 && (
+                              <span style={{ 
+                                marginRight: '8px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '4px 12px',
+                                borderRadius: '16px',
+                                backgroundColor: theme.colors.secondary || '#6c757d',
+                                color: '#fff',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                              }}>
+                                🧩 {item.jira.join(', ')}
                               </span>
                             )}
-                            {item.jira.length > 0 && <span style={{ marginRight: '8px' }}>🧩 {item.jira.join(', ')}</span>}
-                            {item.people.length > 0 && <span>👤 {item.people.join(', ')}</span>}
+                            {item.people.length > 0 && (
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '4px 12px',
+                                borderRadius: '16px',
+                                backgroundColor: theme.colors.secondary || '#6c757d',
+                                color: '#fff',
+                                fontSize: '12px',
+                                fontWeight: '500'
+                              }}>
+                                👤 {Array.isArray(item.people) ? item.people.join(', ') : item.people}
+                              </span>
+                            )}
                           </div>
                           <button
                             onClick={() => handleRemoveItem(id, idx)}
@@ -1074,6 +1534,43 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
                           </button>
                         </div>
                       ))}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${theme.colors.border || '#444'}` }}>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!isSynced) {
+                              await handleSyncEntryToJira(entry);
+                            }
+                          }}
+                          disabled={isSynced}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '12px',
+                            backgroundColor: isSynced ? '#28a745' : (theme.colors.primary || '#007bff'),
+                            color: '#fff',
+                            border: 'none',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            cursor: isSynced ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s',
+                            opacity: isSynced ? 0.8 : 1
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSynced) {
+                              e.target.style.backgroundColor = theme.colors.primaryHover || '#0056b3';
+                              e.target.style.transform = 'scale(1.05)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isSynced) {
+                              e.target.style.backgroundColor = theme.colors.primary || '#007bff';
+                              e.target.style.transform = 'scale(1)';
+                            }
+                          }}
+                        >
+                          {isSynced ? '✓ Synced' : 'Sync with Jira'}
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1229,6 +1726,29 @@ export default function Dashboard({ entries, onDeleteItem, jiraDashboardRefreshT
         </div>
       )}
       </div>
+      <RequestHoursModal
+        isOpen={requestHoursModal.isOpen}
+        issueKey={requestHoursModal.issueKey}
+        currentRemaining={requestHoursModal.currentRemaining}
+        currentDueDate={requestHoursModal.currentDueDate}
+        onClose={() => setRequestHoursModal({ isOpen: false, issueKey: null, currentRemaining: null, currentDueDate: null })}
+        onSuccess={() => {
+          loadIssueData(); // Reload issue data after successful update
+        }}
+      />
+      {editingEntry && (
+        <EntryPopup
+          isOpen={true}
+          entryToEdit={editingEntry}
+          onSave={async (items) => {
+            if (onUpdateEntry) {
+              await onUpdateEntry(editingEntry.entryId, items);
+            }
+            setEditingEntry(null);
+          }}
+          onClose={() => setEditingEntry(null)}
+        />
+      )}
     </div>
   );
 }

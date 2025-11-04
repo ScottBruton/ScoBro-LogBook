@@ -231,6 +231,62 @@ export default function App() {
           setSyncStatus('pending');
         }
       }
+
+      // Post to Jira for each item with tags (Jira issue keys)
+      const config = JiraApiService.getJiraConfig();
+      let jiraSyncSucceeded = false;
+      if (config?.enabled) {
+        for (const item of items) {
+          if (item.tags && Array.isArray(item.tags) && item.tags.length > 0) {
+            for (const tag of item.tags) {
+              // Check if tag is a Jira issue key (e.g., "CMC-123")
+              if (tag && typeof tag === 'string' && tag.match(/^[A-Z]+-\d+$/)) {
+                try {
+                  const timeSpentSeconds = item.hours ? (item.hours * 3600) : 0;
+                  
+                  // Add work log if hours > 0
+                  if (timeSpentSeconds > 0) {
+                    await JiraApiService.addWorkLog(tag, timeSpentSeconds, '');
+                    console.log(`✅ Added work log to ${tag}: ${timeSpentSeconds}s`);
+                    jiraSyncSucceeded = true;
+                  }
+
+                  // Add comment with entry description, people, and hours
+                  const commentParts = [];
+                  if (item.content) commentParts.push(item.content);
+                  if (item.people && item.people.length > 0) commentParts.push(`People: ${Array.isArray(item.people) ? item.people.join(', ') : item.people}`);
+                  if (item.hours && item.hours > 0) commentParts.push(`Hours: ${item.hours}h`);
+                  
+                  if (commentParts.length > 0) {
+                    const commentBody = commentParts.join('\n\n');
+                    await JiraApiService.addComment(tag, commentBody);
+                    console.log(`✅ Added comment to ${tag}`);
+                    jiraSyncSucceeded = true;
+                  }
+                } catch (jiraErr) {
+                  console.warn(`Failed to update Jira issue ${tag}:`, jiraErr);
+                  // Don't fail the entire entry save if Jira update fails
+                }
+              }
+            }
+          }
+        }
+        
+        // Mark entry as synced to Jira if at least one sync succeeded
+        if (jiraSyncSucceeded) {
+          try {
+            await DataService.markEntryAsSyncedToJira(newEntry.id);
+            // Update local state to reflect sync status
+            setEntries((prev) => prev.map(e => 
+              e.id === newEntry.id 
+                ? { ...e, jira_synced_at: new Date().toISOString() }
+                : e
+            ));
+          } catch (markErr) {
+            console.warn('Failed to mark entry as synced:', markErr);
+          }
+        }
+      }
     } catch (err) {
       console.error('Failed to save entry:', err);
       // Fallback to localStorage for development
@@ -245,6 +301,37 @@ export default function App() {
         })),
       };
       setEntries((prev) => [fallbackEntry, ...prev]);
+    }
+  };
+
+  const handleUpdateEntry = async (entryId, items) => {
+    try {
+      const entry = entries.find(e => e.id === entryId);
+      if (!entry) {
+        throw new Error('Entry not found');
+      }
+
+      // Update each item in the entry
+      for (const item of items) {
+        if (item.id) {
+          // Update existing item
+          const updates = {
+            content: item.content,
+            project: item.project || null,
+            tags: item.tags || [],
+            people: item.people || [],
+            jira: item.jira || [],
+            hours: item.hours || null
+          };
+          await DataService.updateEntryItem(item.id, updates);
+        }
+      }
+
+      // Reload entries to reflect changes
+      await loadEntries();
+    } catch (error) {
+      console.error('Failed to update entry:', error);
+      alert(`Failed to update entry: ${error.message}`);
     }
   };
 
@@ -446,7 +533,9 @@ export default function App() {
     <ThemeProvider>
       <AppContent 
         entries={entries}
+        setEntries={setEntries}
         onDeleteItem={handleDeleteItem}
+        onUpdateEntry={handleUpdateEntry}
         showPopup={showPopup}
         setShowPopup={setShowPopup}
         handleSaveItems={handleSaveItems}
@@ -556,7 +645,9 @@ export default function App() {
 // Separate component for the main app content
 function AppContent({
   entries,
+  setEntries,
   onDeleteItem,
+  onUpdateEntry,
   showPopup,
   setShowPopup,
   handleSaveItems,
@@ -689,7 +780,13 @@ function AppContent({
           paddingRight: '16px',
           boxSizing: 'border-box'
         }}>
-          <Dashboard entries={entries} onDeleteItem={onDeleteItem} jiraDashboardRefreshTrigger={jiraDashboardRefreshTrigger} />
+          <Dashboard 
+            entries={entries} 
+            onDeleteItem={onDeleteItem} 
+            jiraDashboardRefreshTrigger={jiraDashboardRefreshTrigger}
+            onUpdateEntry={onUpdateEntry}
+            setEntries={setEntries}
+          />
         </div>
         
         {/* Right-side Jira Tasks Panel */}

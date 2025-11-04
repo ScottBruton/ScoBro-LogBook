@@ -24,6 +24,7 @@ export class DataService {
           tags: item.tags || [],
           jira: item.jira || [],
           people: item.people || [],
+          hours: item.hours || null,
         }))
       };
       
@@ -65,6 +66,20 @@ export class DataService {
       return await invoke('update_entry_item', { entryItemId, updates });
     } catch (error) {
       console.error('Failed to update entry item:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Mark an entry as synced to Jira
+   * @param {string} entryId - ID of the entry to mark as synced
+   * @returns {Promise<void>}
+   */
+  static async markEntryAsSyncedToJira(entryId) {
+    try {
+      return await invoke('mark_entry_as_synced_to_jira', { entryId });
+    } catch (error) {
+      console.error('Failed to mark entry as synced:', error);
       throw error;
     }
   }

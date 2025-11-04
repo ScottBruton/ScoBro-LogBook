@@ -541,6 +541,98 @@ class JiraService {
   }
 
   /**
+   * Add work log to a Jira issue
+   * @param {string} issueKey - Issue key (e.g., "CMC-123")
+   * @param {number} timeSpentSeconds - Time spent in seconds
+   * @param {string} comment - Optional comment for the work log
+   * @param {object} config - Configuration object
+   */
+  async addWorkLog(issueKey, timeSpentSeconds, comment = '', config = null) {
+    try {
+      const endpoint = `/issue/${issueKey}/worklog`;
+      const requestBody = {
+        timeSpentSeconds: timeSpentSeconds,
+        ...(comment && { comment: { type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text: comment }] }] } })
+      };
+      
+      const response = await this.makeApiRequest(endpoint, config, 'POST', requestBody);
+      return response;
+    } catch (error) {
+      console.error(`Failed to add work log to ${issueKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add comment to a Jira issue
+   * @param {string} issueKey - Issue key (e.g., "CMC-123")
+   * @param {string} body - Comment body text
+   * @param {object} config - Configuration object
+   */
+  async addComment(issueKey, body, config = null) {
+    try {
+      const endpoint = `/issue/${issueKey}/comment`;
+      const requestBody = {
+        body: {
+          type: 'doc',
+          version: 1,
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: body
+                }
+              ]
+            }
+          ]
+        }
+      };
+      
+      const response = await this.makeApiRequest(endpoint, config, 'POST', requestBody);
+      return response;
+    } catch (error) {
+      console.error(`Failed to add comment to ${issueKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update issue remaining estimate and/or due date
+   * @param {string} issueKey - Issue key (e.g., "CMC-123")
+   * @param {number} remainingEstimateSeconds - Remaining estimate in seconds (optional)
+   * @param {string} dueDate - Due date in ISO format (optional)
+   * @param {object} config - Configuration object
+   */
+  async updateIssue(issueKey, remainingEstimateSeconds = null, dueDate = null, config = null) {
+    try {
+      const endpoint = `/issue/${issueKey}`;
+      const update = {};
+      
+      if (remainingEstimateSeconds !== null) {
+        update.timetracking = {
+          remainingEstimate: `${remainingEstimateSeconds}s`
+        };
+      }
+      
+      if (dueDate !== null) {
+        update.duedate = dueDate;
+      }
+      
+      const requestBody = {
+        fields: update
+      };
+      
+      const response = await this.makeApiRequest(endpoint, config, 'PUT', requestBody);
+      return response;
+    } catch (error) {
+      console.error(`Failed to update issue ${issueKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Get Jira statistics
    */
   async getJiraStats() {

@@ -20,12 +20,14 @@ pub struct CreateItemRequest {
     pub tags: Vec<String>,
     pub jira: Vec<String>,
     pub people: Vec<String>,
+    pub hours: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EntryResponse {
     pub id: String,
     pub timestamp: String,
+    pub jira_synced_at: Option<String>,
     pub items: Vec<ItemResponse>,
 }
 
@@ -38,6 +40,7 @@ pub struct ItemResponse {
     pub tags: Vec<String>,
     pub jira: Vec<String>,
     pub people: Vec<String>,
+    pub hours: Option<f64>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -118,6 +121,7 @@ pub async fn create_entry(
             &item_req.item_type,
             &item_req.content,
             item_req.project.as_deref(),
+            item_req.hours,
         )
         .await
         .map_err(|e| format!("Failed to create entry item: {}", e))?;
@@ -157,12 +161,14 @@ pub async fn create_entry(
             tags: item_req.tags.clone(),
             jira: item_req.jira.clone(),
             people: item_req.people.clone(),
+            hours: entry_item.hours,
         });
     }
 
     Ok(EntryResponse {
         id: entry.id,
         timestamp: entry.timestamp.to_rfc3339(),
+        jira_synced_at: entry.jira_synced_at.map(|dt| dt.to_rfc3339()),
         items,
     })
 }
@@ -188,12 +194,14 @@ pub async fn get_all_entries(state: State<'_, AppState>) -> Result<Vec<EntryResp
                 tags: item_with_metadata.tags.into_iter().map(|t| t.name).collect(),
                 jira: item_with_metadata.jira_refs.into_iter().map(|j| j.jira_key).collect(),
                 people: item_with_metadata.people.into_iter().map(|p| p.name).collect(),
+                hours: item_with_metadata.item.hours,
             })
             .collect();
 
         result.push(EntryResponse {
             id: entry_with_items.entry.id,
             timestamp: entry_with_items.entry.timestamp.to_rfc3339(),
+            jira_synced_at: entry_with_items.entry.jira_synced_at.map(|dt| dt.to_rfc3339()),
             items,
         });
     }
@@ -208,6 +216,7 @@ pub struct UpdateEntryItemRequest {
     pub tags: Option<Vec<String>>,
     pub jira: Option<Vec<String>>,
     pub people: Option<Vec<String>>,
+    pub hours: Option<f64>,
 }
 
 #[tauri::command]
@@ -230,6 +239,13 @@ pub async fn update_entry_item(
         db.update_entry_item_project(&entry_item_id, Some(&project))
             .await
             .map_err(|e| format!("Failed to update entry item project: {}", e))?;
+    }
+    
+    // Update hours if provided
+    if updates.hours.is_some() {
+        db.update_entry_item_hours(&entry_item_id, updates.hours)
+            .await
+            .map_err(|e| format!("Failed to update entry item hours: {}", e))?;
     }
     
     // Update tags if provided
@@ -297,6 +313,7 @@ pub async fn update_entry_item(
             tags: item_with_metadata.tags.iter().map(|t| t.name.clone()).collect(),
             jira: item_with_metadata.jira_refs.iter().map(|j| j.jira_key.clone()).collect(),
             people: item_with_metadata.people.iter().map(|p| p.name.clone()).collect(),
+            hours: item_with_metadata.item.hours,
         })
     } else {
         Err("Entry item not found".to_string())
@@ -328,6 +345,18 @@ pub async fn delete_entry(
         .await
         .map_err(|e| format!("Failed to delete entry: {}", e))?;
 
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn mark_entry_as_synced_to_jira(
+    state: State<'_, AppState>,
+    entry_id: String,
+) -> Result<(), String> {
+    let db = state.lock().await;
+    db.mark_entry_as_synced_to_jira(&entry_id)
+        .await
+        .map_err(|e| format!("Failed to mark entry as synced: {}", e))?;
     Ok(())
 }
 

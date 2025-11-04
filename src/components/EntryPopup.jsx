@@ -24,7 +24,7 @@ const ITEM_TYPES = ['Action', 'Decision', 'Note', 'Meeting'];
  * - onClose: function called when the popup is dismissed without
  *   saving
  */
-export default function EntryPopup({ isOpen, onSave, onClose }) {
+export default function EntryPopup({ isOpen, onSave, onClose, entryToEdit = null }) {
   const theme = useTheme();
   const [items, setItems] = useState([]);
   const [jiraProjects, setJiraProjects] = useState([]);
@@ -44,8 +44,26 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
       loadJiraProjects();
       loadJiraUsers();
       loadProjectTags();
+      
+      // If editing, load existing items
+      if (entryToEdit && entryToEdit.items) {
+        const formattedItems = entryToEdit.items.map(item => ({
+          type: item.type || item.item_type || 'Action',
+          content: item.content || '',
+          project: item.project || '',
+          projectKey: item.projectKey || '',
+          tags: Array.isArray(item.tags) ? item.tags : (item.tags ? [item.tags] : []),
+          people: Array.isArray(item.people) ? item.people.join(', ') : (item.people || ''),
+          jira: Array.isArray(item.jira) ? item.jira.join(', ') : (item.jira || ''),
+          hours: item.hours || '',
+          id: item.id // Keep item ID for updates
+        }));
+        setItems(formattedItems);
+      } else {
+        setItems([]);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, entryToEdit]);
 
   const loadProjectTags = async () => {
     try {
@@ -209,8 +227,9 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
         content: '',
         project: '',
         projectKey: '',
-        tags: '',
+        tags: [],
         people: '',
+        jira: '',
         hours: '',
       },
     ]);
@@ -282,28 +301,75 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
     });
   };
 
-  // Handle tag input with autocomplete - only show issues from selected project
+  // Handle tag input with autocomplete - search across all issues
   const handleTagInputChange = (index, value) => {
-    // Update the item immediately
-    updateItem(index, 'tags', value);
+    // Don't update tags array directly - just use for search
+    // Tags will be updated when user selects from suggestions
     
-    if (items[index].projectKey && projectIssues[items[index].projectKey]) {
-      const issues = projectIssues[items[index].projectKey];
-      if (value.trim().length > 0) {
-        const searchTerm = value.toLowerCase();
-        const filtered = issues.filter(issue => {
-          return issue.issue_key.toLowerCase().startsWith(searchTerm) ||
-                 issue.summary?.toLowerCase().includes(searchTerm);
-        }).slice(0, 20); // Limit to 20 suggestions
-        setTagSuggestions(prev => ({ ...prev, [index]: filtered }));
+    // Search across all issues from all projects
+    if (value.trim().length > 0) {
+      const searchTerm = value.toLowerCase();
+      const allIssues = [];
+      
+      // Get all issues from all projects
+      Object.values(projectIssues).forEach(issues => {
+        allIssues.push(...issues);
+      });
+      
+      // Also search in projects by key/name
+      const matchingProjects = jiraProjects.filter(project => {
+        const projectKey = (project.key || '').toLowerCase();
+        const projectName = (project.name || '').toLowerCase();
+        return projectKey.includes(searchTerm) || projectName.includes(searchTerm) || projectKey.startsWith(searchTerm) || projectName.startsWith(searchTerm);
+      });
+      
+      const matchingProjectKeys = new Set(matchingProjects.map(p => p.key));
+      
+      const filtered = allIssues.filter(issue => {
+        const issueKey = (issue.issue_key || '').toLowerCase();
+        const summary = (issue.summary || '').toLowerCase();
+        const projectKey = (issue.project_key || '').toLowerCase();
+        
+        return issueKey.startsWith(searchTerm) ||
+               summary.includes(searchTerm) ||
+               matchingProjectKeys.has(issue.project_key);
+      }).slice(0, 20); // Limit to 20 suggestions
+      
+      setTagSuggestions(prev => ({ ...prev, [index]: filtered }));
+    } else {
+      // Show issues from selected project if available, otherwise all
+      if (items[index].projectKey && projectIssues[items[index].projectKey]) {
+        setTagSuggestions(prev => ({ ...prev, [index]: projectIssues[items[index].projectKey].slice(0, 20) }));
       } else {
-        setTagSuggestions(prev => ({ ...prev, [index]: issues.slice(0, 20) }));
+        const allIssues = [];
+        Object.values(projectIssues).forEach(issues => {
+          allIssues.push(...issues);
+        });
+        setTagSuggestions(prev => ({ ...prev, [index]: allIssues.slice(0, 20) }));
       }
     }
   };
 
   const selectTagSuggestion = (index, issueKey) => {
-    updateItem(index, 'tags', issueKey);
+    if (!issueKey) {
+      // Clear tags
+      updateItem(index, 'tags', []);
+    } else {
+      // Add tag to array
+      setItems((prev) => {
+        const updated = [...prev];
+        const currentTags = updated[index].tags || [];
+        const tagsArray = Array.isArray(currentTags) ? currentTags : (currentTags ? [currentTags] : []);
+        
+        // Add tag if not already present
+        if (!tagsArray.includes(issueKey)) {
+          updated[index].tags = [...tagsArray, issueKey];
+        } else {
+          updated[index].tags = tagsArray;
+        }
+        return updated;
+      });
+    }
     
     // Clear suggestions
     setTagSuggestions(prev => {
@@ -389,18 +455,27 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
   const handleSave = () => {
     // Filter out empty content items
       const prepared = items
-        .filter((item) => item.content.trim() !== '')
+        .filter((item) => item.content && item.content.trim() !== '')
         .map((item) => ({
           ...item,
+          id: item.id, // Keep item ID if editing
           tags: item.tags ? (Array.isArray(item.tags) ? item.tags : [item.tags]).filter((t) => t && t.trim().length > 0) : [],
-          people: item.people
-            .split(',')
-            .map((p) => p.trim())
-            .filter((p) => p.length > 0),
-          jira: item.jira
-            .split(',')
-            .map((j) => j.trim())
-            .filter((j) => j.length > 0),
+          people: item.people && typeof item.people === 'string'
+            ? item.people
+                .split(',')
+                .map((p) => p.trim())
+                .filter((p) => p.length > 0)
+            : Array.isArray(item.people)
+            ? item.people.filter((p) => p && p.trim().length > 0)
+            : [],
+          jira: item.jira && typeof item.jira === 'string'
+            ? item.jira
+                .split(',')
+                .map((j) => j.trim())
+                .filter((j) => j.length > 0)
+            : Array.isArray(item.jira)
+            ? item.jira.filter((j) => j && j.trim().length > 0)
+            : [],
           hours: item.hours ? parseFloat(item.hours) || 0 : 0,
         }));
     if (prepared.length > 0) {
@@ -644,7 +719,7 @@ export default function EntryPopup({ isOpen, onSave, onClose }) {
               <div style={{ marginLeft: '8px', width: '70%', position: 'relative' }}>
                 <input
                   type="text"
-                  value={item.tags || ''}
+                  value={Array.isArray(item.tags) ? item.tags.join(', ') : (item.tags || '')}
                   onChange={(e) => handleTagInputChange(index, e.target.value)}
                   onFocus={() => {
                     // Show all tags when focused - only from selected project

@@ -13,7 +13,7 @@ mod database;
 mod commands;
 
 use database::Database;
-use commands::{AppState, create_entry, get_all_entries, update_entry_item, delete_entry_item, delete_entry, export_entries_csv, export_entries_markdown, create_project, get_all_projects, update_project, delete_project, create_tag, get_all_tags, update_tag, delete_tag, create_meeting, get_all_meetings, add_meeting_attendee, get_meeting_attendees, create_meeting_action, get_meeting_actions, delete_meeting};
+use commands::{AppState, create_entry, get_all_entries, update_entry_item, delete_entry_item, delete_entry, mark_entry_as_synced_to_jira, export_entries_csv, export_entries_markdown, create_project, get_all_projects, update_project, delete_project, create_tag, get_all_tags, update_tag, delete_tag, create_meeting, get_all_meetings, add_meeting_attendee, get_meeting_attendees, create_meeting_action, get_meeting_actions, delete_meeting};
 
 
 #[tokio::main]
@@ -30,6 +30,7 @@ async fn main() {
           update_entry_item,
           delete_entry_item,
           delete_entry,
+          mark_entry_as_synced_to_jira,
           export_entries_csv,
           export_entries_markdown,
           create_project,

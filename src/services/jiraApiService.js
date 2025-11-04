@@ -310,6 +310,101 @@ export class JiraApiService {
   }
 
   /**
+   * Add work log to a Jira issue
+   * @param {string} issueKey - Issue key (e.g., "CMC-123")
+   * @param {number} timeSpentSeconds - Time spent in seconds
+   * @param {string} comment - Optional comment for the work log
+   */
+  static async addWorkLog(issueKey, timeSpentSeconds, comment = '') {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/${issueKey}/worklog`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          timeSpentSeconds,
+          comment
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || data.details || 'Failed to add work log';
+        throw new Error(errorMsg);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`❌ Failed to add work log to ${issueKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add comment to a Jira issue
+   * @param {string} issueKey - Issue key (e.g., "CMC-123")
+   * @param {string} body - Comment body text
+   */
+  static async addComment(issueKey, body) {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/${issueKey}/comment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ body })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || data.details || 'Failed to add comment';
+        throw new Error(errorMsg);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`❌ Failed to add comment to ${issueKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update issue remaining estimate and/or due date
+   * @param {string} issueKey - Issue key (e.g., "CMC-123")
+   * @param {number} remainingEstimateSeconds - Remaining estimate in seconds (optional)
+   * @param {string} dueDate - Due date in ISO format (optional)
+   */
+  static async updateIssue(issueKey, remainingEstimateSeconds = null, dueDate = null) {
+    try {
+      const response = await fetch(`${this.BACKEND_URL}/api/jira/issues/${issueKey}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          remainingEstimateSeconds,
+          dueDate
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        const errorMsg = data.error || data.details || 'Failed to update issue';
+        throw new Error(errorMsg);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`❌ Failed to update issue ${issueKey}:`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Format issue data for ScoBro Logbook
    */
   static formatIssueData(issue, config) {

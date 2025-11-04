@@ -275,9 +275,10 @@ export class SupabaseService {
         timestamp: entry.timestamp,
         items: entry.entry_items.map(item => ({
           id: item.id,
-          item_type: item.item_type,
+          type: item.item_type,
           content: item.content,
           project: item.project,
+          hours: item.hours || null,
           tags: item.item_tags.map(it => it.tags.name),
           people: item.item_people.map(ip => ip.people.name),
           jira: item.jira_refs.map(jr => jr.jira_key)
@@ -437,6 +438,7 @@ export class SupabaseService {
             item_type: item.type,
             content: item.content,
             project: item.project,
+            hours: item.hours || null,
             created_at: item.created_at,
             updated_at: item.updated_at
           })
